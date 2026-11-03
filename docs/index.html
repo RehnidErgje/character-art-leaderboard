@@ -372,8 +372,19 @@ const pct = d3.format('.1%');
 const pct0 = d3.format('.0%');
 const GAMES = [{"id": "zzz", "short": "ZZZ", "title": "Zenless Zone Zero agents", "logo": "assets/logos/zzz.webp"}, {"id": "genshin", "short": "Genshin", "title": "Genshin Impact characters", "logo": "assets/logos/genshin.webp"}, {"id": "hsr", "short": "HSR", "title": "Honkai: Star Rail characters", "logo": "assets/logos/hsr.webp"}];
 const savedGame = () => { try { return localStorage.getItem('tagstats-game'); } catch (e) { return null; } };
+// The game shown: the link's ?game= (zzz, genshin, hsr) first, so a shared
+// link opens that game; else the one this browser showed last; else the first.
+const linkGame = () => new URLSearchParams(location.search).get('game');
+const knownGame = (id) => GAMES.some((g) => g.id === id);
 const view = { sort: 'total', query: '', focus: null, measure: 'all',
-               game: GAMES.some((g) => g.id === savedGame()) ? savedGame() : GAMES[0].id };
+               game: knownGame(linkGame()) ? linkGame() : knownGame(savedGame()) ? savedGame() : GAMES[0].id };
+// the address follows the game shown, so a copied link opens it
+const gameInLink = () => {
+  const url = new URL(location.href);
+  url.searchParams.set('game', view.game);
+  try { history.replaceState(null, '', url); } catch (e) { /* the address stays */ }
+};
+gameInLink();
 
 // What the page counts: all art, only R-18, or only art without R-18. A pair's
 // R-18 is counted only from 20 posts on a site, so for small pairs "without
@@ -1798,6 +1809,7 @@ document.querySelectorAll('[data-game]').forEach((btn) => {
     view.game = btn.dataset.game;
     view.focus = null;
     try { localStorage.setItem('tagstats-game', view.game); } catch (e) { /* only this visit */ }
+    gameInLink();
     showGame();
     redrawAll();
   });
