@@ -1196,6 +1196,11 @@ dash.draw('network', {
     const full = Boolean(el.closest('.zl-full'));
     const sig = `${view.game}|${keyOf(chosen())}|${view.measure}|${el.clientWidth}|${full ? el.clientHeight : ''}`;
     if (made.sim && made.sig === sig && inputs.every((d, i) => d === made.inputs[i])) return;
+    // the same network at a new size (full screen, a turned phone): the faces
+    // stay where they were, about the new middle, and are not laid out again
+    const shape = `${view.game}|${keyOf(chosen())}|${view.measure}`;
+    const before = made.sim && made.shape === shape && inputs.every((d, i) => d === made.inputs[i])
+      ? new Map(made.nodes.map((n) => [n.id, [n.x - made.middle[0], n.y - made.middle[1]]])) : null;
     if (made.sim) made.sim.stop();
     made.sim = null;
     // The canvas and its WebGL renderer live as long as the network: making a
@@ -1420,9 +1425,15 @@ dash.draw('network', {
     // the page keeps answering. One already worked out for this game, sites
     // and content (with any faces dragged since) is put back at once.
     const saved = layouts.get(sig);
-    const known = saved && nodes.every((n) => saved.has(n.id));
+    const known = (saved && nodes.every((n) => saved.has(n.id))) || (before && nodes.every((n) => before.has(n.id)));
     // a layout put back is at rest: the frames must not move it again
-    if (known) { nodes.forEach((n) => { [n.x, n.y] = saved.get(n.id); }); sim.alpha(0); }
+    if (known) {
+      nodes.forEach((n) => {
+        if (saved && saved.has(n.id)) [n.x, n.y] = saved.get(n.id);
+        else { const [dx, dy] = before.get(n.id); n.x = W / 2 + dx; n.y = H / 2 + dy; }
+      });
+      sim.alpha(0);
+    }
     let left = known ? 0 : 300;
     const keep = () => layouts.set(sig, new Map(nodes.map((n) => [n.id, [n.x, n.y]])));
     const settle = () => {
@@ -1661,6 +1672,9 @@ dash.draw('network', {
     made.sig = sig;
     made.inputs = inputs;
     made.isHeld = () => held != null;
+    made.shape = shape;
+    made.nodes = nodes;
+    made.middle = [W / 2, H / 2];
     if (!window.PIXI) { el.append(node('p', 'zl-note', 'The network could not load its drawing library (PixiJS).')); return; }
     {
       // made once, for every drawing after; Pixi's own pointer events are not
@@ -1679,7 +1693,13 @@ dash.draw('network', {
           px = pixiNetwork(renderer, nodes);
           made.px = px;
           nodes.forEach((n, i) => { if (n.img) px.setFace(i, n.img); });
-          dirty = true;
+          // Drawn now, not on the next frame: a phone going full screen holds
+          // frames back for a moment, and the resized canvas stood empty (the
+          // screen went dark) until they came. The scatter, drawn at once as
+          // SVG, never did.
+          buildPixi();
+          dirty = false;
+          px.render(view2d);
           paint();
         })
         .catch((error) => console.error('network renderer:', error));
