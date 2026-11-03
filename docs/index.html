@@ -984,7 +984,10 @@ const resolveColor = (value, el) => {
   return color;
 };
 
-// Faces cut round once, kept as small canvases the network draws directly.
+// Faces cut round once and kept as ImageBitmaps the network draws directly.
+// A small canvas would stay in main memory, and the browser would send all of
+// them to the graphics card again on every frame of a drag (2 frames a
+// second on a 4K screen); a bitmap is sent once.
 const roundCache = new Map();
 const roundFace = (src) => {
   if (!src) return Promise.resolve(null);
@@ -1000,7 +1003,8 @@ const roundFace = (src) => {
         ctx.beginPath(); ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2); ctx.clip();
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, size, size);
-        resolve(canvas);
+        if (window.createImageBitmap) createImageBitmap(canvas).then(resolve, () => resolve(canvas));
+        else resolve(canvas);
       };
       img.onerror = () => resolve(null);
       img.src = src;
@@ -1100,6 +1104,7 @@ dash.draw('network', {
     const MAIN = '#e8578f';
     const tierInk = (tier) => (tier === 0 ? MAIN : ink);
     let lit = null;
+    let zooming = false;
     const light = (id) => {
       if (id == null) { lit = null; paint(); return; }
       const mates = partnersOf(pairs, id).filter((l) => l.v > 0);
@@ -1134,7 +1139,8 @@ dash.draw('network', {
       ctx.scale(view2d.k, view2d.k);
       ctx.lineCap = 'round';
       ctx.strokeStyle = ink;
-      ctx.imageSmoothingQuality = 'high';
+      // the best (slow) shrinking of faces only once nothing moves
+      ctx.imageSmoothingQuality = held || zooming || sim.alpha() >= sim.alphaMin() ? 'low' : 'high';
       // the backbone: thin, and barely there while a face is lit
       ctx.globalAlpha = lit ? 0.05 : 0.35;
       for (const e of edges) {
@@ -1222,7 +1228,7 @@ dash.draw('network', {
     };
     // While the layout moves it is drawn at 1x; once it stops, once more sharp.
     sim.on('tick', () => { setScale(1); paint(); });
-    sim.on('end', () => { setScale(sharp); keep(); });
+    sim.on('end', () => { setScale(sharp); keep(); paint(); });
 
     let held = null;
     let hover = null;
@@ -1259,8 +1265,11 @@ dash.draw('network', {
       .translateExtent([[-W, -H], [W * 2, H * 2]])
       .filter((event) => event.type === 'wheel' && event.ctrlKey)
       .wheelDelta(wheelStep)
-      .on('end', () => { clearTimeout(sharpTimer); sharpTimer = setTimeout(() => setScale(sharp), 200); })
-      .on('zoom', (event) => { view2d = event.transform; tip.hidden = true; setScale(1); paint(); });
+      .on('end', () => {
+        clearTimeout(sharpTimer);
+        sharpTimer = setTimeout(() => { zooming = false; setScale(sharp); paint(); }, 200);
+      })
+      .on('zoom', (event) => { view2d = event.transform; zooming = true; tip.hidden = true; setScale(1); paint(); });
     // The wheel over the network only zooms: at a zoom limit d3 lets the wheel
     // through, and the page would scroll instead.
     wheelZoom(canvas, el);
