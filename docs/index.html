@@ -232,7 +232,8 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 [data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
 @media (max-width: 900px) {
   .zl-panel { position: static; width: auto; max-height: none; margin-top: var(--cds-gap-md); box-shadow: none; }
-  .zl-full .zl-panel { display: none; }
+  /* full screen on a narrow screen: the panel is a sheet over the bottom of the network */
+  .zl-full .zl-panel { position: absolute; top: auto; left: var(--cds-pad-sm); right: var(--cds-pad-sm); bottom: var(--cds-pad-sm); width: auto; max-height: 42%; margin: 0; overflow: auto; box-shadow: var(--cds-shadow-popover); }
 }
 @media (max-width: 640px) {
   .zl-topbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
@@ -248,7 +249,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
   .zl-topbar-right > .zl-group { order: 4; flex: 1 1 100%; }
   .zl-topbar-right > .zl-group .zl-seg { display: flex; width: 100%; }
   .zl-topbar-right > .zl-group .zl-seg button { flex: 1; padding-block: 6px; }
-  .zl-bar-tools { order: 5; flex: 1 1 100%; }
+  .zl-bar-tools { order: 5; flex: 1 1 100%; display: flex; justify-content: flex-end; }
   .zl-row { grid-template-columns: 1.4rem 28px minmax(4.5rem, 7rem) 1fr; }
   .zl-pair { grid-template-columns: 1.4rem 48px minmax(5rem, 8rem) 1fr; }
   /* the top three stay in one row: smaller faces and padding */
@@ -1342,10 +1343,18 @@ dash.draw('network', {
       const [x, y] = d3.pointer(event, canvas);
       return view2d.invert([x, y]);
     };
+    // A finger is wider than a cursor: on a touch screen a face smaller than
+    // TOUCH_HIT screen pixels across takes a tap within that much of its
+    // middle; of faces near each other the nearest wins, so none steals a tap
+    // that lands on another.
+    const TOUCH_HIT = 44;
+    const coarse = window.matchMedia && matchMedia('(pointer: coarse)').matches;
     const faceAt = (event) => {
       const [x, y] = pointer(event);
       const n = sim.find(x, y);
-      return n && Math.hypot(n.x - x, n.y - y) <= n.r ? n : null;
+      const touch = coarse || event.pointerType === 'touch' || 'identifier' in event;
+      const reach = n && Math.max(n.r, touch ? TOUCH_HIT / 2 / view2d.k : 0);
+      return n && Math.hypot(n.x - x, n.y - y) <= reach ? n : null;
     };
     // The tip's size is read once per face shown: reading it on every frame of
     // a drag made the browser lay out the whole page each time.
@@ -1528,41 +1537,90 @@ dash.draw('network', {
     }, { passive: false });
     canvas.addEventListener('touchend', (event) => { if (!event.touches.length) pinching = false; });
     canvas.addEventListener('touchcancel', (event) => { if (!event.touches.length) pinching = false; });
+    // A face's drag in three steps, for the mouse, a finger in full screen
+    // (d3.drag) and a finger held on a face on the page (below).
+    const take = (n) => {
+      held = n;
+      if (view.focus !== n.id) pick(n.id);
+      canvas.style.cursor = 'grabbing';
+      tipLines(tip, [who.get(n.id).name]);
+      // The layout rests with alpha far below alphaMin; raised only by
+      // alphaTarget, it would stop again on the first step (the first two
+      // drags froze). It starts above alphaMin and rises from there; the
+      // frames in render move it.
+      sim.alphaTarget(0.3).alpha(Math.max(sim.alpha(), 0.05));
+      n.fx = n.x; n.fy = n.y;
+      paint();
+    };
+    const moveTo = (n, [x, y]) => {
+      n.fx = x; n.fy = y;
+      // the held face follows the pointer even between ticks
+      n.x = x; n.y = y;
+      dirty = true;
+      paint();
+    };
+    const letGo = (n) => {
+      if (held !== n) return; // let go already by a second finger
+      held = null;
+      canvas.style.cursor = '';
+      tip.hidden = true;
+      sim.alphaTarget(0);
+      n.fx = null; n.fy = null;
+      if (made.pending) { made.pending = false; dash.draw('network'); }
+    };
     d3.select(canvas).call(d3.drag()
       .filter((event) => left === 0 && (event.touches ? full && event.touches.length === 1 : event.button === 0))
       .subject((event) => faceAt(fingerOf(event.sourceEvent) || event))
-      .on('start', (event) => {
-        const n = event.subject;
-        held = n;
-        if (view.focus !== n.id) pick(n.id);
-        canvas.style.cursor = 'grabbing';
-        tipLines(tip, [who.get(n.id).name]);
-        // The layout rests with alpha far below alphaMin; raised only by
-        // alphaTarget, it would stop again on the first step (the first two
-        // drags froze). It starts above alphaMin and rises from there; the
-        // frames in render move it.
-        if (!event.active) sim.alphaTarget(0.3).alpha(Math.max(sim.alpha(), 0.05));
-        n.fx = n.x; n.fy = n.y;
-        paint();
-      })
+      .on('start', (event) => take(event.subject))
       .on('drag', (event) => {
         if (pinching || held !== event.subject) return;
-        const [x, y] = pointer(fingerOf(event.sourceEvent, event.identifier));
-        event.subject.fx = x; event.subject.fy = y;
-        // the held face follows the pointer even between ticks
-        event.subject.x = x; event.subject.y = y;
-        dirty = true;
-        paint();
+        moveTo(event.subject, pointer(fingerOf(event.sourceEvent, event.identifier)));
       })
-      .on('end', (event) => {
-        if (held !== event.subject) return; // let go already by a second finger
-        held = null;
-        canvas.style.cursor = '';
-        tip.hidden = true;
-        if (!event.active) sim.alphaTarget(0);
-        event.subject.fx = null; event.subject.fy = null;
-        if (made.pending) { made.pending = false; dash.draw('network'); }
-      }));
+      .on('end', (event) => letGo(event.subject)));
+
+    // On the page one finger scrolls; a finger held still on a face for
+    // HOLD_MS takes it (a short buzz where the phone can), and the face
+    // follows the finger until it lifts. Moving first, or a second finger,
+    // leaves the page to scroll or the view to zoom.
+    const HOLD_MS = 300;
+    let press = null;
+    const dropPress = () => {
+      if (!press) return;
+      clearTimeout(press.timer);
+      if (press.taken) letGo(press.n);
+      press = null;
+    };
+    canvas.addEventListener('touchstart', (event) => {
+      dropPress();
+      if (full || left !== 0 || event.touches.length !== 1) return;
+      const t = event.touches[0];
+      const n = faceAt(t);
+      if (!n) return;
+      press = { n, id: t.identifier, x: t.clientX, y: t.clientY, taken: false };
+      press.timer = setTimeout(() => {
+        if (!press) return;
+        press.taken = true;
+        take(press.n);
+        if (navigator.vibrate) navigator.vibrate(15);
+      }, HOLD_MS);
+    }, { passive: true });
+    canvas.addEventListener('touchmove', (event) => {
+      if (!press) return;
+      const t = [...event.touches].find((f) => f.identifier === press.id);
+      if (!t || event.touches.length > 1) { dropPress(); return; }
+      if (!press.taken) {
+        if (Math.hypot(t.clientX - press.x, t.clientY - press.y) > 8) dropPress(); // a scroll
+        return;
+      }
+      event.preventDefault();
+      moveTo(press.n, pointer(t));
+    }, { passive: false });
+    canvas.addEventListener('touchend', dropPress);
+    canvas.addEventListener('touchcancel', dropPress);
+    // a held finger would open the menu or select the picture
+    canvas.addEventListener('contextmenu', (event) => { if (coarse) event.preventDefault(); });
+    canvas.style.webkitTouchCallout = 'none';
+    canvas.style.userSelect = 'none';
 
     // after d3.drag, which sets touch-action: none (no page scroll over the network)
     touchZoom(canvas, zoom);
