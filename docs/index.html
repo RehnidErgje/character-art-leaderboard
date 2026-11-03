@@ -1089,15 +1089,10 @@ dash.draw('network', {
     const maxNear = d3.max(shown, (l) => l.near) || 1;
     const backbone = d3.group(edges, (e) => Math.round(Math.max(0.75, (narrow ? 10 : 16) * e.l.v / pairMax) * 2) / 2);
 
-    // Sharp (device pixels, at most 2x) at rest; while the layout moves or the
-    // view zooms, the canvas has at most MOVE_PIXELS and the browser stretches
-    // it to the box. Full screen on a big monitor then costs a frame no more
-    // than the box in the page does (it had tens of millions of pixels to
-    // redraw on every frame of a drag); at rest it has at most REST_PIXELS.
-    const MOVE_PIXELS = 1.5e6;
-    const REST_PIXELS = 8e6;
-    const moving = Math.min(1, Math.sqrt(MOVE_PIXELS / (W * H)));
-    const sharp = Math.max(moving, Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(REST_PIXELS / (W * H))));
+    // Sharp (device pixels, at most 2x) at rest; 1x while the layout moves or
+    // the view zooms.
+    const moving = 1;
+    const sharp = Math.min(window.devicePixelRatio || 1, 2);
     let dpr = sharp;
     const canvas = document.createElement('canvas');
     let sized = false;
@@ -1144,22 +1139,42 @@ dash.draw('network', {
       paint();
     };
 
-    // At most one frame per FRAME_MS (about 60 a second): a 144 or 240 Hz
-    // screen would otherwise get a new picture, and a new window composition,
-    // on every refresh.
+    // One loop for the layout and the picture: each frame (at most one per
+    // FRAME_MS, about 60 a second) moves the layout one step while it is
+    // moving, then draws once. d3's own timer is never started, so the
+    // physics never runs apart from the frames, and nothing runs at all once
+    // the layout rests and nothing else changed.
     const FRAME_MS = 16;
     let queued = false;
     let lastFrame = 0;
     const paint = () => { if (!queued) { queued = true; requestAnimationFrame(render); } };
+    const live = () => held != null || sim.alpha() >= sim.alphaMin();
     function render(now) {
       if (now - lastFrame < FRAME_MS) { requestAnimationFrame(render); return; }
       lastFrame = now;
       queued = false;
+      if (left === 0 && live()) {
+        sim.tick();
+        setScale(moving);
+        if (live()) paint(); // the next step
+        else { setScale(sharp); keep(); paint(); } // came to rest: once more, sharp
+      }
       nodes.forEach((n) => { n.x = Math.max(n.r + 2, Math.min(W - n.r - 2, n.x)); n.y = Math.max(n.r + 2, Math.min(H - n.r - 2, n.y)); });
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W, H);
+      const k = view2d.k;
       ctx.translate(view2d.x, view2d.y);
-      ctx.scale(view2d.k, view2d.k);
+      ctx.scale(k, k);
+      // Zoomed in, only what is on screen is drawn, and lines and rings keep
+      // their width on screen (widths are divided by k). Scaled with the view,
+      // at 20x a line was 300 px wide and every line and face, most of them
+      // far off screen, was still drawn: the work grew with the square of
+      // the zoom.
+      const [vx0, vy0] = view2d.invert([0, 0]);
+      const [vx1, vy1] = view2d.invert([W, H]);
+      const onScreen = (n) => n.x + n.r >= vx0 && n.x - n.r <= vx1 && n.y + n.r >= vy0 && n.y - n.r <= vy1;
+      const crosses = (a, b) => Math.max(a.x, b.x) >= vx0 && Math.min(a.x, b.x) <= vx1
+        && Math.max(a.y, b.y) >= vy0 && Math.min(a.y, b.y) <= vy1;
       ctx.lineCap = 'round';
       ctx.strokeStyle = ink;
       // the best (slow) shrinking of faces only once nothing moves
@@ -1168,23 +1183,27 @@ dash.draw('network', {
       // for each line width (in half pixels), not one stroke for each line
       ctx.globalAlpha = lit ? 0.05 : 0.35;
       for (const [width, list] of backbone) {
-        ctx.lineWidth = width;
+        ctx.lineWidth = width / k;
         ctx.beginPath();
-        for (const e of list) { ctx.moveTo(e.source.x, e.source.y); ctx.lineTo(e.target.x, e.target.y); }
+        for (const e of list) {
+          if (crosses(e.source, e.target)) { ctx.moveTo(e.source.x, e.source.y); ctx.lineTo(e.target.x, e.target.y); }
+        }
         ctx.stroke();
       }
       // the lit face's lines: brightness against its biggest partner
       if (lit) {
         const from = byId.get(lit.id);
         for (const m of lit.lines) {
+          if (!crosses(from, m.other)) continue;
           ctx.globalAlpha = TIER_ALPHA[m.tier];
           ctx.strokeStyle = tierInk(m.tier);
-          ctx.lineWidth = lineWidth(m.v);
+          ctx.lineWidth = lineWidth(m.v) / k;
           ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(m.other.x, m.other.y); ctx.stroke();
         }
       }
       // faces and rings
       for (const n of nodes) {
+        if (!onScreen(n)) continue;
         const s = lit ? lit.strength.get(n.id) : undefined;
         const picked = lit && n.id === lit.id;
         const faceAlpha = !lit || picked ? 1 : s != null ? 0.5 + 0.5 * Math.sqrt(s) : 0.4;
@@ -1192,7 +1211,7 @@ dash.draw('network', {
         if (n.img) ctx.drawImage(n.img, n.x - n.r, n.y - n.r, n.r * 2, n.r * 2);
         else { ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.fill(); }
         ctx.globalAlpha = picked ? 1 : s != null ? RING_MIN + (1 - RING_MIN) * Math.sqrt(s) : 0.3;
-        ctx.lineWidth = picked ? 3.5 : s != null ? 2 + 2 * s : 1.5;
+        ctx.lineWidth = (picked ? 3.5 : s != null ? 2 + 2 * s : 1.5) / k;
         ctx.strokeStyle = lit && lit.tier.has(n.id) ? tierInk(lit.tier.get(n.id)) : ink;
         ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.stroke();
       }
@@ -1244,7 +1263,8 @@ dash.draw('network', {
     // and content (with any faces dragged since) is put back at once.
     const saved = layouts.get(sig);
     const known = saved && nodes.every((n) => saved.has(n.id));
-    if (known) nodes.forEach((n) => { [n.x, n.y] = saved.get(n.id); });
+    // a layout put back is at rest: the frames must not move it again
+    if (known) { nodes.forEach((n) => { [n.x, n.y] = saved.get(n.id); }); sim.alpha(0); }
     let left = known ? 0 : 300;
     const keep = () => layouts.set(sig, new Map(nodes.map((n) => [n.id, [n.x, n.y]])));
     const settle = () => {
@@ -1256,9 +1276,6 @@ dash.draw('network', {
       setScale(sharp);
       paint();
     };
-    // While the layout moves it is drawn at 1x; once it stops, once more sharp.
-    sim.on('tick', () => { setScale(moving); paint(); });
-    sim.on('end', () => { setScale(sharp); keep(); paint(); });
 
     let held = null;
     let hover = null;
@@ -1365,10 +1382,12 @@ dash.draw('network', {
         canvas.style.cursor = 'grabbing';
         tipLines(tip, [who.get(n.id).name]);
         // The layout rests with alpha far below alphaMin; raised only by
-        // alphaTarget, it would stop again on the first tick (the first two
-        // drags froze). It starts above alphaMin and rises from there.
-        if (!event.active) sim.alphaTarget(0.3).alpha(Math.max(sim.alpha(), 0.05)).restart();
+        // alphaTarget, it would stop again on the first step (the first two
+        // drags froze). It starts above alphaMin and rises from there; the
+        // frames in render move it.
+        if (!event.active) sim.alphaTarget(0.3).alpha(Math.max(sim.alpha(), 0.05));
         n.fx = n.x; n.fy = n.y;
+        paint();
       })
       .on('drag', (event) => {
         const [x, y] = pointer(fingerOf(event.sourceEvent, event.identifier));
