@@ -137,13 +137,16 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-duo img + img { left: 20px; }
 
 .zl-chart { position: relative; min-height: 380px; }
-/* full screen: the chart (or the network with its panel) fixed over the page */
-.zl-full { position: fixed !important; inset: 0; z-index: 1000; margin: 0; max-width: none; box-sizing: border-box; background: var(--color-bg); }
-.zl-chart.zl-full { min-height: 0; height: 100dvh; }
-.zl-netwrap.zl-full { padding: var(--cds-pad-md); align-items: stretch; }
-.zl-netwrap.zl-full .zl-net { min-height: 0; height: calc(100dvh - 2 * var(--cds-pad-md)); }
-.zl-netwrap.zl-full .zl-panel { max-height: calc(100dvh - 2 * var(--cds-pad-md)); overflow: auto; }
+/* full screen: the top bar (game, sources, content) stays fixed at the top,
+   the chart (or the network with its panel) fills the screen below it;
+   --zl-bar-h is the bar's height, set when full screen starts */
 .zl-noscroll, .zl-noscroll body { overflow: hidden; }
+.zl-noscroll .zl-topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1001; padding-inline: var(--cds-pad-md); }
+.zl-full { position: fixed !important; top: var(--zl-bar-h, 0px); left: 0; right: 0; bottom: 0; z-index: 1000; margin: 0; max-width: none; box-sizing: border-box; background: var(--color-bg); }
+.zl-chart.zl-full { min-height: 0; height: calc(100dvh - var(--zl-bar-h, 0px)); }
+.zl-netwrap.zl-full { padding: var(--cds-pad-md); align-items: stretch; }
+.zl-netwrap.zl-full .zl-net { min-height: 0; height: calc(100dvh - var(--zl-bar-h, 0px) - 2 * var(--cds-pad-md)); }
+.zl-netwrap.zl-full .zl-panel { max-height: calc(100dvh - var(--zl-bar-h, 0px) - 2 * var(--cds-pad-md)); overflow: auto; }
 .zl-chart svg { display: block; overflow: visible; }
 .zl-chart text { fill: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
 .zl-net { min-height: 520px; overflow: hidden; border-radius: var(--cds-radius); }
@@ -709,13 +712,15 @@ const wheelStep = (event) => -event.deltaY * (event.deltaMode === 1 ? 0.05 : eve
 
 // Ctrl + wheel zooms (the page's own Ctrl zoom is held back over the chart);
 // a plain wheel scrolls the page as anywhere else and briefly shows a hint.
+// In full screen there is no page to scroll: a plain wheel zooms.
+const zoomWheel = (box) => (event) => event.type === 'wheel' && (event.ctrlKey || Boolean(box.closest('.zl-full')));
 const wheelZoom = (target, box) => {
   const hint = node('div', 'zl-hint', 'Ctrl + scroll to zoom');
   hint.hidden = true;
   box.append(hint);
   let timer = null;
   target.addEventListener('wheel', (event) => {
-    if (event.ctrlKey) { event.preventDefault(); return; }
+    if (event.ctrlKey || box.closest('.zl-full')) { event.preventDefault(); return; }
     hint.hidden = false;
     clearTimeout(timer);
     timer = setTimeout(() => { hint.hidden = true; }, 1200);
@@ -765,13 +770,20 @@ const resetButton = (box, reset) => {
   tools(box).append(button);
 };
 // Full screen for a chart (target: what fills the screen, the chart or the
-// chart with its panel). The box is fixed over the whole page at once, which
-// is all an iPhone allows; where the browser has a full-screen mode for any
-// element (desktop, Android) it is asked for as well. redraw runs the
-// drawing again at the new size; Esc or the button ends it.
+// chart with its panel). The top bar (game, sources, content) stays fixed at
+// the top and the box fills the screen below it, which is all an iPhone
+// allows; where the browser has a full-screen mode (desktop, Android) the
+// whole page goes into it as well, so the bar stays. redraw runs the drawing
+// again at the new size; Esc or the button ends it.
+const barHeight = () => {
+  const bar = document.querySelector('.zl-topbar');
+  const on = document.documentElement.classList.contains('zl-noscroll');
+  document.documentElement.style.setProperty('--zl-bar-h', on && bar ? `${bar.offsetHeight}px` : '0px');
+};
 const setFull = (target, on) => {
   target.classList.toggle('zl-full', on);
   document.documentElement.classList.toggle('zl-noscroll', on);
+  barHeight();
   if (target.zlRedraw) target.zlRedraw();
 };
 const fullButton = (box, target, redraw) => {
@@ -786,15 +798,19 @@ const fullButton = (box, target, redraw) => {
       return;
     }
     setFull(target, true);
-    if (target.requestFullscreen && document.fullscreenEnabled) target.requestFullscreen().catch(() => {});
+    const page = document.documentElement;
+    if (page.requestFullscreen && document.fullscreenEnabled) page.requestFullscreen().catch(() => {});
   });
   tools(box).append(button);
 };
 const leaveFull = () => document.querySelectorAll('.zl-full').forEach((e) => setFull(e, false));
-document.addEventListener('fullscreenchange', () => {
-  if (!document.fullscreenElement) leaveFull();
-  else if (document.fullscreenElement.zlRedraw) document.fullscreenElement.zlRedraw();
-});
+const redrawFull = () => {
+  barHeight();
+  document.querySelectorAll('.zl-full').forEach((e) => { if (e.zlRedraw) e.zlRedraw(); });
+};
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) leaveFull(); else redrawFull(); });
+// the bar can grow a row on a narrower window, and the chart below follows
+window.addEventListener('resize', () => { if (document.querySelector('.zl-full')) redrawFull(); });
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !document.fullscreenElement) leaveFull(); });
 
 const middlePan = (target, zoom, scale) => {
@@ -882,7 +898,7 @@ dash.draw('scatter', (el) => {
   const zoom = d3.zoom().scaleExtent([1, 20])
     .extent([[left, 0], [W, bottom]])
     .translateExtent([[left, 0], [W, bottom]])
-    .filter((event) => event.type === 'wheel' && event.ctrlKey)
+    .filter(zoomWheel(el))
       .wheelDelta(wheelStep)
     .on('zoom', (event) => { x = event.transform.rescaleX(x0); y = event.transform.rescaleY(y0); tip.hidden = true; place(); });
   svg.call(zoom).on('dblclick.zoom', null);
@@ -1263,7 +1279,7 @@ dash.draw('network', {
     const zoom = d3.zoom().scaleExtent([1, 20])
       .extent([[0, 0], [W, H]])
       .translateExtent([[-W, -H], [W * 2, H * 2]])
-      .filter((event) => event.type === 'wheel' && event.ctrlKey)
+      .filter(zoomWheel(el))
       .wheelDelta(wheelStep)
       .on('end', () => {
         clearTimeout(sharpTimer);
