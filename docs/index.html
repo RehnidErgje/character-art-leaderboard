@@ -163,6 +163,8 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-place .zl-bar { width: 100%; }
 
 .zl-list { position: relative; display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; max-height: 660px; overflow: auto; }
+/* touch: while the page scrolls the lists hold still (see LIST_WAIT) */
+.zl-pagescroll .zl-list, .zl-pagescroll .zl-panel { overflow: hidden; }
 .zl-row { display: grid; grid-template-columns: 1.8rem 32px minmax(6rem, 10rem) 1fr; align-items: center; gap: var(--cds-gap-sm); }
 .zl-row img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: var(--color-bg); }
 .zl-row .zl-n { color: var(--color-fg-muted); text-align: right; font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
@@ -229,6 +231,20 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
   .zl-full .zl-panel { display: none; }
 }
 @media (max-width: 640px) {
+  .zl-topbar { display: grid; grid-template-columns: auto auto minmax(0, 1fr); grid-template-areas: "game sites search" "content content content" "tools tools tools"; align-items: center; gap: 6px; }
+  .zl-topbar-left, .zl-topbar-right { display: contents; }
+  .zl-game { grid-area: game; }
+  .zl-game > summary { height: 34px; padding: 3px 6px; }
+  .zl-game img { height: 26px; }
+  .zl-topbar-left > .zl-group { grid-area: sites; }
+  .zl-topbar .zl-group > legend, .zl-topbar .zl-group > .zl-group-name { display: none; }
+  /* the sites as their icons only; the name stays for screen readers */
+  .zl-chip { height: 30px; padding: 0 7px; gap: 0; font-size: 0; }
+  .zl-topbar-right .zl-search { grid-area: search; width: 100%; min-width: 0; }
+  .zl-topbar-right > .zl-group { grid-area: content; }
+  .zl-topbar-right > .zl-group .zl-seg { display: flex; width: 100%; }
+  .zl-topbar-right > .zl-group .zl-seg button { flex: 1; padding-block: 6px; }
+  .zl-bar-tools { grid-area: tools; }
   .zl-row { grid-template-columns: 1.4rem 28px minmax(4.5rem, 7rem) 1fr; }
   .zl-pair { grid-template-columns: 1.4rem 48px minmax(5rem, 8rem) 1fr; }
   /* the top three stay in one row: smaller faces and padding */
@@ -938,14 +954,19 @@ dash.draw('scatter', (el) => {
   fullButton(el, el.closest('.zl-card'), () => dash.draw('scatter'));
   svg.on('dblclick.reset', (event) => { if (!event.target.closest('.zl-pt')) reset(); });
 
-  g.on('pointerenter', function (event, d) {
+  // a finger passing over (scrolling the page) shows nothing; a tap does
+  const show = function (event, d) {
     this.parentNode.append(this);
     tipLines(tip, [d.p.name, `${fmt(d.amount)} ${WORD[view.measure]}`, `${pct(d.share)} R-18`]);
     tip.hidden = false;
     const k = el.clientWidth / W;
     tip.style.left = Math.max(0, Math.min(el.clientWidth - tip.offsetWidth, x(d.amount) * k - tip.offsetWidth / 2)) + 'px';
     tip.style.top = Math.max(0, (y(d.share) - face / 2) * k - tip.offsetHeight - 6) + 'px';
-  }).on('pointerleave', () => { tip.hidden = true; });
+  };
+  g.on('pointerenter', function (event, d) { if (event.pointerType !== 'touch') show.call(this, event, d); })
+    .on('pointerleave', (event) => { if (event.pointerType !== 'touch') tip.hidden = true; })
+    .on('click', function (event, d) { event.stopPropagation(); show.call(this, event, d); });
+  svg.on('click.tip', () => { tip.hidden = true; });
 
   // The page's search: the faces it finds come to the front with a bright
   // ring, the rest fade.
@@ -1291,7 +1312,6 @@ dash.draw('network', {
         if (live()) paint(); // the next step
         else keep(); // came to rest
       }
-      nodes.forEach((n) => { n.x = Math.max(n.r + 2, Math.min(W - n.r - 2, n.x)); n.y = Math.max(n.r + 2, Math.min(H - n.r - 2, n.y)); });
       if (px) {
         if (dirty) { buildPixi(); dirty = false; }
         px.render(view2d);
@@ -1352,6 +1372,7 @@ dash.draw('network', {
       const until = performance.now() + 8;
       while (left > 0 && performance.now() < until) { sim.tick(); left--; }
       dirty = true;
+      fit();
       paint();
       if (left > 0) { requestAnimationFrame(settle); return; }
       keep();
@@ -1360,7 +1381,7 @@ dash.draw('network', {
     let held = null;
     let hover = null;
     canvas.addEventListener('pointermove', (event) => {
-      if (held || pan) return;
+      if (held || pan || event.pointerType === 'touch') return;
       const n = faceAt(event);
       if (n === hover) return;
       hover = n;
@@ -1368,8 +1389,8 @@ dash.draw('network', {
       light(n ? n.id : focusId(chars));
       if (n) { tipLines(tip, [who.get(n.id).name]); place(n); } else tip.hidden = true;
     });
-    canvas.addEventListener('pointerleave', () => {
-      if (held) return;
+    canvas.addEventListener('pointerleave', (event) => {
+      if (held || event.pointerType === 'touch') return;
       hover = null;
       tip.hidden = true;
       light(focusId(chars));
@@ -1381,21 +1402,43 @@ dash.draw('network', {
     });
 
     // Wheel zooms, the middle button pans; the left button belongs to the faces.
-    // The whole network fits the box at 1x, so the view zooms in only. It may
-    // move off the network by at most its own size each way, so the network
-    // can never be lost outside the box. A zoom only moves and scales the
-    // picture; nothing is built again.
-    const zoom = d3.zoom().scaleExtent([1, 20])
+    // The faces are not held inside the box: the network spreads as it does,
+    // and the view fits all of it (fitView) while the layout settles, until
+    // the view is moved by hand. The view may move only so far that a quarter
+    // of the box still shows the network, so it can never be lost. A zoom
+    // only moves and scales the picture; nothing is built again.
+    const bounds = () => {
+      let x0 = Infinity; let y0 = Infinity; let x1 = -Infinity; let y1 = -Infinity;
+      for (const n of nodes) { x0 = Math.min(x0, n.x - n.r); y0 = Math.min(y0, n.y - n.r); x1 = Math.max(x1, n.x + n.r); y1 = Math.max(y1, n.y + n.r); }
+      return { x0, y0, x1, y1 };
+    };
+    const FIT_PAD = 12;
+    const fitView = () => {
+      const b = bounds();
+      const k = Math.min(1, (W - 2 * FIT_PAD) / (b.x1 - b.x0), (H - 2 * FIT_PAD) / (b.y1 - b.y0));
+      return d3.zoomIdentity.translate(W / 2 - k * (b.x0 + b.x1) / 2, H / 2 - k * (b.y0 + b.y1) / 2).scale(k);
+    };
+    const inSight = (t) => {
+      const b = bounds();
+      const x = Math.min(W * 0.75 - b.x0 * t.k, Math.max(W * 0.25 - b.x1 * t.k, t.x));
+      const y = Math.min(H * 0.75 - b.y0 * t.k, Math.max(H * 0.25 - b.y1 * t.k, t.y));
+      return d3.zoomIdentity.translate(x, y).scale(t.k);
+    };
+    let autoFit = true;
+    const zoom = d3.zoom().scaleExtent([0.1, 20])
       .extent([[0, 0], [W, H]])
-      .translateExtent([[-W, -H], [W * 2, H * 2]])
+      .constrain(inSight)
       .filter(zoomWheel(el))
       .wheelDelta(wheelStep)
+      .on('start', (event) => { if (event.sourceEvent) autoFit = false; })
       .on('zoom', (event) => { view2d = event.transform; tip.hidden = true; paint(); });
+    // fits the view to the network unless it was moved by hand
+    const fit = () => { if (autoFit) d3.select(canvas).call(zoom.transform, fitView()); };
     // The wheel over the network only zooms: at a zoom limit d3 lets the wheel
     // through, and the page would scroll instead.
     wheelZoom(canvas, el);
     d3.select(canvas).call(zoom).on('dblclick.zoom', null);
-    const resetView = () => { d3.select(canvas).call(zoom.transform, d3.zoomIdentity); };
+    const resetView = () => { autoFit = true; fit(); };
     // The page's search: the faces it finds stand out, the rest fade; Enter
     // picks the most drawn of them, as a click on its face would.
     onSearch.set('network', (kind) => {
@@ -1413,11 +1456,6 @@ dash.draw('network', {
     // The middle button pans. The pointer is captured, so the release is seen
     // even outside the window; a move with the button no longer down, a lost
     // capture or the window losing focus ends the pan too, so it never sticks.
-    const keepInside = (t) => {
-      const x = Math.min(W * t.k, Math.max(W - W * 2 * t.k, t.x));
-      const y = Math.min(H * t.k, Math.max(H - H * 2 * t.k, t.y));
-      return d3.zoomIdentity.translate(x, y).scale(t.k);
-    };
     let pan = null;
     const endPan = () => {
       if (!pan) return;
@@ -1436,7 +1474,8 @@ dash.draw('network', {
     canvas.addEventListener('pointermove', (event) => {
       if (!pan) return;
       if (!(event.buttons & 4)) { endPan(); return; }
-      view2d = keepInside(d3.zoomIdentity.translate(pan.from.x + event.clientX - pan.x, pan.from.y + event.clientY - pan.y).scale(pan.from.k));
+      autoFit = false;
+      view2d = inSight(d3.zoomIdentity.translate(pan.from.x + event.clientX - pan.x, pan.from.y + event.clientY - pan.y).scale(pan.from.k));
       canvas.__zoom = view2d; // the wheel zoom goes on from here
       paint();
     });
@@ -1450,12 +1489,24 @@ dash.draw('network', {
     const fingerOf = (source, id) => (source && source.changedTouches
       ? [...source.changedTouches].find((t) => id == null || t.identifier === id) || source.changedTouches[0]
       : source);
-    // A finger that lands on a face drags it; anywhere else it scrolls the page.
+    // In full screen a finger that lands on a face drags it; on the page one
+    // finger always scrolls (a tap picks a face) and two move and zoom. A
+    // second finger during a drag turns it into a two-finger move: the face
+    // is let go where it is.
+    let pinching = false;
     canvas.addEventListener('touchstart', (event) => {
-      if (event.touches.length === 1 && left === 0 && faceAt(event.touches[0])) event.preventDefault();
+      if (event.touches.length > 1) {
+        pinching = true;
+        autoFit = false;
+        if (held) { held.fx = null; held.fy = null; held = null; tip.hidden = true; canvas.style.cursor = ''; sim.alphaTarget(0); }
+        return;
+      }
+      if (full && left === 0 && faceAt(event.touches[0])) event.preventDefault();
     }, { passive: false });
+    canvas.addEventListener('touchend', (event) => { if (!event.touches.length) pinching = false; });
+    canvas.addEventListener('touchcancel', (event) => { if (!event.touches.length) pinching = false; });
     d3.select(canvas).call(d3.drag()
-      .filter((event) => left === 0 && (event.touches ? event.touches.length === 1 : event.button === 0))
+      .filter((event) => left === 0 && (event.touches ? full && event.touches.length === 1 : event.button === 0))
       .subject((event) => faceAt(fingerOf(event.sourceEvent) || event))
       .on('start', (event) => {
         const n = event.subject;
@@ -1472,6 +1523,7 @@ dash.draw('network', {
         paint();
       })
       .on('drag', (event) => {
+        if (pinching || held !== event.subject) return;
         const [x, y] = pointer(fingerOf(event.sourceEvent, event.identifier));
         event.subject.fx = x; event.subject.fy = y;
         // the held face follows the pointer even between ticks
@@ -1480,6 +1532,7 @@ dash.draw('network', {
         paint();
       })
       .on('end', (event) => {
+        if (held !== event.subject) return; // let go already by a second finger
         held = null;
         canvas.style.cursor = '';
         tip.hidden = true;
@@ -1491,6 +1544,7 @@ dash.draw('network', {
     // after d3.drag, which sets touch-action: none (no page scroll over the network)
     touchZoom(canvas, zoom);
 
+    fit();
     light(focusId(chars));
     relight = () => light(focusId(chars));
     nodes.forEach((n, i) => roundFace(who.get(n.id).icon).then((img) => {
@@ -1508,6 +1562,11 @@ dash.draw('network', {
       PIXI.autoDetectRenderer({ canvas, width: W, height: H, resolution: sharp, antialias: true, backgroundAlpha: 0, preference: 'webgl' })
         .then((renderer) => {
           if (made.sim !== sim) { renderer.destroy(); return; } // a newer drawing took its place
+          // Pixi's own pointer events are not used: they set touch-action none
+          // on the canvas (no page scroll with a finger) and keep a ticker
+          // running. The page's touch handling (touchZoom) is put back.
+          if (renderer.events) renderer.events.setTargetElement(null);
+          canvas.style.touchAction = 'pan-x pan-y';
           px = pixiNetwork(renderer, nodes);
           made.px = px;
           nodes.forEach((n, i) => { if (n.img) px.setFace(i, n.img); });
@@ -1650,6 +1709,17 @@ window.addEventListener('wheel', (event) => {
   event.preventDefault();
   window.scrollBy(0, event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? innerHeight : 1));
 }, { passive: false });
+// On a touch screen the page's own scrolling decides: while the page scrolls
+// (and LIST_WAIT ms after) the lists cannot scroll, so a swipe that starts on
+// one moves the page; once the page has stopped, a swipe on a list moves it.
+if (window.matchMedia && matchMedia('(pointer: coarse)').matches) {
+  let pageScroll = 0;
+  window.addEventListener('scroll', () => {
+    document.documentElement.classList.add('zl-pagescroll');
+    clearTimeout(pageScroll);
+    pageScroll = setTimeout(() => document.documentElement.classList.remove('zl-pagescroll'), LIST_WAIT);
+  }, { passive: true });
+}
 const find = () => { view.query = searchBox.value; dash.draw('bars'); dash.draw('pairs-top'); searched(); };
 searchBox.addEventListener('input', find);
 searchBox.addEventListener('focus', () => searched());
