@@ -1165,11 +1165,7 @@ dash.draw('network', {
       const k = view2d.k;
       ctx.translate(view2d.x, view2d.y);
       ctx.scale(k, k);
-      // Zoomed in, only what is on screen is drawn, and lines and rings keep
-      // their width on screen (widths are divided by k). Scaled with the view,
-      // at 20x a line was 300 px wide and every line and face, most of them
-      // far off screen, was still drawn: the work grew with the square of
-      // the zoom.
+      // Zoomed in, only the faces and lines on screen are drawn.
       const [vx0, vy0] = view2d.invert([0, 0]);
       const [vx1, vy1] = view2d.invert([W, H]);
       const onScreen = (n) => n.x + n.r >= vx0 && n.x - n.r <= vx1 && n.y + n.r >= vy0 && n.y - n.r <= vy1;
@@ -1183,7 +1179,7 @@ dash.draw('network', {
       // for each line width (in half pixels), not one stroke for each line
       ctx.globalAlpha = lit ? 0.05 : 0.35;
       for (const [width, list] of backbone) {
-        ctx.lineWidth = width / k;
+        ctx.lineWidth = width;
         ctx.beginPath();
         for (const e of list) {
           if (crosses(e.source, e.target)) { ctx.moveTo(e.source.x, e.source.y); ctx.lineTo(e.target.x, e.target.y); }
@@ -1197,7 +1193,7 @@ dash.draw('network', {
           if (!crosses(from, m.other)) continue;
           ctx.globalAlpha = TIER_ALPHA[m.tier];
           ctx.strokeStyle = tierInk(m.tier);
-          ctx.lineWidth = lineWidth(m.v) / k;
+          ctx.lineWidth = lineWidth(m.v);
           ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(m.other.x, m.other.y); ctx.stroke();
         }
       }
@@ -1211,7 +1207,7 @@ dash.draw('network', {
         if (n.img) ctx.drawImage(n.img, n.x - n.r, n.y - n.r, n.r * 2, n.r * 2);
         else { ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.fill(); }
         ctx.globalAlpha = picked ? 1 : s != null ? RING_MIN + (1 - RING_MIN) * Math.sqrt(s) : 0.3;
-        ctx.lineWidth = (picked ? 3.5 : s != null ? 2 + 2 * s : 1.5) / k;
+        ctx.lineWidth = picked ? 3.5 : s != null ? 2 + 2 * s : 1.5;
         ctx.strokeStyle = lit && lit.tier.has(n.id) ? tierInk(lit.tier.get(n.id)) : ink;
         ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.stroke();
       }
