@@ -40,6 +40,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 </style>
 <script>window.DASH_DATASETS = {"board_genshin": "data/genshin/board.json", "pairs_genshin": "data/genshin/pairs.json", "board_hsr": "data/hsr/board.json", "pairs_hsr": "data/hsr/pairs.json", "board_zzz": "data/zzz/board.json", "pairs_zzz": "data/zzz/pairs.json"};</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pixi.js@8.22.0/dist/pixi.min.js"></script>
 <script src="dash-lite.js"></script>
 </head>
 <body>
@@ -70,11 +71,26 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-chip[data-site="rule34"]:has(input:checked) { background: #aae5a4; border-color: #336633; color: #003300; }
 .zl-chip[data-site="pixiv"]:has(input:checked) { background: #0096fa; border-color: #0096fa; color: #ffffff; }
 .zl-chip:has(input:focus-visible) { outline: 2px solid var(--color-fg); outline-offset: 2px; }
-.zl-seg button[data-measure="r18"][aria-pressed="true"] { background: #ff4060; color: #ffffff; }
+.zl-seg button[data-measure="r18"][aria-pressed="true"], .zl-seg button[data-sort="share"][aria-pressed="true"] { background: linear-gradient(90deg, #a8204f, #e0457b); color: #ffffff; }
 .zl-seg button[data-measure="safe"][aria-pressed="true"] { background: #1d9e75; color: #ffffff; }
 .zl-sec { display: grid; gap: var(--cds-gap-md); }
+.zl-sechead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--cds-gap-sm); }
+.zl-sechead h2 { margin: 0; }
 .zl-topbar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--cds-gap-sm); padding-block: var(--cds-pad-sm); background: var(--color-bg); border-bottom: 1px solid var(--color-border-line); }
 .zl-topbar-left { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cds-gap-md); }
+/* right: Content, and in full screen the chart's buttons after it */
+.zl-topbar-right { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cds-gap-md); margin-left: auto; }
+.zl-bar-tools:empty { display: none; }
+/* a fixed width: a percentage one made the bar wrap the search above Content */
+.zl-topbar-right { justify-content: flex-end; }
+.zl-topbar-right .zl-search { width: 14rem; max-width: 100%; }
+/* full screen on a wide screen: search, Content and the chart's buttons in
+   one row; the search gives up room first */
+@media (min-width: 900px) {
+  .zl-noscroll .zl-topbar-right { flex-wrap: nowrap; }
+  .zl-noscroll .zl-topbar-right > * { flex-shrink: 0; }
+  .zl-noscroll .zl-topbar-right > .zl-search { flex-shrink: 1; min-width: 7rem; }
+}
 .zl-game { position: relative; }
 .zl-game > summary { list-style: none; display: inline-flex; align-items: center; gap: var(--cds-gap-sm); height: 48px; padding: 4px var(--cds-pad-md); border-radius: var(--cds-radius); background: #141413; color: #faf9f5; cursor: pointer; user-select: none; }
 .zl-game img { display: block; height: 40px; width: auto; }
@@ -97,7 +113,9 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-seg button { font: inherit; font-size: var(--cds-font-size-caption); padding: var(--cds-pad-xs) var(--cds-pad-sm); border: 0; background: transparent; color: var(--color-fg-muted); cursor: pointer; }
 .zl-seg button + button { border-left: 1px solid var(--color-border-line); }
 .zl-seg button[aria-pressed="true"] { background: var(--color-fg); color: var(--color-bg); }
-.zl-seg button:focus-visible, .zl-search:focus-visible, .zl-focus:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+.zl-search:focus-visible, .zl-focus:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+/* inside the button: the group clips what is outside, which left a strip */
+.zl-seg button:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
 .zl-search, .zl-focus { font: inherit; padding: var(--cds-pad-xs) var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-bg); color: var(--color-fg); }
 .zl-search { width: min(100%, 14rem); }
 .zl-key { display: flex; flex-wrap: wrap; gap: var(--cds-gap-md); margin: 0; padding: 0; list-style: none; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
@@ -108,7 +126,8 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-sw-main, .zl-sw-mid { display: inline-block; vertical-align: -1px; height: 4px; width: 16px; border-radius: 2px; }
 .zl-sw-main { background: #e8578f; }
 .zl-sw-mid { background: var(--zl-c0); }
-.zl { --zl-all: color-mix(in srgb, var(--zl-c0, currentColor) 32%, transparent); --zl-r18: var(--zl-c0, currentColor); }
+/* R-18 is rose; hearts fly over it (see the heart layer in the script) */
+.zl { --zl-all: color-mix(in srgb, var(--color-fg) 16%, transparent); --zl-r18: linear-gradient(90deg, #a8204f, #e0457b); }
 
 /* A bar: the light part is all posts, the dark part R-18 with its share inside. */
 .zl-bar { position: relative; height: 22px; border-radius: 5px; background: var(--zl-all); min-width: 4px; }
@@ -116,6 +135,23 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-barline { display: grid; grid-template-columns: minmax(0, 1fr) 4.75rem; align-items: center; gap: var(--cds-gap-sm); min-width: 0; }
 .zl-track { min-width: 0; }
 .zl-bar-dark { background: var(--zl-r18); }
+/* Hearts rising over the R-18 parts on screen (class zl-fly, set by the
+   script). Two layers of a hearts pattern, drawn once and only moved: the
+   script sets each layer's place (--zl-m1, --zl-m2) 30 times a second. A
+   CSS animation would change the page on every frame of the screen (240 a
+   second on a 240 Hz one), and each changed frame costs the same, however
+   small the change. Each layer moves by exactly one tile of its pattern and
+   starts again, so the loop has no seam; the second sways and moves slower,
+   so the two do not move as one. */
+.zl-bar-r18, .zl-bar-dark, .zl-seg button[data-measure="r18"], .zl-seg button[data-sort="share"] { isolation: isolate; }
+.zl-seg button[data-measure="r18"], .zl-seg button[data-sort="share"], .zl-bar-dark { position: relative; overflow: hidden; }
+.zl-seg button[aria-pressed="false"].zl-fly::before, .zl-seg button[aria-pressed="false"].zl-fly::after { display: none; }
+.zl-fly::before, .zl-fly::after { content: ''; position: absolute; left: -12px; right: -12px; top: 0; z-index: -1; pointer-events: none; will-change: transform; }
+.zl-fly::before { height: calc(100% + 48px); background: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22640%22 height=%2248%22%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.84%22 transform=%22translate%28418.1 13.4%29 scale%280.50%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.65%22 transform=%22translate%28115.3 11.3%29 scale%280.61%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.82%22 transform=%22translate%2874.2 19.4%29 scale%280.67%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.74%22 transform=%22translate%28147.5 8.8%29 scale%280.69%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.65%22 transform=%22translate%28428.2 34.9%29 scale%280.50%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.79%22 transform=%22translate%284.2 38.6%29 scale%280.52%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.81%22 transform=%22translate%28218.3 22.5%29 scale%280.55%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.74%22 transform=%22translate%28191.1 4.4%29 scale%280.60%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.65%22 transform=%22translate%28312.9 30.8%29 scale%280.58%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.74%22 transform=%22translate%28508.4 5.0%29 scale%280.61%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.62%22 transform=%22translate%28497.7 31.2%29 scale%280.66%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.74%22 transform=%22translate%2896.2 3.2%29 scale%280.49%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.85%22 transform=%22translate%28575.3 25.2%29 scale%280.50%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.64%22 transform=%22translate%28171.0 15.5%29 scale%280.55%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.71%22 transform=%22translate%28534.2 11.9%29 scale%280.53%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.64%22 transform=%22translate%28544.1 34.2%29 scale%280.62%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.60%22 transform=%22translate%28467.0 26.2%29 scale%280.49%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.79%22 transform=%22translate%28521.8 21.2%29 scale%280.59%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.82%22 transform=%22translate%28265.7 15.2%29 scale%280.64%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.83%22 transform=%22translate%28396.7 19.5%29 scale%280.54%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.64%22 transform=%22translate%28586.6 10.2%29 scale%280.58%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.63%22 transform=%22translate%28627.8 8.9%29 scale%280.59%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.83%22 transform=%22translate%28225.8 3.5%29 scale%280.54%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.79%22 transform=%22translate%28249.8 15.5%29 scale%280.63%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.62%22 transform=%22translate%2828.8 9.6%29 scale%280.65%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.62%22 transform=%22translate%28236.3 27.5%29 scale%280.52%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.65%22 transform=%22translate%28351.1 17.6%29 scale%280.64%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.64%22 transform=%22translate%28295.7 31.5%29 scale%280.47%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.73%22 transform=%22translate%2858.8 13.4%29 scale%280.69%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.76%22 transform=%22translate%28287.0 0.8%29 scale%280.62%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.78%22 transform=%22translate%2852.6 26.4%29 scale%280.50%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.66%22 transform=%22translate%28407.8 0.7%29 scale%280.48%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.63%22 transform=%22translate%28469.3 6.3%29 scale%280.62%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.75%22 transform=%22translate%28383.5 32.2%29 scale%280.47%29%22/%3E%3C/svg%3E"); background-position: var(--zl-x1, 0) var(--zl-y1, 0); transform: var(--zl-m1); }
+/* the long lists stay calm: one layer, fainter; the top 3 and the switch keep both */
+.zl-list .zl-fly::after { display: none; }
+.zl-list .zl-fly::before { opacity: 0.6; }
+.zl-fly::after { height: calc(100% + 64px); background: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22640%22 height=%2264%22%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.49%22 transform=%22translate%28399.3 23.3%29 scale%280.40%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.59%22 transform=%22translate%28578.6 36.7%29 scale%280.38%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.54%22 transform=%22translate%28617.3 4.6%29 scale%280.43%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.64%22 transform=%22translate%2853.0 38.9%29 scale%280.42%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.49%22 transform=%22translate%28372.0 55.2%29 scale%280.37%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.63%22 transform=%22translate%28516.7 44.7%29 scale%280.37%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.60%22 transform=%22translate%2887.0 24.7%29 scale%280.38%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.54%22 transform=%22translate%28328.8 2.9%29 scale%280.42%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.62%22 transform=%22translate%2835.5 16.3%29 scale%280.37%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.63%22 transform=%22translate%28511.5 17.7%29 scale%280.35%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.57%22 transform=%22translate%28610.1 38.1%29 scale%280.37%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.50%22 transform=%22translate%28282.1 40.9%29 scale%280.39%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.47%22 transform=%22translate%28188.7 7.3%29 scale%280.43%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.62%22 transform=%22translate%28530.1 50.8%29 scale%280.40%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.59%22 transform=%22translate%28299.4 38.3%29 scale%280.45%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.58%22 transform=%22translate%2834.0 39.4%29 scale%280.42%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.62%22 transform=%22translate%2869.2 18.8%29 scale%280.42%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.59%22 transform=%22translate%28236.6 18.6%29 scale%280.43%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.53%22 transform=%22translate%28417.3 34.9%29 scale%280.44%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.46%22 transform=%22translate%28283.6 18.4%29 scale%280.38%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.54%22 transform=%22translate%28228.9 36.9%29 scale%280.45%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.56%22 transform=%22translate%28620.8 27.7%29 scale%280.45%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.53%22 transform=%22translate%28472.5 28.5%29 scale%280.44%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.52%22 transform=%22translate%28102.6 42.9%29 scale%280.36%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.65%22 transform=%22translate%28131.8 0.1%29 scale%280.41%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.48%22 transform=%22translate%28244.4 55.2%29 scale%280.43%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.53%22 transform=%22translate%2816.3 18.2%29 scale%280.36%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.48%22 transform=%22translate%28483.1 56.5%29 scale%280.42%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.55%22 transform=%22translate%28213.7 52.0%29 scale%280.40%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.61%22 transform=%22translate%289.9 36.3%29 scale%280.38%29%22/%3E%3C/svg%3E"); background-position: var(--zl-x2, 0) var(--zl-y2, 0); transform: var(--zl-m2); }
 .zl-count { font-variant-numeric: tabular-nums; font-weight: var(--cds-font-weight-medium); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .zl-podium { display: grid; gap: var(--cds-gap-md); grid-template-columns: repeat(3, minmax(0, 1fr)); min-height: 230px; }
@@ -143,17 +179,22 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-noscroll, .zl-noscroll body { overflow: hidden; }
 .zl-noscroll .zl-topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1001; padding-inline: var(--cds-pad-md); }
 .zl-full { position: fixed !important; top: var(--zl-bar-h, 0px); left: 0; right: 0; bottom: 0; z-index: 1000; margin: 0; max-width: none; box-sizing: border-box; background: var(--color-bg); }
-.zl-chart.zl-full { min-height: 0; height: calc(100dvh - var(--zl-bar-h, 0px)); }
-.zl-netwrap.zl-full { padding: var(--cds-pad-md); align-items: stretch; }
-.zl-netwrap.zl-full .zl-net { min-height: 0; height: calc(100dvh - var(--zl-bar-h, 0px) - 2 * var(--cds-pad-md)); }
-.zl-netwrap.zl-full .zl-panel { max-height: calc(100dvh - var(--zl-bar-h, 0px) - 2 * var(--cds-pad-md)); overflow: auto; }
+/* a chart's card in full screen: its buttons where they always are (top
+   right), no title or notes, the chart (and the network's panel) filling the rest */
+.zl-card.zl-full { display: flex; flex-direction: column; gap: var(--cds-gap-sm); padding: var(--cds-pad-sm) var(--cds-pad-md) var(--cds-pad-md); border: 0; border-radius: 0; }
+.zl-full .zl-cardhead h3, .zl-full .zl-hint-short, .zl-full > .zl-key { display: none; }
+.zl-full .zl-cardhead { display: none; }
+.zl-full .zl-chart { flex: 1; min-height: 0; }
+.zl-full .zl-netwrap { flex: 1; min-height: 0; }
+.zl-full .zl-net { height: 100%; min-height: 0; }
 .zl-chart svg { display: block; overflow: visible; }
 .zl-chart text { fill: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
 .zl-net { min-height: 520px; overflow: hidden; border-radius: var(--cds-radius); }
 .zl-pt circle { fill: none; stroke: var(--color-border-line); stroke-width: 1.5; }
 .zl-pt:hover circle { stroke: var(--color-fg); stroke-width: 2; }
-.zl-netwrap { display: grid; gap: var(--cds-gap-md); grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem); align-items: start; }
-.zl-panel { display: grid; gap: var(--cds-gap-sm); align-content: start; min-height: 420px; padding: var(--cds-pad-md); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-bg); }
+/* the network takes the whole width; the selected character's panel floats over its right side */
+.zl-netwrap { position: relative; }
+.zl-panel { position: absolute; top: var(--cds-pad-sm); right: var(--cds-pad-sm); z-index: 3; width: min(22rem, 45%); max-height: calc(100% - 2 * var(--cds-pad-sm)); overflow: auto; box-sizing: border-box; display: grid; gap: var(--cds-gap-sm); align-content: start; padding: var(--cds-pad-md); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-bg); box-shadow: var(--cds-shadow-popover); }
 .zl-panel-head { display: flex; align-items: center; gap: var(--cds-gap-sm); }
 .zl-panel-head img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; }
 .zl-close { margin-left: auto; align-self: flex-start; width: 28px; height: 28px; padding: 0; border: 1px solid var(--color-border-line); border-radius: 50%; background: var(--color-panel); color: var(--color-fg-muted); font: inherit; font-size: 18px; line-height: 1; cursor: pointer; }
@@ -168,7 +209,12 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-mate-body .zl-name { font-size: var(--cds-font-size-caption); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .zl-mate .zl-bar { height: 18px; }
 .zl-hint { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 4; pointer-events: none; padding: var(--cds-pad-sm) var(--cds-pad-md); border-radius: var(--cds-radius); background: var(--cds-surface-popover); border: 1px solid var(--cds-border); box-shadow: var(--cds-shadow-popover); font-size: var(--cds-font-size-body); }
-.zl-tools { position: absolute; top: var(--cds-pad-xs); right: var(--cds-pad-xs); z-index: 2; display: flex; align-items: center; gap: var(--cds-gap-xs); }
+/* a chart card's header: title, a short hint, the chart's controls on the right */
+.zl-cardhead { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cds-gap-xs) var(--cds-gap-md); }
+.zl-hint-short { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.zl-touch { display: none; }
+@media (hover: none) { .zl-mouse { display: none; } .zl-touch { display: inline; } }
+.zl-ctools { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: var(--cds-gap-xs); }
 .zl-size-box { display: inline-flex; align-items: center; gap: var(--cds-gap-xs); padding: 2px var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-panel); color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
 .zl-size { width: 6rem; margin: 0; accent-color: var(--color-fg); }
 .zl-reset { font: inherit; font-size: var(--cds-font-size-caption); padding: 2px var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-panel); color: var(--color-fg-muted); cursor: pointer; }
@@ -179,8 +225,8 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-tip span { display: block; color: var(--cds-text-secondary); }
 [data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
 @media (max-width: 900px) {
-  .zl-netwrap { grid-template-columns: 1fr; }
-  .zl-netwrap.zl-full .zl-panel { display: none; }
+  .zl-panel { position: static; width: auto; max-height: none; margin-top: var(--cds-gap-md); box-shadow: none; }
+  .zl-full .zl-panel { display: none; }
 }
 @media (max-width: 640px) {
   .zl-row { grid-template-columns: 1.4rem 28px minmax(4.5rem, 7rem) 1fr; }
@@ -196,7 +242,6 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 <div class="zl">
 <header class="zl-head">
   <h1><span data-game-title="zzz">Zenless Zone Zero agents</span><span data-game-title="genshin" hidden>Genshin Impact characters</span><span data-game-title="hsr" hidden>Honkai: Star Rail characters</span></h1>
-  <p class="zl-muted">How much fan art each character has, how much of it is R-18, and who gets drawn together.</p>
 </header>
 
 <div class="zl-topbar">
@@ -218,6 +263,8 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
     </div>
   </fieldset>
   </div>
+  <div class="zl-topbar-right">
+  <input class="zl-search" type="search" id="find" placeholder="Find a character" aria-label="Find a character in every list and chart">
   <div class="zl-group"><span class="zl-group-name" aria-hidden="true">Content</span>
   <div class="zl-seg" role="group" aria-label="Content">
     <button type="button" data-measure="all" aria-pressed="true">All art</button>
@@ -225,22 +272,23 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
     <button type="button" data-measure="safe" aria-pressed="false">Without R-18</button>
   </div>
   </div>
+  <div class="zl-bar-tools"></div>
+  </div>
 </div>
 <p class="zl-warn" data-draw="missing" data-source="board_zzz board_genshin board_hsr">—</p>
-<p class="zl-note">Totals add the chosen sites together, so a picture posted on two of them counts twice. Inside one site a picture counts once, even when it has several of a character's tags. R-18 is Danbooru rating:explicit, Rule34 rating:explicit, pixiv&#x27;s R-18 search (with R-18G).</p>
 
 <section class="zl-sec" id="leaderboard">
-  <h2>Leaderboard</h2>
-  <p class="zl-lead">Most art: <b data-draw="lead-top" data-source="leaders_zzz leaders_genshin leaders_hsr" data-field="top_name">—</b>. Highest R-18 share among characters with at least <span data-draw="min-posts">—</span> posts: <b data-draw="lead-lewd" data-source="leaders_zzz leaders_genshin leaders_hsr" data-field="lewd_name">—</b>, <b data-draw="lead-lewd-share" data-source="leaders_zzz leaders_genshin leaders_hsr" data-field="lewd_share">—</b>.</p>
+  <div class="zl-sechead">
+    <h2>Leaderboard</h2>
+    <div class="zl-seg" role="group" aria-label="Sort by">
+      <button type="button" data-sort="total" aria-pressed="true">Most posts</button>
+      <button type="button" data-sort="share" aria-pressed="false">Highest R-18 share</button>
+    </div>
+  </div>
   <div class="zl-podium" data-draw="podium" data-source="totals_zzz board_zzz totals_genshin board_genshin totals_hsr board_hsr"></div>
   <div class="zl-card">
     <div class="zl-tools">
       <h3>Every character</h3>
-      <div class="zl-seg" role="group" aria-label="Sort by">
-        <button type="button" data-sort="total" aria-pressed="true">Most posts</button>
-        <button type="button" data-sort="share" aria-pressed="false">Highest R-18 share</button>
-      </div>
-      <input class="zl-search" type="search" id="find-character" placeholder="Find a character" aria-label="Find a character">
     </div>
     <ul class="zl-key" data-legend="all"><li><span class="zl-sw zl-sw-all"></span>All posts (count at the end)</li><li><span class="zl-sw zl-sw-r18"></span>R-18 part (share inside)</li></ul>
     <ul class="zl-key" data-legend="r18" hidden><li><span class="zl-sw zl-sw-r18"></span>R-18 posts (count at the end)</li></ul>
@@ -248,31 +296,32 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
     <ol class="zl-list" data-draw="bars" data-source="totals_zzz board_zzz totals_genshin board_genshin totals_hsr board_hsr"></ol>
   </div>
   <div class="zl-card">
-    <h3>Posts against R-18 share</h3>
-    <p class="zl-note">Each face is one character. Further right means more posts (log scale); higher means a larger R-18 share. Ctrl + scroll to zoom; hold the middle mouse button to move; double-click the background to reset. On a touch screen: two fingers move and zoom.</p>
+    <div class="zl-cardhead">
+      <h3>Posts against R-18 share</h3>
+      <span class="zl-hint-short"><span class="zl-mouse">Hold Ctrl and scroll to zoom</span><span class="zl-touch">Two fingers to zoom</span></span>
+      <div class="zl-ctools"></div>
+    </div>
     <div class="zl-chart" data-draw="scatter" data-source="totals_zzz board_zzz totals_genshin board_genshin totals_hsr board_hsr"></div>
   </div>
 </section>
 
 <section class="zl-sec" id="crossovers">
   <h2>Crossovers</h2>
-  <p class="zl-lead">Most drawn pair: <b data-draw="pair-top" data-source="pair_totals_zzz board_zzz pair_totals_genshin board_genshin pair_totals_hsr board_hsr">—</b>.</p>
-  <p class="zl-note">A crossover is a post tagged with both characters' main tags. Pairs are counted on <span data-draw="pair-sites" data-source="pairs_zzz board_zzz pairs_genshin board_genshin pairs_hsr board_hsr">—</span>.</p>
   <div class="zl-card">
-    <div class="zl-tools">
+    <div class="zl-cardhead">
       <h3>Who gets drawn with whom</h3>
+      <span class="zl-hint-short"><span class="zl-mouse">Hold Ctrl and scroll to zoom</span><span class="zl-touch">Two fingers to zoom</span></span>
+      <div class="zl-ctools"></div>
     </div>
-    <p class="zl-note">Every character, each joined to its closest partners. Point at a face to light up everyone it is drawn with, click it to keep it on the right, drag it to pull its group around. Ctrl + scroll to zoom; hold the middle mouse button to move the view; double-click the background to reset. On a touch screen: tap a face to keep it, two fingers move and zoom.</p>
     <div class="zl-netwrap">
       <div class="zl-chart zl-net" data-draw="network" data-source="pair_totals_zzz totals_zzz board_zzz pair_totals_genshin totals_genshin board_genshin pair_totals_hsr totals_hsr board_hsr"></div>
       <aside class="zl-panel" data-draw="focus-panel" data-source="pair_totals_zzz totals_zzz board_zzz pair_totals_genshin totals_genshin board_genshin pair_totals_hsr totals_hsr board_hsr"></aside>
     </div>
-    <ul class="zl-key"><li>Face size: how much art the character has</li><li>Line width: how much art the two share</li><li>Lines: pairs that stand out among a character's pairs (disparity filter)</li><li>Around a lit face: every partner gets a ring; <span class="zl-sw zl-sw-main"></span> pink lines go to its main group of partners, <span class="zl-sw zl-sw-mid"></span> blue lines to the middle group (each group: partners with about the same amount of art, at most 2× apart); a line's width compares all pairs</li><li>R-18 of a pair is counted from 20 posts on a site</li></ul>
+    <ul class="zl-key"><li><span class="zl-sw zl-sw-main"></span>Main partners</li><li><span class="zl-sw zl-sw-mid"></span>Next partners</li></ul>
   </div>
   <div class="zl-card">
     <div class="zl-tools">
       <h3>Every pair, most drawn first</h3>
-      <input class="zl-search" type="search" id="find-pair" data-find="pairs" placeholder="Find a character" aria-label="Find a pair by a character's name">
     </div>
     <ul class="zl-key" data-legend="all"><li><span class="zl-sw zl-sw-all"></span>Posts together</li><li><span class="zl-sw zl-sw-r18"></span>R-18 part</li></ul>
     <ul class="zl-key" data-legend="r18" hidden><li><span class="zl-sw zl-sw-r18"></span>R-18 posts together</li></ul>
@@ -284,14 +333,13 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 <script>
 const SITES = ["danbooru", "rule34", "pixiv"];
 const LABELS = {"danbooru": "Danbooru", "rule34": "Rule34", "pixiv": "pixiv"};
-const MIN_POSTS = 500;
 const fmt = d3.format(',');
 const short = (n) => (n >= 10000 ? d3.format('.3~s')(n).replace('k', 'K') : fmt(n));
 const pct = d3.format('.1%');
 const pct0 = d3.format('.0%');
 const GAMES = [{"id": "zzz", "short": "ZZZ", "title": "Zenless Zone Zero agents", "logo": "assets/logos/zzz.webp"}, {"id": "genshin", "short": "Genshin", "title": "Genshin Impact characters", "logo": "assets/logos/genshin.webp"}, {"id": "hsr", "short": "HSR", "title": "Honkai: Star Rail characters", "logo": "assets/logos/hsr.webp"}];
 const savedGame = () => { try { return localStorage.getItem('tagstats-game'); } catch (e) { return null; } };
-const view = { sort: 'total', query: '', pairQuery: '', focus: null, measure: 'all',
+const view = { sort: 'total', query: '', focus: null, measure: 'all',
                game: GAMES.some((g) => g.id === savedGame()) ? savedGame() : GAMES[0].id };
 
 // What the page counts: all art, only R-18, or only art without R-18. A pair's
@@ -338,25 +386,6 @@ dash.calc('totals_zzz', {
       out.push(...rows);
     }
     return out;
-  },
-});
-
-dash.calc('leaders_zzz', {
-  inputs: ['totals_zzz', 'board_zzz'],
-  title: 'ZZZ: Leaders for each choice of sites',
-  description: 'The character with the most art (all, R-18 only, or without R-18), and the highest R-18 share among characters with at least 500 posts.',
-  fn: (totals, board) => {
-    const names = new Map(board.map((r) => [r.id, r.name]));
-    const value = { all: (r) => r.total, r18: (r) => r.r18, safe: (r) => r.total - r.r18 };
-    return d3.groups(totals, (r) => r.sites).flatMap(([key, rows]) => {
-      const has = rows.filter((r) => r.total != null);
-      const lewd = d3.greatest(has.filter((r) => r.total >= 500), (r) => r.share);
-      return Object.entries(value).map(([mode, v]) => {
-        const top = d3.greatest(has, v);
-        return { sites: key, mode, top_name: top ? names.get(top.id) : null, top_total: top ? v(top) : null,
-                 lewd_name: lewd ? names.get(lewd.id) : null, lewd_share: lewd ? lewd.share : null };
-      });
-    });
   },
 });
 
@@ -417,25 +446,6 @@ dash.calc('totals_genshin', {
   },
 });
 
-dash.calc('leaders_genshin', {
-  inputs: ['totals_genshin', 'board_genshin'],
-  title: 'Genshin: Leaders for each choice of sites',
-  description: 'The character with the most art (all, R-18 only, or without R-18), and the highest R-18 share among characters with at least 500 posts.',
-  fn: (totals, board) => {
-    const names = new Map(board.map((r) => [r.id, r.name]));
-    const value = { all: (r) => r.total, r18: (r) => r.r18, safe: (r) => r.total - r.r18 };
-    return d3.groups(totals, (r) => r.sites).flatMap(([key, rows]) => {
-      const has = rows.filter((r) => r.total != null);
-      const lewd = d3.greatest(has.filter((r) => r.total >= 500), (r) => r.share);
-      return Object.entries(value).map(([mode, v]) => {
-        const top = d3.greatest(has, v);
-        return { sites: key, mode, top_name: top ? names.get(top.id) : null, top_total: top ? v(top) : null,
-                 lewd_name: lewd ? names.get(lewd.id) : null, lewd_share: lewd ? lewd.share : null };
-      });
-    });
-  },
-});
-
 dash.calc('pair_totals_genshin', {
   inputs: ['pairs_genshin', 'totals_genshin'],
   title: 'Genshin: Crossovers for each choice of sites',
@@ -493,25 +503,6 @@ dash.calc('totals_hsr', {
   },
 });
 
-dash.calc('leaders_hsr', {
-  inputs: ['totals_hsr', 'board_hsr'],
-  title: 'HSR: Leaders for each choice of sites',
-  description: 'The character with the most art (all, R-18 only, or without R-18), and the highest R-18 share among characters with at least 500 posts.',
-  fn: (totals, board) => {
-    const names = new Map(board.map((r) => [r.id, r.name]));
-    const value = { all: (r) => r.total, r18: (r) => r.r18, safe: (r) => r.total - r.r18 };
-    return d3.groups(totals, (r) => r.sites).flatMap(([key, rows]) => {
-      const has = rows.filter((r) => r.total != null);
-      const lewd = d3.greatest(has.filter((r) => r.total >= 500), (r) => r.share);
-      return Object.entries(value).map(([mode, v]) => {
-        const top = d3.greatest(has, v);
-        return { sites: key, mode, top_name: top ? names.get(top.id) : null, top_total: top ? v(top) : null,
-                 lewd_name: lewd ? names.get(lewd.id) : null, lewd_share: lewd ? lewd.share : null };
-      });
-    });
-  },
-});
-
 dash.calc('pair_totals_hsr', {
   inputs: ['pairs_hsr', 'totals_hsr'],
   title: 'HSR: Crossovers for each choice of sites',
@@ -548,13 +539,23 @@ dash.calc('pair_totals_hsr', {
 const D = (id) => dash.data(`${id}_${view.game}`);
 const ready = (...ids) => ids.every((id) => D(id).status === 'ok');
 const people = () => new Map(D('board').data.map((r) => [r.id, r]));
+
+// One search for the whole page, in the top bar. A character matches when
+// each typed word starts one of its words: the name and the tags it is
+// counted under (report.py), so any language works; "ell jo" finds Ellen Joe,
+// "len" does not. The lists keep only what matches; the charts light the
+// matches while the search has the focus (a click on a chart takes it, and
+// the chart shows its own selection again). Charts listen in onSearch.
+const searchBox = document.getElementById('find');
+const queryWords = () => view.query.toLowerCase().split(/[\s_]+/).filter(Boolean);
+const wordsOf = (r) => r.words || r.name.toLowerCase().split(/[\W_]+/);
+const startsWord = (r, part) => wordsOf(r).some((w) => w.startsWith(part));
+const finds = (r, q = queryWords()) => q.every((part) => startsWord(r, part));
+const searchLit = () => document.activeElement === searchBox && queryWords().length > 0;
+const onSearch = new Map();
+const searched = (kind) => onSearch.forEach((f) => f(kind));
 const totalsFor = (key) => D('totals').data.filter((r) => r.sites === key && r.total != null);
 const pairsFor = (key) => D('pair_totals').data.filter((r) => r.sites === key && r.total > 0);
-const leader = () => {
-  const l = D('leaders');
-  return l.status === 'ok' ? l.data.find((r) => r.sites === keyOf(chosen()) && r.mode === view.measure) : null;
-};
-const leaderWhere = () => `sites=${encodeURIComponent(keyOf(chosen()))}&mode=${view.measure}`;
 const text = (el, value) => { el.textContent = value == null ? '—' : value; };
 const icon = (src, size) => { const img = document.createElement('img'); img.src = src || ''; img.alt = ''; if (size) { img.width = size; img.height = size; } return img; };
 const node = (tag, cls, content) => { const e = document.createElement(tag); if (cls) e.className = cls; if (content != null) e.textContent = content; return e; };
@@ -626,8 +627,8 @@ const addTip = (el) => { const tip = node('div', 'zl-tip'); tip.hidden = true; e
 // Meanwhile the page carries zl-busy: a spinner, and the old parts dimmed.
 // The first part waits a moment, so the pressed button and the spinner show
 // before any drawing starts.
-const PARTS = ['missing', 'lead-top', 'lead-lewd', 'lead-lewd-share', 'podium', 'bars', 'scatter',
-  'pair-top', 'pair-sites', 'network', 'focus-panel', 'pairs-top'];
+const PARTS = ['missing', 'podium', 'bars', 'scatter',
+  'network', 'focus-panel', 'pairs-top'];
 let redrawTimer = null;
 const redrawAll = () => {
   document.querySelectorAll('.zl').forEach((root) => root.classList.add('zl-busy'));
@@ -645,11 +646,6 @@ dash.onData(() => {
   document.querySelector('.zl').style.setProperty('--zl-c0', dash.colors[0]);
 });
 
-dash.draw('lead-top', (el) => { const l = leader(); el.dataset.where = leaderWhere(); text(el, l && l.top_name); });
-dash.draw('lead-lewd', (el) => { const l = leader(); el.dataset.where = leaderWhere(); text(el, l && l.lewd_name); });
-dash.draw('lead-lewd-share', (el) => { const l = leader(); el.dataset.where = leaderWhere(); text(el, l && l.lewd_share != null ? pct0(l.lewd_share) : null); });
-dash.draw('min-posts', (el) => { el.textContent = fmt(MIN_POSTS); });
-
 // Chosen sites that have no counts yet: say so instead of showing an empty page.
 dash.draw('missing', (el) => {
   const b = D('board');
@@ -659,21 +655,34 @@ dash.draw('missing', (el) => {
   el.textContent = empty.length ? `No counts yet for ${empty.join(', ')}: these figures leave ${empty.length > 1 ? 'them' : 'it'} out.` : '';
 });
 
+// The sort switch above the podium orders the podium and the list alike.
+const sorted = (rows, v) => {
+  const by = view.sort === 'share' ? (r) => r.share ?? -1 : v;
+  return rows.sort((a, b) => by(b) - by(a));
+};
+
+// A bar of a character's R-18 share, the share written inside.
+const shareBar = (share) => {
+  const bar = node('div', 'zl-bar');
+  const part = node('div', 'zl-bar-r18');
+  part.append(node('span', null, pct0(share)));
+  part.style.width = (share * 100).toFixed(1) + '%';
+  bar.append(part);
+  return bar;
+};
+
 dash.draw('podium', (el) => {
   el.replaceChildren();
   if (!ready('totals', 'board')) return;
   const who = people();
   const v = measure();
-  totalsFor(keyOf(chosen())).filter((r) => v(r) > 0).sort((a, b) => v(b) - v(a)).slice(0, 3).forEach((r, i) => {
+  sorted(totalsFor(keyOf(chosen())).filter((r) => v(r) > 0), v).slice(0, 3).forEach((r, i) => {
     const p = who.get(r.id);
     const card = node('div', 'zl-place');
-    const bar = node('div', 'zl-bar');
-    const part = node('div', 'zl-bar-r18');
-    part.append(node('span', null, `${pct0(r.share)} R-18`));
-    part.style.width = (r.share * 100).toFixed(1) + '%';
-    bar.append(part);
     card.append(node('div', 'zl-rank', `#${i + 1}`), icon(p.icon, 84), node('div', 'zl-name', p.name),
-      node('div', 'zl-big', fmt(v(r))), node('div', 'zl-note', WORD[view.measure]), bar);
+      node('div', 'zl-big', fmt(v(r))), node('div', 'zl-note', WORD[view.measure]));
+    // the R-18 share, unless the page leaves R-18 out
+    if (view.measure !== 'safe') card.append(shareBar(r.share));
     el.append(card);
   });
   fitLabels(el);
@@ -682,15 +691,13 @@ dash.draw('podium', (el) => {
 dash.draw('bars', (el) => {
   el.replaceChildren();
   if (!ready('totals', 'board')) return;
-  addTip(el);
   const who = people();
   const v = measure();
   let rows = totalsFor(keyOf(chosen())).filter((r) => v(r) > 0);
   const max = d3.max(rows, v) || 1;
-  const q = view.query.trim().toLowerCase();
-  if (q) rows = rows.filter((r) => who.get(r.id).name.toLowerCase().includes(q));
-  const by = view.sort === 'share' ? (r) => r.share ?? -1 : v;
-  rows.sort((a, b) => by(b) - by(a));
+  const q = queryWords();
+  if (q.length) rows = rows.filter((r) => finds(who.get(r.id), q));
+  sorted(rows, v);
   el.scrollTop = 0;
   lazyRows(el, rows, (r) => {
     const p = who.get(r.id);
@@ -698,7 +705,6 @@ dash.draw('bars', (el) => {
     li.dataset.key = r.id;
     li.append(node('span', 'zl-n', r[RANK[view.measure]]), icon(p.icon, 32), node('span', 'zl-name', p.name),
       view.measure === 'all' ? barLine(r.total, r.r18, max) : barLine(v(r), null, max));
-    withTip(el, li, () => [p.name, `${fmt(r.total)} posts, #${r.rank}`, `${fmt(r.r18)} R-18 (${pct(r.share)})`]);
     return li;
   });
 });
@@ -760,9 +766,17 @@ const touchZoom = (target, zoom, scale = () => 1) => {
   target.addEventListener('touchend', end);
   target.addEventListener('touchcancel', end);
 };
-// A small button in the corner that puts the view back; a double-click on
-// the background does the same.
-const tools = (box) => box.querySelector(':scope > .zl-tools') || box.appendChild(node('div', 'zl-tools'));
+// A chart's controls go in its card's header (.zl-ctools); in full screen the
+// same element moves into the top bar, after Content. Each drawing of the
+// chart empties it first (startTools) and adds its controls again.
+const tools = (box) => {
+  const card = box.closest('.zl-card');
+  if (!card.zlTools) card.zlTools = card.querySelector('.zl-ctools');
+  return card.zlTools;
+};
+const startTools = (box) => tools(box).replaceChildren();
+// A button that puts the view back; a double-click on the background does
+// the same.
 const resetButton = (box, reset) => {
   const button = node('button', 'zl-reset', 'Reset view');
   button.type = 'button';
@@ -783,13 +797,18 @@ const barHeight = () => {
 const setFull = (target, on) => {
   target.classList.toggle('zl-full', on);
   document.documentElement.classList.toggle('zl-noscroll', on);
+  // the card's buttons: into the top bar and back
+  const own = target.zlTools || target.querySelector('.zl-ctools');
+  target.zlTools = own;
+  const bar = document.querySelector('.zl-bar-tools');
+  if (own && bar) (on ? bar : target.querySelector('.zl-cardhead')).append(own);
   barHeight();
   if (target.zlRedraw) target.zlRedraw();
 };
 const fullButton = (box, target, redraw) => {
   target.zlRedraw = redraw;
   const on = target.classList.contains('zl-full');
-  const button = node('button', 'zl-reset', on ? 'Exit full screen' : 'Full screen');
+  const button = node('button', 'zl-reset zl-fullbtn', on ? 'Exit full screen' : 'Full screen');
   button.type = 'button';
   button.addEventListener('click', () => {
     if (on) {
@@ -844,13 +863,15 @@ const middlePan = (target, zoom, scale) => {
 
 dash.draw('scatter', (el) => {
   el.replaceChildren();
+  onSearch.delete('scatter');
+  startTools(el);
   if (!ready('totals', 'board')) return;
   const who = people();
   const v = measure();
   const pts = totalsFor(keyOf(chosen())).filter((r) => v(r) > 0).map((r) => ({ ...r, p: who.get(r.id), amount: v(r) }));
   if (!pts.length) return;
   const W = el.clientWidth || 600;
-  const H = el.classList.contains('zl-full') ? Math.max(320, el.clientHeight) : 380;
+  const H = el.closest('.zl-full') ? Math.max(320, el.clientHeight) : 380;
   const I = W < 520 ? 22 : 30;
   const bottom = H - 34;
   const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
@@ -914,7 +935,7 @@ dash.draw('scatter', (el) => {
   sizeBox.append(slider);
   tools(el).append(sizeBox);
   resetButton(el, reset);
-  fullButton(el, el, () => dash.draw('scatter'));
+  fullButton(el, el.closest('.zl-card'), () => dash.draw('scatter'));
   svg.on('dblclick.reset', (event) => { if (!event.target.closest('.zl-pt')) reset(); });
 
   g.on('pointerenter', function (event, d) {
@@ -925,27 +946,29 @@ dash.draw('scatter', (el) => {
     tip.style.left = Math.max(0, Math.min(el.clientWidth - tip.offsetWidth, x(d.amount) * k - tip.offsetWidth / 2)) + 'px';
     tip.style.top = Math.max(0, (y(d.share) - face / 2) * k - tip.offsetHeight - 6) + 'px';
   }).on('pointerleave', () => { tip.hidden = true; });
+
+  // The page's search: the faces it finds come to the front with a bright
+  // ring, the rest fade.
+  onSearch.set('scatter', () => {
+    const lit = searchLit();
+    const hit = (d) => lit && finds(d.p);
+    g.style('opacity', (d) => (!lit || hit(d) ? null : 0.15));
+    ring.style('stroke', (d) => (hit(d) ? '#ffd34d' : null)).style('stroke-width', (d) => (hit(d) ? 3 : null));
+    if (lit) g.filter(hit).raise();
+  });
+  onSearch.get('scatter')();
+  svg.on('pointerdown.search', () => searchBox.blur());
 });
 
-const pairName = (who, r) => `${who.get(r.a).name} × ${who.get(r.b).name}`;
-dash.draw('pair-top', (el) => {
-  if (!ready('pair_totals', 'board')) return text(el, null);
-  const v = measure();
-  const top = d3.greatest(pairsFor(keyOf(chosen())).filter((r) => v(r) > 0), v);
-  text(el, top ? pairName(people(), top) : null);
-});
-dash.draw('pair-sites', (el) => {
-  const p = D('pairs');
-  if (p.status !== 'ok') return text(el, null);
-  const b = D('board');
-  const n = b.status === 'ok' ? b.data.length : 0;
-  const expected = (n * (n - 1)) / 2;
-  const done = d3.rollup(p.data, (v) => v.length, (r) => r.site);
-  const on = chosen().filter((s) => done.has(s)).map((s) =>
-    done.get(s) < expected ? `${LABELS[s]} (${fmt(done.get(s))} of ${fmt(expected)} pairs so far, the most drawn characters first)` : LABELS[s]);
-  const off = chosen().filter((s) => !done.has(s)).map((s) => LABELS[s]);
-  text(el, (on.join(', ') || 'none of the chosen sites') + (off.length ? `; not yet on ${off.join(', ')}` : ''));
-});
+const pairName = (who, [a, b]) => `${who.get(a).name} × ${who.get(b).name}`;
+// A pair's order: first the character this pair means more to, the one for
+// whom it is the bigger share of all of its crossover art. Ellen × Belle:
+// Belle is Ellen's main partner, but Ellen is not Belle's.
+const pairOrder = (pairs, v) => {
+  const sum = new Map();
+  for (const r of pairs) for (const id of [r.a, r.b]) sum.set(id, (sum.get(id) || 0) + v(r));
+  return (r) => (sum.get(r.b) < sum.get(r.a) ? [r.b, r.a] : [r.a, r.b]);
+};
 
 // The network's characters and pairs for the chosen sites and measure.
 const netData = () => {
@@ -967,15 +990,28 @@ let relight = () => {};
 const partnersOf = (pairs, id) => pairs.filter((l) => l.a === id || l.b === id)
   .map((l) => ({ ...l, other: l.a === id ? l.b : l.a })).sort((a, b) => b.v - a.v);
 
-// Groups of a face's partners (sorted most first) that share about the same
-// amount of art. A group starts at its biggest partner and spans at most
-// TIER_SPAN times down from it; inside that span it ends at the largest drop
-// of at least TIER_JUMP from one partner to the next, else at the span's end.
-// So a partner far above the rest is a group of its own, partners close
-// together stay together however many they are, and a smooth slope is cut
-// by the span. Returns the index after the group that starts at `start`.
+// Groups of a face's partners (sorted most first), as the eye splits the
+// bars. A jump is how many times one partner has more art than the next.
+//
+// The main group ends at the first peak of the jumps: the first jump of at
+// least PEAK_MIN that is bigger than the jump after it. While the jumps keep
+// growing (3186, 2813, 1642, then 761) the group goes on; the drop that
+// stands out against the ones around it ends it.
+const PEAK_MIN = 1.05;
+const mainEnd = (mates) => {
+  for (let i = 0; i < mates.length - 1; i++) {
+    const jump = mates[i].v / mates[i + 1].v;
+    const next = i + 2 < mates.length ? mates[i + 1].v / mates[i + 2].v : 0;
+    if (jump >= PEAK_MIN && jump > next) return i + 1;
+  }
+  return mates.length;
+};
+// The middle group starts after it and ends at the biggest jump among the
+// partners with at least 1 / TIER_SPAN of its first one's art (a smooth slope,
+// every jump there under TIER_SMOOTH, ends where that range ends). Returns
+// the index after the group that starts at `start`.
 const TIER_SPAN = 2;
-const TIER_JUMP = 1.3;
+const TIER_SMOOTH = 1.1;
 const tierEnd = (mates, start) => {
   if (start >= mates.length) return start;
   let end = start + 1;
@@ -983,10 +1019,10 @@ const tierEnd = (mates, start) => {
   let best = 1;
   let cut = end;
   for (let i = start; i < Math.min(end, mates.length - 1); i++) {
-    const drop = mates[i].v / mates[i + 1].v;
-    if (drop >= TIER_JUMP && drop > best) { best = drop; cut = i + 1; }
+    const jump = mates[i].v / mates[i + 1].v;
+    if (jump > best) { best = jump; cut = i + 1; }
   }
-  return cut;
+  return best >= TIER_SMOOTH ? cut : end;
 };
 
 // dash.colors and theme tokens can be CSS expressions (var(), color-mix());
@@ -1029,6 +1065,59 @@ const roundFace = (src) => {
   return roundCache.get(src);
 };
 
+// A colour the page can name (hex, rgb(), color-mix(), ...) as a number 0xRRGGBB.
+const hexOf = (color) => {
+  const c = document.createElement('canvas');
+  c.width = 1; c.height = 1;
+  const x = c.getContext('2d', { willReadFrequently: true });
+  x.fillStyle = color;
+  x.fillRect(0, 0, 1, 1);
+  const [r, g, b] = x.getImageData(0, 0, 1, 1).data;
+  return (r << 16) | (g << 8) | b;
+};
+
+// The network drawn with PixiJS (WebGL; Pixi falls back to a plain canvas
+// where WebGL is missing). Lines, faces and rings are built in the layout's
+// own units inside one container; zooming and panning only move and scale
+// that container, so the picture is not built again and a frame costs the
+// same at any zoom. Built again only when faces move or the lighting changes.
+const pixiNetwork = (renderer, nodes) => {
+  const stage = new PIXI.Container();
+  const world = new PIXI.Container();
+  const back = new PIXI.Graphics();
+  const litLines = new PIXI.Graphics();
+  // a solid disc under each face: a faded face does not show the lines through
+  const plates = new PIXI.Graphics();
+  const faces = new PIXI.Container();
+  const rings = new PIXI.Graphics();
+  world.addChild(back, litLines, plates, faces, rings);
+  stage.addChild(world);
+  const sprites = nodes.map(() => {
+    const s = new PIXI.Sprite();
+    s.anchor.set(0.5);
+    s.visible = false;
+    faces.addChild(s);
+    return s;
+  });
+  return {
+    back, litLines, plates, rings, sprites,
+    // smaller copies of each face (mipmaps) keep it clean when shrunk
+    setFace: (i, img) => {
+      sprites[i].texture = PIXI.Texture.from({ resource: img, autoGenerateMipmaps: true });
+      sprites[i].visible = true;
+    },
+    render: (view) => {
+      world.position.set(view.x, view.y);
+      world.scale.set(view.k);
+      renderer.render(stage);
+    },
+    destroy: () => {
+      stage.destroy({ children: true });
+      renderer.destroy();
+    },
+  };
+};
+
 // Each worked-out layout of the network, by game, sites, content and width:
 // node id -> [x, y].
 const layouts = new Map();
@@ -1040,7 +1129,7 @@ const layouts = new Map();
 // lights up its partners; a click keeps that face selected for the panel.
 dash.draw('network', {
   mount: () => ({ sim: null }),
-  unmount: (el, made) => { if (made.sim) made.sim.stop(); },
+  unmount: (el, made) => { if (made.sim) made.sim.stop(); if (made.px) made.px.destroy(); onSearch.delete('network'); },
   update: (el, made) => {
     // A redraw while a face is held would swap the canvas under the pointer
     // (the face stops after a few pixels): it waits for the drop. Nothing the
@@ -1053,7 +1142,11 @@ dash.draw('network', {
     if (made.sim && made.sig === sig && inputs.every((d, i) => d === made.inputs[i])) return;
     if (made.sim) made.sim.stop();
     made.sim = null;
+    // a browser has a few WebGL contexts at most: the old one goes first
+    if (made.px) { made.px.destroy(); made.px = null; }
+    onSearch.delete('network');
     el.replaceChildren();
+    startTools(el);
     if (!ready('pair_totals', 'board', 'totals')) return;
     const who = people();
     const { val, chars, pairs } = netData();
@@ -1089,26 +1182,17 @@ dash.draw('network', {
     const maxNear = d3.max(shown, (l) => l.near) || 1;
     const backbone = d3.group(edges, (e) => Math.round(Math.max(0.75, (narrow ? 10 : 16) * e.l.v / pairMax) * 2) / 2);
 
-    // Sharp (device pixels, at most 2x) at rest; 1x while the layout moves or
-    // the view zooms.
-    const moving = 1;
+    // PixiJS sizes the canvas at device pixels (at most 2x) and draws on it.
     const sharp = Math.min(window.devicePixelRatio || 1, 2);
-    let dpr = sharp;
     const canvas = document.createElement('canvas');
-    let sized = false;
-    const setScale = (scale) => {
-      if (scale === dpr && sized) return;
-      sized = true;
-      dpr = scale;
-      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
-      paint();
-    };
+    let px = null;
+    let dirty = true; // faces moved or the lighting changed: the picture is built again
+    let found = null; // ids matching the search, or null when nothing is searched
     canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
     canvas.style.display = 'block';
     canvas.setAttribute('role', 'img');
     canvas.setAttribute('aria-label', 'Network of characters drawn together');
     el.append(canvas);
-    const ctx = canvas.getContext('2d');
     const tip = node('div', 'zl-tip'); tip.hidden = true; el.append(tip);
     const ink = resolveColor(dash.colors[0], el);
     let view2d = d3.zoomIdentity;
@@ -1121,13 +1205,59 @@ dash.draw('network', {
     const TIER_ALPHA = [0.95, 0.7];
     const MAIN = '#e8578f';
     const tierInk = (tier) => (tier === 0 ? MAIN : ink);
+    const inkHex = hexOf(ink);
+    const panelHex = hexOf(resolveColor('var(--color-panel)', el));
+    const tierHex = (tier) => (tier === 0 ? hexOf(MAIN) : inkHex);
+    // The Pixi picture: lines, faces and rings at the faces' places now.
+    const buildPixi = () => {
+      const { back, litLines, plates, rings, sprites } = px;
+      back.clear();
+      const backAlpha = found ? 0.04 : lit ? 0.05 : 0.35;
+      for (const [width, list] of backbone) {
+        for (const e of list) back.moveTo(e.source.x, e.source.y).lineTo(e.target.x, e.target.y);
+        back.stroke({ width, color: inkHex, alpha: backAlpha, cap: 'round' });
+      }
+      litLines.clear();
+      if (lit && !found) {
+        const from = byId.get(lit.id);
+        for (const m of lit.lines) {
+          litLines.moveTo(from.x, from.y).lineTo(m.other.x, m.other.y)
+            .stroke({ width: lineWidth(m.v), color: tierHex(m.tier), alpha: TIER_ALPHA[m.tier], cap: 'round' });
+        }
+      }
+      plates.clear();
+      for (const n of nodes) plates.circle(n.x, n.y, n.r);
+      plates.fill({ color: panelHex });
+      rings.clear();
+      nodes.forEach((n, i) => {
+        const s = lit ? lit.strength.get(n.id) : undefined;
+        const picked = lit && n.id === lit.id;
+        const sprite = sprites[i];
+        sprite.position.set(n.x, n.y);
+        sprite.width = n.r * 2;
+        sprite.height = n.r * 2;
+        if (found) {
+          // searching: the matches stand out with a bright ring, the rest fade
+          const hit = found.has(n.id);
+          sprite.alpha = hit ? 1 : 0.15;
+          rings.circle(n.x, n.y, n.r).stroke(hit ? { width: 4, color: 0xffd34d, alpha: 1 } : { width: 1.5, color: inkHex, alpha: 0.15 });
+          return;
+        }
+        sprite.alpha = !lit || picked ? 1 : s != null ? 0.5 + 0.5 * Math.sqrt(s) : 0.4;
+        rings.circle(n.x, n.y, n.r).stroke({
+          width: picked ? 3.5 : s != null ? 2 + 2 * s : 1.5,
+          color: lit && lit.tier.has(n.id) ? tierHex(lit.tier.get(n.id)) : inkHex,
+          alpha: picked ? 1 : s != null ? RING_MIN + (1 - RING_MIN) * Math.sqrt(s) : 0.3,
+        });
+      });
+    };
     let lit = null;
-    let zooming = false;
     const light = (id) => {
+      dirty = true;
       if (id == null) { lit = null; paint(); return; }
       const mates = partnersOf(pairs, id).filter((l) => l.v > 0);
       const top = d3.max(mates, (l) => l.v) || 1;
-      const first = tierEnd(mates, 0);
+      const first = mainEnd(mates);
       const second = tierEnd(mates, first);
       lit = {
         id,
@@ -1150,68 +1280,22 @@ dash.draw('network', {
     const paint = () => { if (!queued) { queued = true; requestAnimationFrame(render); } };
     const live = () => held != null || sim.alpha() >= sim.alphaMin();
     function render(now) {
+      // a frame asked for before the network was built again: its picture is gone
+      if (made.sim !== sim) return;
       if (now - lastFrame < FRAME_MS) { requestAnimationFrame(render); return; }
       lastFrame = now;
       queued = false;
       if (left === 0 && live()) {
         sim.tick();
-        setScale(moving);
+        dirty = true;
         if (live()) paint(); // the next step
-        else { setScale(sharp); keep(); paint(); } // came to rest: once more, sharp
+        else keep(); // came to rest
       }
       nodes.forEach((n) => { n.x = Math.max(n.r + 2, Math.min(W - n.r - 2, n.x)); n.y = Math.max(n.r + 2, Math.min(H - n.r - 2, n.y)); });
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, W, H);
-      const k = view2d.k;
-      ctx.translate(view2d.x, view2d.y);
-      ctx.scale(k, k);
-      // Zoomed in, only the faces and lines on screen are drawn.
-      const [vx0, vy0] = view2d.invert([0, 0]);
-      const [vx1, vy1] = view2d.invert([W, H]);
-      const onScreen = (n) => n.x + n.r >= vx0 && n.x - n.r <= vx1 && n.y + n.r >= vy0 && n.y - n.r <= vy1;
-      const crosses = (a, b) => Math.max(a.x, b.x) >= vx0 && Math.min(a.x, b.x) <= vx1
-        && Math.max(a.y, b.y) >= vy0 && Math.min(a.y, b.y) <= vy1;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = ink;
-      // the best (slow) shrinking of faces only once nothing moves
-      ctx.imageSmoothingQuality = held || zooming || sim.alpha() >= sim.alphaMin() ? 'low' : 'high';
-      // the backbone: thin, and barely there while a face is lit; one path
-      // for each line width (in half pixels), not one stroke for each line
-      ctx.globalAlpha = lit ? 0.05 : 0.35;
-      for (const [width, list] of backbone) {
-        ctx.lineWidth = width;
-        ctx.beginPath();
-        for (const e of list) {
-          if (crosses(e.source, e.target)) { ctx.moveTo(e.source.x, e.source.y); ctx.lineTo(e.target.x, e.target.y); }
-        }
-        ctx.stroke();
+      if (px) {
+        if (dirty) { buildPixi(); dirty = false; }
+        px.render(view2d);
       }
-      // the lit face's lines: brightness against its biggest partner
-      if (lit) {
-        const from = byId.get(lit.id);
-        for (const m of lit.lines) {
-          if (!crosses(from, m.other)) continue;
-          ctx.globalAlpha = TIER_ALPHA[m.tier];
-          ctx.strokeStyle = tierInk(m.tier);
-          ctx.lineWidth = lineWidth(m.v);
-          ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(m.other.x, m.other.y); ctx.stroke();
-        }
-      }
-      // faces and rings
-      for (const n of nodes) {
-        if (!onScreen(n)) continue;
-        const s = lit ? lit.strength.get(n.id) : undefined;
-        const picked = lit && n.id === lit.id;
-        const faceAlpha = !lit || picked ? 1 : s != null ? 0.5 + 0.5 * Math.sqrt(s) : 0.4;
-        ctx.globalAlpha = faceAlpha;
-        if (n.img) ctx.drawImage(n.img, n.x - n.r, n.y - n.r, n.r * 2, n.r * 2);
-        else { ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.fill(); }
-        ctx.globalAlpha = picked ? 1 : s != null ? RING_MIN + (1 - RING_MIN) * Math.sqrt(s) : 0.3;
-        ctx.lineWidth = picked ? 3.5 : s != null ? 2 + 2 * s : 1.5;
-        ctx.strokeStyle = lit && lit.tier.has(n.id) ? tierInk(lit.tier.get(n.id)) : ink;
-        ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
       if (held) place(held);
     }
 
@@ -1267,10 +1351,10 @@ dash.draw('network', {
       if (made.sim !== sim) return; // a newer drawing took its place
       const until = performance.now() + 8;
       while (left > 0 && performance.now() < until) { sim.tick(); left--; }
-      if (left > 0) { setScale(moving); paint(); requestAnimationFrame(settle); return; }
-      keep();
-      setScale(sharp);
+      dirty = true;
       paint();
+      if (left > 0) { requestAnimationFrame(settle); return; }
+      keep();
     };
 
     let held = null;
@@ -1299,27 +1383,31 @@ dash.draw('network', {
     // Wheel zooms, the middle button pans; the left button belongs to the faces.
     // The whole network fits the box at 1x, so the view zooms in only. It may
     // move off the network by at most its own size each way, so the network
-    // can never be lost outside the box. Sharp again only once the view has
-    // rested a moment: two fingers end a zoom on every move, and switching
-    // the canvas size each time made it flicker.
-    let sharpTimer = null;
+    // can never be lost outside the box. A zoom only moves and scales the
+    // picture; nothing is built again.
     const zoom = d3.zoom().scaleExtent([1, 20])
       .extent([[0, 0], [W, H]])
       .translateExtent([[-W, -H], [W * 2, H * 2]])
       .filter(zoomWheel(el))
       .wheelDelta(wheelStep)
-      .on('end', () => {
-        clearTimeout(sharpTimer);
-        sharpTimer = setTimeout(() => { zooming = false; setScale(sharp); paint(); }, 200);
-      })
-      .on('zoom', (event) => { view2d = event.transform; zooming = true; tip.hidden = true; setScale(moving); paint(); });
+      .on('zoom', (event) => { view2d = event.transform; tip.hidden = true; paint(); });
     // The wheel over the network only zooms: at a zoom limit d3 lets the wheel
     // through, and the page would scroll instead.
     wheelZoom(canvas, el);
     d3.select(canvas).call(zoom).on('dblclick.zoom', null);
-    const resetView = () => { d3.select(canvas).call(zoom.transform, d3.zoomIdentity); setScale(sharp); };
+    const resetView = () => { d3.select(canvas).call(zoom.transform, d3.zoomIdentity); };
+    // The page's search: the faces it finds stand out, the rest fade; Enter
+    // picks the most drawn of them, as a click on its face would.
+    onSearch.set('network', (kind) => {
+      found = searchLit() ? new Set(nodes.filter((n) => finds(who.get(n.id))).map((n) => n.id)) : null;
+      if (kind === 'enter' && found && found.size) { pick(nodes.find((n) => found.has(n.id)).id); searchBox.blur(); }
+      dirty = true;
+      paint();
+    });
+    onSearch.get('network')();
+    canvas.addEventListener('pointerdown', () => searchBox.blur());
     resetButton(el, resetView);
-    fullButton(el, el.closest('.zl-netwrap') || el, () => dash.draw('network'));
+    fullButton(el, el.closest('.zl-card'), () => dash.draw('network'));
     canvas.addEventListener('dblclick', (event) => { if (!faceAt(event)) resetView(); });
 
     // The middle button pans. The pointer is captured, so the release is seen
@@ -1336,7 +1424,6 @@ dash.draw('network', {
       if (canvas.hasPointerCapture(pan.id)) canvas.releasePointerCapture(pan.id);
       pan = null;
       canvas.style.cursor = '';
-      setScale(sharp);
     };
     canvas.addEventListener('pointerdown', (event) => {
       if (event.button !== 1) return;
@@ -1351,7 +1438,6 @@ dash.draw('network', {
       if (!(event.buttons & 4)) { endPan(); return; }
       view2d = keepInside(d3.zoomIdentity.translate(pan.from.x + event.clientX - pan.x, pan.from.y + event.clientY - pan.y).scale(pan.from.k));
       canvas.__zoom = view2d; // the wheel zoom goes on from here
-      setScale(moving);
       paint();
     });
     canvas.addEventListener('pointerup', (event) => { if (event.button === 1) endPan(); });
@@ -1390,6 +1476,7 @@ dash.draw('network', {
         event.subject.fx = x; event.subject.fy = y;
         // the held face follows the pointer even between ticks
         event.subject.x = x; event.subject.y = y;
+        dirty = true;
         paint();
       })
       .on('end', (event) => {
@@ -1404,29 +1491,47 @@ dash.draw('network', {
     // after d3.drag, which sets touch-action: none (no page scroll over the network)
     touchZoom(canvas, zoom);
 
-    setScale(sharp);
     light(focusId(chars));
     relight = () => light(focusId(chars));
-    nodes.forEach((n) => roundFace(who.get(n.id).icon).then((img) => { n.img = img; paint(); }));
+    nodes.forEach((n, i) => roundFace(who.get(n.id).icon).then((img) => {
+      n.img = img;
+      if (px && img) px.setFace(i, img);
+      dirty = true;
+      paint();
+    }));
     made.sim = sim;
     made.sig = sig;
     made.inputs = inputs;
     made.isHeld = () => held != null;
+    if (!window.PIXI) { el.append(node('p', 'zl-note', 'The network could not load its drawing library (PixiJS).')); return; }
+    {
+      PIXI.autoDetectRenderer({ canvas, width: W, height: H, resolution: sharp, antialias: true, backgroundAlpha: 0, preference: 'webgl' })
+        .then((renderer) => {
+          if (made.sim !== sim) { renderer.destroy(); return; } // a newer drawing took its place
+          px = pixiNetwork(renderer, nodes);
+          made.px = px;
+          nodes.forEach((n, i) => { if (n.img) px.setFace(i, n.img); });
+          dirty = true;
+          paint();
+        })
+        .catch((error) => console.error('network renderer:', error));
+    }
     settle();
   },
 });
 
 // The panel beside the network: the selected character and its partners.
+// It floats over the network's right side, and only while someone is
+// selected: with nobody selected it is gone.
 dash.draw('focus-panel', (el) => {
   el.replaceChildren();
+  el.hidden = true;
   if (!ready('pair_totals', 'board', 'totals')) return;
   const who = people();
   const { val, chars, pairs } = netData();
   const id = focusId(chars);
-  if (!id) {
-    if (chars.length) el.append(node('p', 'zl-note', 'Click a face in the network to see who that character is drawn with.'));
-    return;
-  }
+  if (!id) return;
+  el.hidden = false;
   const row = chars.find((r) => r.id === id);
   const p = who.get(id);
   const mates = partnersOf(pairs, id);
@@ -1438,17 +1543,13 @@ dash.draw('focus-panel', (el) => {
   close.setAttribute('aria-label', `Close ${p.name}, show every line`);
   close.addEventListener('click', () => { view.focus = false; relight(); dash.draw('focus-panel'); });
   head.append(icon(p.icon, 64), title, close);
-  const bar = node('div', 'zl-bar');
-  const part = node('div', 'zl-bar-r18');
-  part.append(node('span', null, `${pct0(row.share)} R-18`));
-  part.style.width = (row.share * 100).toFixed(1) + '%';
-  bar.append(part);
-  el.append(head, bar, node('p', 'zl-note', `Drawn together with ${fmt(mates.length)} other characters.`),
+  el.append(head);
+  if (view.measure !== 'safe') el.append(shareBar(row.share));
+  el.append(node('p', 'zl-note', `Drawn together with ${fmt(mates.length)} other characters.`),
     node('h4', 'zl-panel-sub', view.measure === 'r18' ? 'Most R-18 art with' : view.measure === 'safe' ? 'Most art without R-18 with' : 'Most art with'));
   const list = node('ol', 'zl-mates');
   const top = mates;
   const max = d3.max(top, (l) => l.v) || 1;
-  addTip(list);
   for (const l of top) {
     const li = node('li', 'zl-mate');
     li.dataset.key = l.a + '|' + l.b;
@@ -1456,8 +1557,6 @@ dash.draw('focus-panel', (el) => {
     body.append(node('div', 'zl-name', who.get(l.other).name),
       view.measure === 'all' ? barLine(l.total, l.r18, max) : barLine(l.v, null, max));
     li.append(icon(who.get(l.other).icon, 32), body);
-    withTip(list, li, () => [`${p.name} × ${who.get(l.other).name}`, `${fmt(l.total)} posts together`,
-      `${pct(l.total / row.total)} of ${p.name}'s art`, l.total >= 20 ? `${pct0(l.r18 / l.total)} R-18` : '']);
     list.append(li);
   }
   el.append(list);
@@ -1467,23 +1566,24 @@ dash.draw('focus-panel', (el) => {
 dash.draw('pairs-top', (el) => {
   el.replaceChildren();
   if (!ready('pair_totals', 'board')) return;
-  addTip(el);
   const who = people();
-  const q = view.pairQuery.trim().toLowerCase();
+  const q = queryWords();
   const v = measure();
   const ranked = pairsFor(keyOf(chosen())).filter((r) => v(r) > 0).sort((a, b) => v(b) - v(a)).map((r, i) => ({ ...r, place: i + 1 }));
   // bars keep the scale of the whole list, so a search does not stretch them
   const max = d3.max(ranked, v) || 1;
-  const rows = ranked.filter((r) => !q || who.get(r.a).name.toLowerCase().includes(q) || who.get(r.b).name.toLowerCase().includes(q));
+  const order = pairOrder(ranked, v);
+  // each typed word starts a word of either character: "ellen lyc" finds the pair
+  const rows = ranked.filter((r) => q.every((part) => startsWord(who.get(r.a), part) || startsWord(who.get(r.b), part)));
   el.scrollTop = 0;
   lazyRows(el, rows, (r) => {
     const li = node('li', 'zl-row zl-pair');
     li.dataset.key = r.a + '|' + r.b;
+    const ids = order(r);
     const duo = node('span', 'zl-duo');
-    duo.append(icon(who.get(r.a).icon, 32), icon(who.get(r.b).icon, 32));
-    li.append(node('span', 'zl-n', r.place), duo, node('span', 'zl-name', pairName(who, r)),
+    duo.append(...ids.map((id) => icon(who.get(id).icon, 32)));
+    li.append(node('span', 'zl-n', r.place), duo, node('span', 'zl-name', pairName(who, ids)),
       view.measure === 'all' ? barLine(r.total, r.r18, max) : barLine(v(r), null, max));
-    withTip(el, li, () => [pairName(who, r), `${fmt(r.total)} posts together`, `${fmt(r.r18)} R-18 (${pct(r.r18 / r.total)})`]);
     return li;
   });
 });
@@ -1523,6 +1623,7 @@ document.querySelectorAll('[data-sort]').forEach((btn) => {
   btn.addEventListener('click', () => {
     view.sort = btn.dataset.sort;
     document.querySelectorAll('[data-sort]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+    dash.draw('podium');
     dash.draw('bars');
   });
 });
@@ -1534,12 +1635,94 @@ document.querySelectorAll('[data-measure]').forEach((btn) => {
     redrawAll();
   });
 });
-document.querySelectorAll('.zl-search').forEach((input) => {
-  input.addEventListener('input', () => {
-    if (input.dataset.find === 'pairs') { view.pairQuery = input.value; dash.draw('pairs-top'); }
-    else { view.query = input.value; dash.draw('bars'); }
-  });
+// The wheel goes on scrolling the page over a list (or the selected
+// character's panel) while it keeps turning; the list takes it only after the
+// wheel has rested LIST_WAIT ms, so passing over a list does not catch it.
+const LIST_WAIT = 700;
+let pageWheelAt = -Infinity;
+window.addEventListener('wheel', (event) => {
+  if (event.ctrlKey || document.querySelector('.zl-full')) return;
+  const list = event.target.closest && event.target.closest('.zl-list, .zl-panel');
+  const now = performance.now();
+  if (!list) { pageWheelAt = now; return; }
+  if (now - pageWheelAt >= LIST_WAIT) return;
+  pageWheelAt = now;
+  event.preventDefault();
+  window.scrollBy(0, event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? innerHeight : 1));
+}, { passive: false });
+const find = () => { view.query = searchBox.value; dash.draw('bars'); dash.draw('pairs-top'); searched(); };
+searchBox.addEventListener('input', find);
+searchBox.addEventListener('focus', () => searched());
+searchBox.addEventListener('blur', () => searched());
+searchBox.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') searched('enter');
+  if (event.key === 'Escape') { searchBox.value = ''; find(); }
 });
+
+// Hearts over R-18 (see zl-fly in the style): only the parts on screen get
+// them, so a long list moves no hidden layers. An IntersectionObserver says
+// which are on screen; parts drawn later are found as they are added. Each
+// part gets its own speed, start and pattern offset, so no two move alike.
+// The loop runs only while a part is on screen and the tab is shown; with
+// reduced motion the hearts stay still.
+(() => {
+  const TARGET = '.zl-bar-r18, .zl-bar-dark, .zl-seg button[data-measure="r18"], .zl-seg button[data-sort="share"]';
+  const FPS = 30;
+  const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const shown = new Set();
+  const vary = (el) => {
+    if (el.zlHearts) return;
+    // durations and starts in milliseconds; layer 1 rises one 48 px tile,
+    // layer 2 one 64 px tile, swaying 5 px each way
+    const d1 = rand(4000, 7000);
+    const d2 = rand(7000, 12000);
+    el.zlHearts = { d1, o1: rand(0, d1), d2, o2: rand(0, d2) };
+    el.style.setProperty('--zl-x1', Math.round(rand(0, 640)) + 'px'); el.style.setProperty('--zl-y1', Math.round(rand(0, 48)) + 'px');
+    el.style.setProperty('--zl-x2', Math.round(rand(0, 640)) + 'px'); el.style.setProperty('--zl-y2', Math.round(rand(0, 64)) + 'px');
+  };
+  const place = (el, now) => {
+    const h = el.zlHearts;
+    const t1 = ((now + h.o1) % h.d1) / h.d1;
+    const t2 = ((now + h.o2) % h.d2) / h.d2;
+    el.style.setProperty('--zl-m1', `translateY(${(-48 * t1).toFixed(1)}px)`);
+    el.style.setProperty('--zl-m2', `translate(${(5 * Math.sin(t2 * 2 * Math.PI)).toFixed(1)}px, ${(-64 * t2).toFixed(1)}px)`);
+  };
+  let running = false;
+  let last = 0;
+  const tick = (now) => {
+    if (!shown.size || document.hidden) { running = false; return; }
+    if (now - last >= 1000 / FPS - 1) {
+      last = now;
+      for (const el of shown) {
+        if (!el.isConnected) { shown.delete(el); continue; }
+        if (el.getAttribute('aria-pressed') !== 'false') place(el, now);
+      }
+    }
+    requestAnimationFrame(tick);
+  };
+  const wake = () => {
+    if (still || running || !shown.size || document.hidden) return;
+    running = true;
+    requestAnimationFrame(tick);
+  };
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      const el = e.target;
+      if (e.isIntersecting) { vary(el); place(el, performance.now()); shown.add(el); } else shown.delete(el);
+      el.classList.toggle('zl-fly', e.isIntersecting);
+    }
+    wake();
+  });
+  const watch = (root) => {
+    if (root.nodeType !== 1) return;
+    if (root.matches(TARGET)) io.observe(root);
+    root.querySelectorAll(TARGET).forEach((el) => io.observe(el));
+  };
+  new MutationObserver((list) => { for (const m of list) m.addedNodes.forEach(watch); }).observe(document.body, { childList: true, subtree: true });
+  watch(document.body);
+  document.addEventListener('visibilitychange', wake);
+})();
 </script>
 </div>
 <footer class="site-foot">Counts of tag searches on Danbooru, Rule34 and pixiv, collected 2026-11-03. Only numbers are shown, no pictures from those sites. Character icons from the games' fandom wikis, © their publishers.</footer>

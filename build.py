@@ -23,6 +23,8 @@ import yaml
 HERE = pathlib.Path(__file__).parent
 DOCS = HERE / "docs"
 D3 = "https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"
+# the network draws with PixiJS (WebGL) where it is loaded
+PIXI = "https://cdn.jsdelivr.net/npm/pixi.js@8.22.0/dist/pixi.min.js"
 
 TEMPLATE = """<!doctype html>
 <html lang="en">
@@ -66,6 +68,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 </style>
 <script>window.DASH_DATASETS = __DATASETS__;</script>
 <script src="__D3__"></script>
+<script src="__PIXI__"></script>
 <script src="dash-lite.js"></script>
 </head>
 <body>
@@ -114,6 +117,7 @@ def main(tagstats):
 
     out = (TEMPLATE.replace("__DATASETS__", json.dumps(datasets))
            .replace("__D3__", D3)
+           .replace("__PIXI__", PIXI)
            .replace("__DATE__", html.escape(datetime.date.today().isoformat()))
            .replace("__PAGE__", page))
     (DOCS / "index.html").write_text(out, encoding="utf-8")
