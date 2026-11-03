@@ -118,7 +118,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-bar-dark { background: var(--zl-r18); }
 .zl-count { font-variant-numeric: tabular-nums; font-weight: var(--cds-font-weight-medium); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.zl-podium { display: grid; gap: var(--cds-gap-md); grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); min-height: 230px; }
+.zl-podium { display: grid; gap: var(--cds-gap-md); grid-template-columns: repeat(3, minmax(0, 1fr)); min-height: 230px; }
 .zl-place { display: grid; justify-items: center; align-content: start; gap: var(--cds-gap-xs); text-align: center; padding: var(--cds-pad-lg); background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); }
 .zl-place img { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; background: var(--color-bg); }
 .zl-place .zl-rank { font-family: var(--font-anthropic-serif); font-size: var(--cds-font-size-heading); color: var(--color-fg-muted); }
@@ -169,6 +169,12 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 @media (max-width: 640px) {
   .zl-row { grid-template-columns: 1.4rem 28px minmax(4.5rem, 7rem) 1fr; }
   .zl-pair { grid-template-columns: 1.4rem 48px minmax(5rem, 8rem) 1fr; }
+  /* the top three stay in one row: smaller faces and padding */
+  .zl-podium { gap: var(--cds-gap-sm); min-height: 0; }
+  .zl-place { padding: var(--cds-pad-sm); }
+  .zl-place img { width: 52px; height: 52px; }
+  .zl-place .zl-name { font-size: var(--cds-font-size-caption); overflow-wrap: anywhere; }
+  .zl-place .zl-big { font-size: var(--cds-font-size-heading); }
 }
 </style>
 <div class="zl">
@@ -690,26 +696,17 @@ const wheelStep = (event) => -event.deltaY * (event.deltaMode === 1 ? 0.05 : eve
 
 // Ctrl + wheel zooms (the page's own Ctrl zoom is held back over the chart);
 // a plain wheel scrolls the page as anywhere else and briefly shows a hint.
-// On a touch screen one finger scrolls the page, and the hint says how to
-// move the chart instead.
 const wheelZoom = (target, box) => {
   const hint = node('div', 'zl-hint', 'Ctrl + scroll to zoom');
   hint.hidden = true;
   box.append(hint);
   let timer = null;
-  const show = (text) => {
-    hint.textContent = text;
+  target.addEventListener('wheel', (event) => {
+    if (event.ctrlKey) { event.preventDefault(); return; }
     hint.hidden = false;
     clearTimeout(timer);
     timer = setTimeout(() => { hint.hidden = true; }, 1200);
-  };
-  target.addEventListener('wheel', (event) => {
-    if (event.ctrlKey) { event.preventDefault(); return; }
-    show('Ctrl + scroll to zoom');
   }, { passive: false });
-  target.addEventListener('touchmove', (event) => {
-    if (event.touches.length === 1) show('Use two fingers to move and zoom');
-  }, { passive: true });
 };
 // Touch screens, as an embedded map: one finger scrolls the page (a tap still
 // picks a face), two fingers move and pinch-zoom the chart. d3.zoom's own
@@ -1128,13 +1125,20 @@ dash.draw('network', {
     const pick = (id) => { view.focus = id; light(id); dash.draw('focus-panel'); };
     const unpick = () => { view.focus = false; light(null); dash.draw('focus-panel'); };
 
-    // The layout is worked out before it is shown, then rests until a drag.
+    // The pushing apart and the line lengths shrink with the box's room per
+    // face: in a phone-sized box the full push sent most faces against the
+    // edges, where they stood in a square. Faces with few lines (little
+    // pulls them in) are held nearer the middle.
+    const room = Math.min(1, (W * H) / (nodes.length * 3200));
+    const lines = new Map();
+    for (const e of edges) for (const id of [e.source, e.target]) lines.set(id, (lines.get(id) || 0) + 1);
+    const hold = (d) => ((lines.get(d.id) || 0) < 2 ? 0.2 : 0.06);
     const sim = d3.forceSimulation(nodes)
-      .force('link', d3.forceLink(edges).id((d) => d.id).distance((e) => 60 + 110 * (1 - e.l.near / maxNear)).strength(0.25))
-      .force('charge', d3.forceManyBody().strength(-200))
+      .force('link', d3.forceLink(edges).id((d) => d.id).distance((e) => (60 + 110 * (1 - e.l.near / maxNear)) * Math.sqrt(room)).strength(0.25))
+      .force('charge', d3.forceManyBody().strength(-200 * room))
       .force('collide', d3.forceCollide((d) => d.r + 4))
-      .force('x', d3.forceX(W / 2).strength(0.06))
-      .force('y', d3.forceY(H / 2).strength(0.08))
+      .force('x', d3.forceX(W / 2).strength(hold))
+      .force('y', d3.forceY(H / 2).strength((d) => hold(d) * 1.3))
       .alphaMin(0.02)
       .stop();
     // The layout is worked out about 8 ms a frame and drawn as it settles, so
@@ -1236,9 +1240,19 @@ dash.draw('network', {
     canvas.addEventListener('lostpointercapture', endPan);
     canvas.addEventListener('auxclick', (event) => { if (event.button === 1) event.preventDefault(); });
     window.addEventListener('blur', endPan);
+    // A drag comes from the left mouse button or one finger. d3 hands a touch
+    // drag the whole TouchEvent, which has no position: the finger's own
+    // Touch has it.
+    const fingerOf = (source, id) => (source && source.changedTouches
+      ? [...source.changedTouches].find((t) => id == null || t.identifier === id) || source.changedTouches[0]
+      : source);
+    // A finger that lands on a face drags it; anywhere else it scrolls the page.
+    canvas.addEventListener('touchstart', (event) => {
+      if (event.touches.length === 1 && left === 0 && faceAt(event.touches[0])) event.preventDefault();
+    }, { passive: false });
     d3.select(canvas).call(d3.drag()
-      .filter((event) => event.button === 0 && left === 0)
-      .subject((event) => faceAt(event.sourceEvent || event))
+      .filter((event) => left === 0 && (event.touches ? event.touches.length === 1 : event.button === 0))
+      .subject((event) => faceAt(fingerOf(event.sourceEvent) || event))
       .on('start', (event) => {
         const n = event.subject;
         held = n;
@@ -1252,7 +1266,7 @@ dash.draw('network', {
         n.fx = n.x; n.fy = n.y;
       })
       .on('drag', (event) => {
-        const [x, y] = pointer(event.sourceEvent);
+        const [x, y] = pointer(fingerOf(event.sourceEvent, event.identifier));
         event.subject.fx = x; event.subject.fy = y;
         // the held face follows the pointer even between ticks
         event.subject.x = x; event.subject.y = y;
