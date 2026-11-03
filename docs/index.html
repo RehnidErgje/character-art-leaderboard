@@ -857,6 +857,9 @@ const fullButton = (box, target, redraw) => {
     }
     setFull(target, true);
     const page = document.documentElement;
+    // test switch: ?nofs leaves the browser's own full screen out (does a
+    // phone's dark moment come from it?)
+    if (new URLSearchParams(location.search).has('nofs')) return;
     if (page.requestFullscreen && document.fullscreenEnabled) page.requestFullscreen().catch(() => {});
   });
   tools(box).append(button);
