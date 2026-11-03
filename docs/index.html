@@ -46,7 +46,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 <body>
 <div id="dash-root">
 <style>
-.zl { display: grid; gap: var(--cds-gap-xl); font-family: var(--font-anthropic-sans); }
+.zl { min-width: 300px; display: grid; gap: var(--cds-gap-xl); font-family: var(--font-anthropic-sans); }
 /* while a switch redraws: a spinner in the corner, the parts dimmed until all are redrawn */
 .zl [data-draw] { transition: opacity .15s; }
 .zl.zl-busy [data-draw] { opacity: .55; }
@@ -166,6 +166,8 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 /* touch: while the page scrolls the lists hold still (see LIST_WAIT) */
 .zl-pagescroll .zl-list, .zl-pagescroll .zl-panel { overflow: hidden; }
 .zl-row { display: grid; grid-template-columns: 1.8rem 32px minmax(6rem, 10rem) 1fr; align-items: center; gap: var(--cds-gap-sm); }
+.zl-row.zl-hit { border-radius: var(--cds-radius); background: color-mix(in srgb, #ffd34d 14%, transparent); box-shadow: inset 0 0 0 1px #ffd34d; }
+.zl-row.zl-miss { opacity: 0.4; }
 .zl-row img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: var(--color-bg); }
 .zl-row .zl-n { color: var(--color-fg-muted); text-align: right; font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
 .zl-row .zl-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -195,7 +197,8 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-pt circle { fill: none; stroke: var(--color-border-line); stroke-width: 1.5; }
 .zl-pt:hover circle { stroke: var(--color-fg); stroke-width: 2; }
 /* the network takes the whole width; the selected character's panel floats over its right side */
-.zl-netwrap { position: relative; }
+.zl-netwrap { position: relative; min-width: 0; }
+.zl-chart { min-width: 0; }
 .zl-panel { position: absolute; top: var(--cds-pad-sm); right: var(--cds-pad-sm); z-index: 3; width: min(22rem, 45%); max-height: calc(100% - 2 * var(--cds-pad-sm)); overflow: auto; box-sizing: border-box; display: grid; gap: var(--cds-gap-sm); align-content: start; padding: var(--cds-pad-md); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-bg); box-shadow: var(--cds-shadow-popover); }
 .zl-panel-head { display: flex; align-items: center; gap: var(--cds-gap-sm); }
 .zl-panel-head img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; }
@@ -205,7 +208,8 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-panel-title .zl-name { font-family: var(--font-anthropic-serif); font-size: var(--cds-font-size-heading); }
 .zl-panel-sub { margin: var(--cds-gap-xs) 0 0; font-size: var(--cds-font-size-caption); font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); text-transform: uppercase; letter-spacing: .04em; }
 .zl-mates { position: relative; display: grid; gap: var(--cds-gap-sm); margin: 0; padding: 0 var(--cds-pad-xs) 0 0; list-style: none; max-height: 560px; overflow: auto; }
-.zl-mate { display: grid; grid-template-columns: 32px 1fr; gap: var(--cds-gap-sm); align-items: center; }
+.zl-mate { display: grid; grid-template-columns: 32px 1fr; gap: var(--cds-gap-sm); align-items: center; cursor: pointer; border-radius: var(--cds-radius); }
+.zl-mate:hover { background: color-mix(in srgb, var(--color-fg) 6%, transparent); }
 .zl-mate img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
 .zl-mate-body { display: grid; gap: 3px; min-width: 0; }
 .zl-mate-body .zl-name { font-size: var(--cds-font-size-caption); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -231,20 +235,20 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
   .zl-full .zl-panel { display: none; }
 }
 @media (max-width: 640px) {
-  .zl-topbar { display: grid; grid-template-columns: auto auto minmax(0, 1fr); grid-template-areas: "game sites search" "content content content" "tools tools tools"; align-items: center; gap: 6px; }
+  .zl-topbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
   .zl-topbar-left, .zl-topbar-right { display: contents; }
-  .zl-game { grid-area: game; }
+  .zl-game { order: 1; }
   .zl-game > summary { height: 34px; padding: 3px 6px; }
   .zl-game img { height: 26px; }
-  .zl-topbar-left > .zl-group { grid-area: sites; }
+  .zl-topbar-left > .zl-group { order: 2; }
   .zl-topbar .zl-group > legend, .zl-topbar .zl-group > .zl-group-name { display: none; }
   /* the sites as their icons only; the name stays for screen readers */
   .zl-chip { height: 30px; padding: 0 7px; gap: 0; font-size: 0; }
-  .zl-topbar-right .zl-search { grid-area: search; width: 100%; min-width: 0; }
-  .zl-topbar-right > .zl-group { grid-area: content; }
+  .zl-topbar-right .zl-search { order: 3; flex: 1 1 10rem; width: auto; min-width: 10rem; }
+  .zl-topbar-right > .zl-group { order: 4; flex: 1 1 100%; }
   .zl-topbar-right > .zl-group .zl-seg { display: flex; width: 100%; }
   .zl-topbar-right > .zl-group .zl-seg button { flex: 1; padding-block: 6px; }
-  .zl-bar-tools { grid-area: tools; }
+  .zl-bar-tools { order: 5; flex: 1 1 100%; }
   .zl-row { grid-template-columns: 1.4rem 28px minmax(4.5rem, 7rem) 1fr; }
   .zl-pair { grid-template-columns: 1.4rem 48px minmax(5rem, 8rem) 1fr; }
   /* the top three stay in one row: smaller faces and padding */
@@ -610,7 +614,8 @@ const fitLabels = (scope) => {
 // it is scrolled near its end. A switch then never builds thousands of rows,
 // two faces each, that sit below the list's visible part.
 const CHUNK = 60;
-const lazyRows = (el, rows, makeRow) => {
+// upTo: build at least the rows up to this index (a row to scroll to).
+const lazyRows = (el, rows, makeRow, upTo = 0) => {
   let shown = 0;
   const more = () => {
     const batch = rows.slice(shown, shown + CHUNK).map(makeRow);
@@ -618,7 +623,7 @@ const lazyRows = (el, rows, makeRow) => {
     el.append(...batch);
     fitLabels(batch);
   };
-  more();
+  do more(); while (shown <= upTo && shown < rows.length);
   el.onscroll = () => { if (shown < rows.length && el.scrollTop + el.clientHeight > el.scrollHeight - 400) more(); };
 };
 const tipLines = (tip, lines) => {
@@ -711,18 +716,23 @@ dash.draw('bars', (el) => {
   const v = measure();
   let rows = totalsFor(keyOf(chosen())).filter((r) => v(r) > 0);
   const max = d3.max(rows, v) || 1;
+  // the search marks the characters it finds (the rest fade) and scrolls the
+  // list to the first of them
   const q = queryWords();
-  if (q.length) rows = rows.filter((r) => finds(who.get(r.id), q));
   sorted(rows, v);
+  const hit = (r) => q.length > 0 && finds(who.get(r.id), q);
+  const first = rows.findIndex(hit);
   el.scrollTop = 0;
   lazyRows(el, rows, (r) => {
     const p = who.get(r.id);
-    const li = node('li', 'zl-row');
+    const li = node('li', q.length ? (hit(r) ? 'zl-row zl-hit' : 'zl-row zl-miss') : 'zl-row');
     li.dataset.key = r.id;
     li.append(node('span', 'zl-n', r[RANK[view.measure]]), icon(p.icon, 32), node('span', 'zl-name', p.name),
       view.measure === 'all' ? barLine(r.total, r.r18, max) : barLine(v(r), null, max));
     return li;
-  });
+  }, first);
+  const mark = el.querySelector('.zl-hit');
+  if (mark) el.scrollTop = mark.offsetTop - 6;
 });
 
 // The middle button pans; the pointer is captured and the button state
@@ -1033,6 +1043,12 @@ const mainEnd = (mates) => {
 // the index after the group that starts at `start`.
 const TIER_SPAN = 2;
 const TIER_SMOOTH = 1.1;
+// A partner in a group still gets no line when the pair weighs too little
+// for the face: under LINE_MIN posts together, or under LINE_SHARE of the
+// face's own art (main group, middle group). The groups pick who gets lines;
+// this only cuts the smallest of them (a partner with 5 of 486 posts).
+const LINE_MIN = 5;
+const LINE_SHARE = [0.015, 0.05];
 const tierEnd = (mates, start) => {
   if (start >= mates.length) return start;
   let end = start + 1;
@@ -1280,12 +1296,15 @@ dash.draw('network', {
       const top = d3.max(mates, (l) => l.v) || 1;
       const first = mainEnd(mates);
       const second = tierEnd(mates, first);
+      // the groups' partners that weigh too little for the face lose the line
+      const own = val(byId.get(id).row);
+      const linked = mates.slice(0, second).map((l, i) => ({ l, tier: i < first ? 0 : 1 }))
+        .filter(({ l, tier }) => l.v >= LINE_MIN && l.v >= LINE_SHARE[tier] * own);
       lit = {
         id,
         strength: new Map(mates.map((l) => [l.other, l.v / top])),
-        tier: new Map(mates.slice(0, second).map((l, i) => [l.other, i < first ? 0 : 1])),
-        lines: mates.slice(0, second).map((l, i) => ({ other: byId.get(l.other), v: l.v, tier: i < first ? 0 : 1 }))
-          .reverse(),
+        tier: new Map(linked.map(({ l, tier }) => [l.other, tier])),
+        lines: linked.map(({ l, tier }) => ({ other: byId.get(l.other), v: l.v, tier })).reverse(),
       };
       paint();
     };
@@ -1349,8 +1368,12 @@ dash.draw('network', {
     const lines = new Map();
     for (const e of edges) for (const id of [e.source, e.target]) lines.set(id, (lines.get(id) || 0) + 1);
     const hold = (d) => ((lines.get(d.id) || 0) < 2 ? 0.2 : 0.06);
+    // A line pulls in proportion to the art the two share: the network's
+    // biggest pair pulls with LINK_MAX, a pair with half its art with half.
+    const LINK_MAX = 0.8;
+    const shownMax = d3.max(edges, (e) => e.l.v) || 1;
     const sim = d3.forceSimulation(nodes)
-      .force('link', d3.forceLink(edges).id((d) => d.id).distance((e) => (60 + 110 * (1 - e.l.near / maxNear)) * Math.sqrt(room)).strength(0.25))
+      .force('link', d3.forceLink(edges).id((d) => d.id).distance((e) => (60 + 110 * (1 - e.l.near / maxNear)) * Math.sqrt(room)).strength((e) => LINK_MAX * e.l.v / shownMax))
       .force('charge', d3.forceManyBody().strength(-200 * room))
       .force('collide', d3.forceCollide((d) => d.r + 4))
       // the box's short side holds harder (a tall phone screen in full screen)
@@ -1616,6 +1639,9 @@ dash.draw('focus-panel', (el) => {
     body.append(node('div', 'zl-name', who.get(l.other).name),
       view.measure === 'all' ? barLine(l.total, l.r18, max) : barLine(l.v, null, max));
     li.append(icon(who.get(l.other).icon, 32), body);
+    // a click on a partner selects it, in the network and here
+    li.title = `Show ${who.get(l.other).name}`;
+    li.addEventListener('click', () => { view.focus = l.other; relight(); dash.draw('focus-panel'); });
     list.append(li);
   }
   el.append(list);
