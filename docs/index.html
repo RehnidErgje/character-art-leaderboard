@@ -822,12 +822,11 @@ const resetButton = (box, reset) => {
   button.addEventListener('click', reset);
   tools(box).append(button);
 };
-// Full screen for a chart (target: what fills the screen, the chart or the
-// chart with its panel). The top bar (game, sources, content) stays fixed at
-// the top and the box fills the screen below it, which is all an iPhone
-// allows; where the browser has a full-screen mode (desktop, Android) the
-// whole page goes into it as well, so the bar stays. redraw runs the drawing
-// again at the new size; Esc or the button ends it.
+// Expand a chart (target: what fills the window, the chart or the chart with
+// its panel): the top bar (game, sources, content) stays fixed at the top and
+// the box fills the window below it. The browser's own full-screen mode is
+// not used: on phones its switch left the screen dark for a moment. redraw
+// runs the drawing again at the new size; Esc or the button ends it.
 const barHeight = () => {
   const bar = document.querySelector('.zl-topbar');
   const on = document.documentElement.classList.contains('zl-noscroll');
@@ -847,21 +846,9 @@ const setFull = (target, on) => {
 const fullButton = (box, target, redraw) => {
   target.zlRedraw = redraw;
   const on = target.classList.contains('zl-full');
-  const button = node('button', 'zl-reset zl-fullbtn', on ? 'Exit full screen' : 'Full screen');
+  const button = node('button', 'zl-reset zl-fullbtn', on ? 'Collapse' : 'Expand');
   button.type = 'button';
-  button.addEventListener('click', () => {
-    if (on) {
-      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-      setFull(target, false);
-      return;
-    }
-    setFull(target, true);
-    const page = document.documentElement;
-    // test switch: ?nofs leaves the browser's own full screen out (does a
-    // phone's dark moment come from it?)
-    if (new URLSearchParams(location.search).has('nofs')) return;
-    if (page.requestFullscreen && document.fullscreenEnabled) page.requestFullscreen().catch(() => {});
-  });
+  button.addEventListener('click', () => setFull(target, !on));
   tools(box).append(button);
 };
 const leaveFull = () => document.querySelectorAll('.zl-full').forEach((e) => setFull(e, false));
@@ -869,10 +856,9 @@ const redrawFull = () => {
   barHeight();
   document.querySelectorAll('.zl-full').forEach((e) => { if (e.zlRedraw) e.zlRedraw(); });
 };
-document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) leaveFull(); else redrawFull(); });
 // the bar can grow a row on a narrower window, and the chart below follows
 window.addEventListener('resize', () => { if (document.querySelector('.zl-full')) redrawFull(); });
-document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !document.fullscreenElement) leaveFull(); });
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape') leaveFull(); });
 
 const middlePan = (target, zoom, scale) => {
   let pan = null;
