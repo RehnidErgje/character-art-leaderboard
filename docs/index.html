@@ -404,7 +404,6 @@ const MEASURE = {
   safe: (row) => row.total - (row.r18 ?? 0),
 };
 const WORD = { all: 'posts', r18: 'R-18 posts', safe: 'posts without R-18' };
-const RANK = { all: 'rank', r18: 'rank_r18', safe: 'rank_safe' };
 const measure = () => MEASURE[view.measure];
 
 // Every non-empty combination of sites, as "danbooru+pixiv": the key the calcs use.
@@ -794,9 +793,20 @@ dash.draw('missing', (el) => {
   el.textContent = empty.length ? `No counts yet for ${empty.join(', ')}: these figures leave ${empty.length > 1 ? 'them' : 'it'} out.` : '';
 });
 
-// The sort switch above the podium orders the podium and the list alike.
+// The lower bound of the 95% Wilson interval of k R-18 posts out of n: the
+// share a character surely has, given how many posts it rests on. 5 of 5
+// gives 57%, 151 of 156 gives 93%.
+const wilson = (k, n) => {
+  if (!n) return -1;
+  const z2 = 1.96 * 1.96, p = k / n;
+  return (p + z2 / (2 * n) - Math.sqrt(z2 * (p * (1 - p) / n + z2 / (4 * n * n)))) / (1 + z2 / n);
+};
+
+// The sort switch above the podium orders the podium and the list alike. The
+// share sort goes by the Wilson bound, so a handful of posts, all R-18, does
+// not top hundreds; the bars still show the plain share.
 const sorted = (rows, v) => {
-  const by = view.sort === 'share' ? (r) => r.share ?? -1 : v;
+  const by = view.sort === 'share' ? (r) => wilson(r.r18, r.total) : v;
   return rows.sort((a, b) => by(b) - by(a));
 };
 
@@ -837,7 +847,8 @@ dash.draw('bars', (el) => {
   // the search marks the characters it finds (the rest fade) and scrolls the
   // list to the first of them
   const q = queryWords();
-  sorted(rows, v);
+  // the number is the place in the order shown, not the rank by posts
+  rows = sorted(rows, v).map((r, i) => ({ ...r, place: i + 1 }));
   const hit = (r) => q.length > 0 && finds(who.get(r.id), q);
   const first = rows.findIndex(hit);
   el.scrollTop = 0;
@@ -847,7 +858,7 @@ dash.draw('bars', (el) => {
     li.dataset.key = r.id;
     const name = node('span', 'zl-name', p.name);
     if (view.period === 'window' && (p.w_incomplete || p.w_unreleased)) name.append(node('span', 'zl-so-far', p.w_unreleased ? 'all time' : 'so far'));
-    li.append(node('span', 'zl-n', r[RANK[view.measure]]), icon(p.icon, 32), name,
+    li.append(node('span', 'zl-n', r.place), icon(p.icon, 32), name,
       view.measure === 'all' ? barLine(r.total, r.r18, max) : barLine(v(r), null, max));
     return li;
   }, first);
@@ -2045,6 +2056,6 @@ searchBox.addEventListener('keydown', (event) => {
 })();
 </script>
 </div>
-<footer class="site-foot">Counts of tag searches on Danbooru, Rule34 and pixiv, collected 2026-11-03. Only numbers are shown, no pictures from those sites. Character icons from the games' fandom wikis, © their publishers.</footer>
+<footer class="site-foot">Counts of tag searches on Danbooru, Rule34 and pixiv, collected 2026-11-04. Only numbers are shown, no pictures from those sites. Character icons from the games' fandom wikis, © their publishers.</footer>
 </body>
 </html>
