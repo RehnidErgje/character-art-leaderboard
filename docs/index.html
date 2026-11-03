@@ -46,7 +46,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 <body>
 <div id="dash-root">
 <style>
-.zl { min-width: 300px; display: grid; gap: var(--cds-gap-xl); font-family: var(--font-anthropic-sans); }
+.zl { -webkit-tap-highlight-color: transparent; min-width: 300px; display: grid; gap: var(--cds-gap-xl); font-family: var(--font-anthropic-sans); }
 /* while a switch redraws: a spinner in the corner, the parts dimmed until all are redrawn */
 .zl [data-draw] { transition: opacity .15s; }
 .zl.zl-busy [data-draw] { opacity: .55; }
@@ -164,7 +164,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 
 .zl-list { position: relative; display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; max-height: 660px; overflow: auto; }
 /* touch: while the page scrolls the lists hold still (see LIST_WAIT) */
-.zl-pagescroll .zl-list, .zl-pagescroll .zl-panel { overflow: hidden; }
+.zl-pagescroll .zl-list, .zl-pagescroll .zl-panel, .zl-pagescroll .zl-mates { overflow: hidden; }
 .zl-row { display: grid; grid-template-columns: 1.8rem 32px minmax(6rem, 10rem) 1fr; align-items: center; gap: var(--cds-gap-sm); }
 .zl-row.zl-hit { border-radius: var(--cds-radius); background: color-mix(in srgb, #ffd34d 14%, transparent); box-shadow: inset 0 0 0 1px #ffd34d; }
 .zl-row.zl-miss { opacity: 0.4; }
@@ -234,6 +234,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 [data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
 @media (max-width: 900px) {
   .zl-panel { position: static; width: auto; max-height: none; margin-top: var(--cds-gap-md); box-shadow: none; }
+  .zl-netwrap:not(.zl-full .zl-netwrap) .zl-mates { max-height: 420px; overflow: auto; }
   /* full screen on a narrow screen: the panel is a sheet at the bottom of the
      network, the face and its share only; open (zl-open) it covers the
      network with the list */
@@ -241,7 +242,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
   .zl-full .zl-panel:not(.zl-open) > :not(.zl-panel-head):not(.zl-bar) { display: none; }
   .zl-full .zl-panel.zl-open { top: var(--cds-pad-sm); overflow: auto; }
   .zl-full .zl-sheet-arrow { display: block; }
-  .zl-full .zl-sheet-arrow + .zl-close { margin-left: var(--cds-gap-sm); }
+  .zl-full .zl-panel .zl-close { display: none; }
   .zl-full .zl-panel.zl-open .zl-sheet-arrow { transform: translateY(0.15em) rotate(45deg); }
 }
 @media (max-width: 640px) {
@@ -756,7 +757,7 @@ const wheelStep = (event) => -event.deltaY * (event.deltaMode === 1 ? 0.05 : eve
 // a plain wheel scrolls the page as anywhere else and briefly shows a hint.
 // In full screen there is no page to scroll: a plain wheel zooms.
 const zoomWheel = (box) => (event) => event.type === 'wheel' && (event.ctrlKey || Boolean(box.closest('.zl-full')));
-const wheelZoom = (target, box) => {
+const wheelZoom = (target, box, signal) => {
   const hint = node('div', 'zl-hint', 'Ctrl + scroll to zoom');
   hint.hidden = true;
   box.append(hint);
@@ -766,14 +767,14 @@ const wheelZoom = (target, box) => {
     hint.hidden = false;
     clearTimeout(timer);
     timer = setTimeout(() => { hint.hidden = true; }, 1200);
-  }, { passive: false });
+  }, { passive: false, signal });
 };
 // Touch screens, as an embedded map: one finger scrolls the page (a tap still
 // picks a face), two fingers move and pinch-zoom the chart. d3.zoom's own
 // touch handling cannot do this: it starts on the first finger, which must
 // stay the page's. scale() turns screen pixels into the chart's own (an SVG
 // drawn through a viewBox). The zoom's limits and extent still hold.
-const touchZoom = (target, zoom, scale = () => 1) => {
+const touchZoom = (target, zoom, scale = () => 1, signal) => {
   target.style.touchAction = 'pan-x pan-y';
   const at = (t) => {
     const box = target.getBoundingClientRect();
@@ -786,7 +787,7 @@ const touchZoom = (target, zoom, scale = () => 1) => {
     if (event.touches.length !== 2) return;
     event.preventDefault();
     start = { from: d3.zoomTransform(target), at: at(event.touches), apart: apart(event.touches) };
-  }, { passive: false });
+  }, { passive: false, signal });
   target.addEventListener('touchmove', (event) => {
     if (!start || event.touches.length !== 2) return;
     event.preventDefault();
@@ -797,10 +798,10 @@ const touchZoom = (target, zoom, scale = () => 1) => {
     const [mx, my] = at(event.touches);
     const moved = d3.zoomIdentity.translate(mx - px * k, my - py * k).scale(k);
     d3.select(target).call(zoom.transform, zoom.constrain()(moved, zoom.extent().apply(target, []), zoom.translateExtent()));
-  }, { passive: false });
+  }, { passive: false, signal });
   const end = (event) => { if (event.touches.length < 2) start = null; };
-  target.addEventListener('touchend', end);
-  target.addEventListener('touchcancel', end);
+  target.addEventListener('touchend', end, { signal });
+  target.addEventListener('touchcancel', end, { signal });
 };
 // A chart's controls go in its card's header (.zl-ctools); in full screen the
 // same element moves into the top bar, after Content. Each drawing of the
@@ -1149,8 +1150,10 @@ const pixiNetwork = (renderer, nodes) => {
   return {
     back, litLines, plates, rings, sprites,
     // smaller copies of each face (mipmaps) keep it clean when shrunk
+    // the texture is kept with its picture: every drawing reuses it
     setFace: (i, img) => {
-      sprites[i].texture = PIXI.Texture.from({ resource: img, autoGenerateMipmaps: true });
+      if (!img.zlTexture) img.zlTexture = PIXI.Texture.from({ resource: img, autoGenerateMipmaps: true });
+      sprites[i].texture = img.zlTexture;
       sprites[i].visible = true;
     },
     render: (view) => {
@@ -1158,10 +1161,8 @@ const pixiNetwork = (renderer, nodes) => {
       world.scale.set(view.k);
       renderer.render(stage);
     },
-    destroy: () => {
-      stage.destroy({ children: true });
-      renderer.destroy();
-    },
+    // the scene only: the renderer and the faces' textures stay for the next drawing
+    destroy: () => stage.destroy({ children: true }),
   };
 };
 
@@ -1176,7 +1177,13 @@ const layouts = new Map();
 // lights up its partners; a click keeps that face selected for the panel.
 dash.draw('network', {
   mount: () => ({ sim: null }),
-  unmount: (el, made) => { if (made.sim) made.sim.stop(); if (made.px) made.px.destroy(); onSearch.delete('network'); },
+  unmount: (el, made) => {
+    if (made.sim) made.sim.stop();
+    if (made.px) made.px.destroy();
+    if (made.listen) made.listen.abort();
+    if (made.renderer) made.renderer.then((r) => r && r.destroy());
+    onSearch.delete('network');
+  },
   update: (el, made) => {
     // A redraw while a face is held would swap the canvas under the pointer
     // (the face stops after a few pixels): it waits for the drop. Nothing the
@@ -1189,8 +1196,15 @@ dash.draw('network', {
     if (made.sim && made.sig === sig && inputs.every((d, i) => d === made.inputs[i])) return;
     if (made.sim) made.sim.stop();
     made.sim = null;
-    // a browser has a few WebGL contexts at most: the old one goes first
+    // The canvas and its WebGL renderer live as long as the network: making a
+    // context again on every drawing (full screen draws two or three times in
+    // a row) blacked out a phone's screen for a moment. A drawing builds a new
+    // scene on them; its listeners are dropped with it (made.listen).
     if (made.px) { made.px.destroy(); made.px = null; }
+    if (made.listen) made.listen.abort();
+    const listen = new AbortController();
+    made.listen = listen;
+    const on = (target, type, fn, opts = {}) => target.addEventListener(type, fn, { ...opts, signal: listen.signal });
     onSearch.delete('network');
     el.replaceChildren();
     startTools(el);
@@ -1231,7 +1245,8 @@ dash.draw('network', {
 
     // PixiJS sizes the canvas at device pixels (at most 2x) and draws on it.
     const sharp = Math.min(window.devicePixelRatio || 1, 2);
-    const canvas = document.createElement('canvas');
+    if (!made.canvas) made.canvas = document.createElement('canvas');
+    const canvas = made.canvas;
     let px = null;
     let dirty = true; // faces moved or the lighting changed: the picture is built again
     let found = null; // ids matching the search, or null when nothing is searched
@@ -1421,7 +1436,7 @@ dash.draw('network', {
 
     let held = null;
     let hover = null;
-    canvas.addEventListener('pointermove', (event) => {
+    on(canvas, 'pointermove', (event) => {
       if (held || pan || event.pointerType === 'touch') return;
       const n = faceAt(event);
       if (n === hover) return;
@@ -1430,14 +1445,14 @@ dash.draw('network', {
       light(n ? n.id : focusId(chars));
       if (n) { tipLines(tip, [who.get(n.id).name]); place(n); } else tip.hidden = true;
     });
-    canvas.addEventListener('pointerleave', (event) => {
+    on(canvas, 'pointerleave', (event) => {
       if (held || event.pointerType === 'touch') return;
       hover = null;
       tip.hidden = true;
       light(focusId(chars));
     });
     // a click on a face selects it; on the background, closes the selection
-    canvas.addEventListener('click', (event) => {
+    on(canvas, 'click', (event) => {
       const n = faceAt(event);
       if (n) pick(n.id); else if (view.focus !== false) unpick();
     });
@@ -1477,7 +1492,7 @@ dash.draw('network', {
     const fit = () => { if (autoFit) d3.select(canvas).call(zoom.transform, fitView()); };
     // The wheel over the network only zooms: at a zoom limit d3 lets the wheel
     // through, and the page would scroll instead.
-    wheelZoom(canvas, el);
+    wheelZoom(canvas, el, listen.signal);
     d3.select(canvas).call(zoom).on('dblclick.zoom', null);
     const resetView = () => { autoFit = true; fit(); };
     // The page's search: the faces it finds stand out, the rest fade; Enter
@@ -1489,10 +1504,10 @@ dash.draw('network', {
       paint();
     });
     onSearch.get('network')();
-    canvas.addEventListener('pointerdown', () => searchBox.blur());
+    on(canvas, 'pointerdown', () => searchBox.blur());
     resetButton(el, resetView);
     fullButton(el, el.closest('.zl-card'), () => dash.draw('network'));
-    canvas.addEventListener('dblclick', (event) => { if (!faceAt(event)) resetView(); });
+    on(canvas, 'dblclick', (event) => { if (!faceAt(event)) resetView(); });
 
     // The middle button pans. The pointer is captured, so the release is seen
     // even outside the window; a move with the button no longer down, a lost
@@ -1504,7 +1519,7 @@ dash.draw('network', {
       pan = null;
       canvas.style.cursor = '';
     };
-    canvas.addEventListener('pointerdown', (event) => {
+    on(canvas, 'pointerdown', (event) => {
       if (event.button !== 1) return;
       event.preventDefault();
       canvas.setPointerCapture(event.pointerId);
@@ -1512,7 +1527,7 @@ dash.draw('network', {
       canvas.style.cursor = 'grabbing';
       tip.hidden = true;
     });
-    canvas.addEventListener('pointermove', (event) => {
+    on(canvas, 'pointermove', (event) => {
       if (!pan) return;
       if (!(event.buttons & 4)) { endPan(); return; }
       autoFit = false;
@@ -1520,10 +1535,10 @@ dash.draw('network', {
       canvas.__zoom = view2d; // the wheel zoom goes on from here
       paint();
     });
-    canvas.addEventListener('pointerup', (event) => { if (event.button === 1) endPan(); });
-    canvas.addEventListener('lostpointercapture', endPan);
-    canvas.addEventListener('auxclick', (event) => { if (event.button === 1) event.preventDefault(); });
-    window.addEventListener('blur', endPan);
+    on(canvas, 'pointerup', (event) => { if (event.button === 1) endPan(); });
+    on(canvas, 'lostpointercapture', endPan);
+    on(canvas, 'auxclick', (event) => { if (event.button === 1) event.preventDefault(); });
+    on(window, 'blur', endPan);
     // A drag comes from the left mouse button or one finger. d3 hands a touch
     // drag the whole TouchEvent, which has no position: the finger's own
     // Touch has it.
@@ -1534,15 +1549,15 @@ dash.draw('network', {
     // a face is dragged after a hold (below). A second finger during a drag
     // turns it into a two-finger move: the face is let go where it is.
     let pinching = false;
-    canvas.addEventListener('touchstart', (event) => {
+    on(canvas, 'touchstart', (event) => {
       if (event.touches.length > 1) {
         pinching = true;
         autoFit = false;
         if (held) { held.fx = null; held.fy = null; held = null; tip.hidden = true; canvas.style.cursor = ''; sim.alphaTarget(0); }
       }
     }, { passive: false });
-    canvas.addEventListener('touchend', (event) => { if (!event.touches.length) pinching = false; });
-    canvas.addEventListener('touchcancel', (event) => { if (!event.touches.length) pinching = false; });
+    on(canvas, 'touchend', (event) => { if (!event.touches.length) pinching = false; });
+    on(canvas, 'touchcancel', (event) => { if (!event.touches.length) pinching = false; });
     // A face's drag in three steps, for the mouse, a finger in full screen
     // (d3.drag) and a finger held on a face on the page (below).
     const take = (n) => {
@@ -1596,7 +1611,7 @@ dash.draw('network', {
       if (press.taken) letGo(press.n);
       press = null;
     };
-    canvas.addEventListener('touchstart', (event) => {
+    on(canvas, 'touchstart', (event) => {
       dropPress();
       if (left !== 0 || event.touches.length !== 1) return;
       const t = event.touches[0];
@@ -1610,7 +1625,7 @@ dash.draw('network', {
         if (navigator.vibrate) navigator.vibrate(15);
       }, HOLD_MS);
     }, { passive: true });
-    canvas.addEventListener('touchmove', (event) => {
+    on(canvas, 'touchmove', (event) => {
       if (!press) return;
       const t = [...event.touches].find((f) => f.identifier === press.id);
       if (!t || event.touches.length > 1) { dropPress(); return; }
@@ -1621,15 +1636,15 @@ dash.draw('network', {
       event.preventDefault();
       moveTo(press.n, pointer(t));
     }, { passive: false });
-    canvas.addEventListener('touchend', dropPress);
-    canvas.addEventListener('touchcancel', dropPress);
+    on(canvas, 'touchend', dropPress);
+    on(canvas, 'touchcancel', dropPress);
     // a held finger would open the menu or select the picture
-    canvas.addEventListener('contextmenu', (event) => { if (coarse) event.preventDefault(); });
+    on(canvas, 'contextmenu', (event) => { if (coarse) event.preventDefault(); });
     canvas.style.webkitTouchCallout = 'none';
     canvas.style.userSelect = 'none';
 
     // after d3.drag, which sets touch-action: none (no page scroll over the network)
-    touchZoom(canvas, zoom);
+    touchZoom(canvas, zoom, undefined, listen.signal);
 
     fit();
     light(focusId(chars));
@@ -1646,13 +1661,18 @@ dash.draw('network', {
     made.isHeld = () => held != null;
     if (!window.PIXI) { el.append(node('p', 'zl-note', 'The network could not load its drawing library (PixiJS).')); return; }
     {
-      PIXI.autoDetectRenderer({ canvas, width: W, height: H, resolution: sharp, antialias: true, backgroundAlpha: 0, preference: 'webgl' })
+      // made once, for every drawing after; Pixi's own pointer events are not
+      // used: they set touch-action none on the canvas (no page scroll with a
+      // finger) and keep a ticker running
+      if (!made.renderer) {
+        made.renderer = PIXI.autoDetectRenderer({ canvas, width: W, height: H, resolution: sharp, antialias: true, backgroundAlpha: 0, preference: 'webgl' })
+          .then((renderer) => { if (renderer.events) renderer.events.setTargetElement(null); return renderer; });
+      }
+      made.renderer
         .then((renderer) => {
-          if (made.sim !== sim) { renderer.destroy(); return; } // a newer drawing took its place
-          // Pixi's own pointer events are not used: they set touch-action none
-          // on the canvas (no page scroll with a finger) and keep a ticker
-          // running. The page's touch handling (touchZoom) is put back.
-          if (renderer.events) renderer.events.setTargetElement(null);
+          if (made.sim !== sim) return; // a newer drawing took its place
+          renderer.resize(W, H);
+          canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
           canvas.style.touchAction = 'pan-x pan-y';
           px = pixiNetwork(renderer, nodes);
           made.px = px;
@@ -1803,7 +1823,7 @@ const LIST_WAIT = 700;
 let pageWheelAt = -Infinity;
 window.addEventListener('wheel', (event) => {
   if (event.ctrlKey || document.querySelector('.zl-full')) return;
-  const list = event.target.closest && event.target.closest('.zl-list, .zl-panel');
+  const list = event.target.closest && event.target.closest('.zl-list, .zl-panel, .zl-mates');
   const now = performance.now();
   if (!list) { pageWheelAt = now; return; }
   if (now - pageWheelAt >= LIST_WAIT) return;
