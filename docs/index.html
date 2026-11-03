@@ -76,6 +76,9 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-sec { display: grid; gap: var(--cds-gap-md); }
 .zl-sechead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--cds-gap-sm); }
 .zl-sechead h2 { margin: 0; }
+.zl-sechead-tools { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); }
+/* a character whose 3 months are still running, or with no release (all its art) */
+.zl-so-far { margin-left: 0.35em; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
 .zl-topbar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--cds-gap-sm); padding-block: var(--cds-pad-sm); background: var(--color-bg); border-bottom: 1px solid var(--color-border-line); }
 .zl-topbar-left { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cds-gap-md); }
 /* right: Content, and in full screen the chart's buttons after it */
@@ -313,12 +316,18 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 <section class="zl-sec" id="leaderboard">
   <div class="zl-sechead">
     <h2>Leaderboard</h2>
+    <div class="zl-sechead-tools">
+    <div class="zl-seg" role="group" aria-label="Period">
+      <button type="button" data-period="all" aria-pressed="true">All time</button>
+      <button type="button" data-period="window" aria-pressed="false" title="Art up to 3 months after each character's release, art from before release included">First 3 months</button>
+    </div>
     <div class="zl-seg" role="group" aria-label="Sort by">
       <button type="button" data-sort="total" aria-pressed="true">Most posts</button>
       <button type="button" data-sort="share" aria-pressed="false">Highest R-18 share</button>
     </div>
+    </div>
   </div>
-  <div class="zl-podium" data-draw="podium" data-source="totals_zzz board_zzz totals_genshin board_genshin totals_hsr board_hsr"></div>
+  <div class="zl-podium" data-draw="podium" data-source="totals_zzz totals_window_zzz board_zzz totals_genshin totals_window_genshin board_genshin totals_hsr totals_window_hsr board_hsr"></div>
   <div class="zl-card">
     <div class="zl-tools">
       <h3>Every character</h3>
@@ -326,7 +335,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
     <ul class="zl-key" data-legend="all"><li><span class="zl-sw zl-sw-all"></span>All posts (count at the end)</li><li><span class="zl-sw zl-sw-r18"></span>R-18 part (share inside)</li></ul>
     <ul class="zl-key" data-legend="r18" hidden><li><span class="zl-sw zl-sw-r18"></span>R-18 posts (count at the end)</li></ul>
     <ul class="zl-key" data-legend="safe" hidden><li><span class="zl-sw zl-sw-all"></span>Posts without R-18 (count at the end)</li></ul>
-    <ol class="zl-list" data-draw="bars" data-source="totals_zzz board_zzz totals_genshin board_genshin totals_hsr board_hsr"></ol>
+    <ol class="zl-list" data-draw="bars" data-source="totals_zzz totals_window_zzz board_zzz totals_genshin totals_window_genshin board_genshin totals_hsr totals_window_hsr board_hsr"></ol>
   </div>
   <div class="zl-card">
     <div class="zl-cardhead">
@@ -334,7 +343,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
       <span class="zl-hint-short"><span class="zl-mouse">Hold Ctrl and scroll to zoom</span><span class="zl-touch">Two fingers to zoom</span></span>
       <div class="zl-ctools"></div>
     </div>
-    <div class="zl-chart" data-draw="scatter" data-source="totals_zzz board_zzz totals_genshin board_genshin totals_hsr board_hsr"></div>
+    <div class="zl-chart" data-draw="scatter" data-source="totals_zzz totals_window_zzz board_zzz totals_genshin totals_window_genshin board_genshin totals_hsr totals_window_hsr board_hsr"></div>
   </div>
 </section>
 
@@ -376,7 +385,7 @@ const savedGame = () => { try { return localStorage.getItem('tagstats-game'); } 
 // link opens that game; else the one this browser showed last; else the first.
 const linkGame = () => new URLSearchParams(location.search).get('game');
 const knownGame = (id) => GAMES.some((g) => g.id === id);
-const view = { sort: 'total', query: '', focus: null, measure: 'all',
+const view = { sort: 'total', period: 'all', query: '', focus: null, measure: 'all',
                game: knownGame(linkGame()) ? linkGame() : knownGame(savedGame()) ? savedGame() : GAMES[0].id };
 // the address follows the game shown, so a copied link opens it
 const gameInLink = () => {
@@ -421,6 +430,33 @@ dash.calc('totals_zzz', {
         const has = parts.filter((s) => r[s + '_total'] != null);
         const total = has.length ? d3.sum(has, (s) => r[s + '_total']) : null;
         const r18 = has.length ? d3.sum(has, (s) => r[s + '_r18'] ?? 0) : null;
+        return { sites: key, id: r.id, total, r18, share: total ? r18 / total : null };
+      });
+      const has = rows.filter((r) => r.total != null);
+      has.sort((a, b) => b.total - a.total).forEach((r, i) => { r.rank = i + 1; });
+      has.sort((a, b) => b.r18 - a.r18).forEach((r, i) => { r.rank_r18 = i + 1; });
+      has.sort((a, b) => (b.total - b.r18) - (a.total - a.r18)).forEach((r, i) => { r.rank_safe = i + 1; });
+      out.push(...rows);
+    }
+    return out;
+  },
+});
+
+dash.calc('totals_window_zzz', {
+  inputs: ['board_zzz'],
+  title: 'ZZZ: Posts per character up to 3 months after release',
+  description: 'Posts and R-18 posts up to 3 months after each character\'s release (art before release included), added up over the chosen sites, the R-18 share, and the rank by all posts, by R-18 posts and by posts without R-18.',
+  fn: (board) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const keys = [];
+    for (let m = 1; m < 1 << sites.length; m++) keys.push(sites.filter((s, i) => m & (1 << i)).sort().join('+'));
+    const out = [];
+    for (const key of keys) {
+      const parts = key.split('+');
+      const rows = board.map((r) => {
+        const has = parts.filter((s) => r['w_' + s + '_total'] != null);
+        const total = has.length ? d3.sum(has, (s) => r['w_' + s + '_total']) : null;
+        const r18 = has.length ? d3.sum(has, (s) => r['w_' + s + '_r18'] ?? 0) : null;
         return { sites: key, id: r.id, total, r18, share: total ? r18 / total : null };
       });
       const has = rows.filter((r) => r.total != null);
@@ -490,6 +526,33 @@ dash.calc('totals_genshin', {
   },
 });
 
+dash.calc('totals_window_genshin', {
+  inputs: ['board_genshin'],
+  title: 'Genshin: Posts per character up to 3 months after release',
+  description: 'Posts and R-18 posts up to 3 months after each character\'s release (art before release included), added up over the chosen sites, the R-18 share, and the rank by all posts, by R-18 posts and by posts without R-18.',
+  fn: (board) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const keys = [];
+    for (let m = 1; m < 1 << sites.length; m++) keys.push(sites.filter((s, i) => m & (1 << i)).sort().join('+'));
+    const out = [];
+    for (const key of keys) {
+      const parts = key.split('+');
+      const rows = board.map((r) => {
+        const has = parts.filter((s) => r['w_' + s + '_total'] != null);
+        const total = has.length ? d3.sum(has, (s) => r['w_' + s + '_total']) : null;
+        const r18 = has.length ? d3.sum(has, (s) => r['w_' + s + '_r18'] ?? 0) : null;
+        return { sites: key, id: r.id, total, r18, share: total ? r18 / total : null };
+      });
+      const has = rows.filter((r) => r.total != null);
+      has.sort((a, b) => b.total - a.total).forEach((r, i) => { r.rank = i + 1; });
+      has.sort((a, b) => b.r18 - a.r18).forEach((r, i) => { r.rank_r18 = i + 1; });
+      has.sort((a, b) => (b.total - b.r18) - (a.total - a.r18)).forEach((r, i) => { r.rank_safe = i + 1; });
+      out.push(...rows);
+    }
+    return out;
+  },
+});
+
 dash.calc('pair_totals_genshin', {
   inputs: ['pairs_genshin', 'totals_genshin'],
   title: 'Genshin: Crossovers for each choice of sites',
@@ -535,6 +598,33 @@ dash.calc('totals_hsr', {
         const has = parts.filter((s) => r[s + '_total'] != null);
         const total = has.length ? d3.sum(has, (s) => r[s + '_total']) : null;
         const r18 = has.length ? d3.sum(has, (s) => r[s + '_r18'] ?? 0) : null;
+        return { sites: key, id: r.id, total, r18, share: total ? r18 / total : null };
+      });
+      const has = rows.filter((r) => r.total != null);
+      has.sort((a, b) => b.total - a.total).forEach((r, i) => { r.rank = i + 1; });
+      has.sort((a, b) => b.r18 - a.r18).forEach((r, i) => { r.rank_r18 = i + 1; });
+      has.sort((a, b) => (b.total - b.r18) - (a.total - a.r18)).forEach((r, i) => { r.rank_safe = i + 1; });
+      out.push(...rows);
+    }
+    return out;
+  },
+});
+
+dash.calc('totals_window_hsr', {
+  inputs: ['board_hsr'],
+  title: 'HSR: Posts per character up to 3 months after release',
+  description: 'Posts and R-18 posts up to 3 months after each character\'s release (art before release included), added up over the chosen sites, the R-18 share, and the rank by all posts, by R-18 posts and by posts without R-18.',
+  fn: (board) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const keys = [];
+    for (let m = 1; m < 1 << sites.length; m++) keys.push(sites.filter((s, i) => m & (1 << i)).sort().join('+'));
+    const out = [];
+    for (const key of keys) {
+      const parts = key.split('+');
+      const rows = board.map((r) => {
+        const has = parts.filter((s) => r['w_' + s + '_total'] != null);
+        const total = has.length ? d3.sum(has, (s) => r['w_' + s + '_total']) : null;
+        const r18 = has.length ? d3.sum(has, (s) => r['w_' + s + '_r18'] ?? 0) : null;
         return { sites: key, id: r.id, total, r18, share: total ? r18 / total : null };
       });
       const has = rows.filter((r) => r.total != null);
@@ -599,6 +689,10 @@ const searchLit = () => document.activeElement === searchBox && queryWords().len
 const onSearch = new Map();
 const searched = (kind) => onSearch.forEach((f) => f(kind));
 const totalsFor = (key) => D('totals').data.filter((r) => r.sites === key && r.total != null);
+// The leaderboard's totals: all time, or up to 3 months after release (the
+// network and the pairs are all time).
+const boardTotals = () => (view.period === 'window' ? 'totals_window' : 'totals');
+const boardTotalsFor = (key) => D(boardTotals()).data.filter((r) => r.sites === key && r.total != null);
 const pairsFor = (key) => D('pair_totals').data.filter((r) => r.sites === key && r.total > 0);
 const text = (el, value) => { el.textContent = value == null ? '—' : value; };
 const icon = (src, size) => { const img = document.createElement('img'); img.src = src || ''; img.alt = ''; if (size) { img.width = size; img.height = size; } return img; };
@@ -718,10 +812,10 @@ const shareBar = (share) => {
 
 dash.draw('podium', (el) => {
   el.replaceChildren();
-  if (!ready('totals', 'board')) return;
+  if (!ready(boardTotals(), 'board')) return;
   const who = people();
   const v = measure();
-  sorted(totalsFor(keyOf(chosen())).filter((r) => v(r) > 0), v).slice(0, 3).forEach((r, i) => {
+  sorted(boardTotalsFor(keyOf(chosen())).filter((r) => v(r) > 0), v).slice(0, 3).forEach((r, i) => {
     const p = who.get(r.id);
     const card = node('div', 'zl-place');
     card.append(node('div', 'zl-rank', `#${i + 1}`), icon(p.icon, 84), node('div', 'zl-name', p.name),
@@ -735,10 +829,10 @@ dash.draw('podium', (el) => {
 
 dash.draw('bars', (el) => {
   el.replaceChildren();
-  if (!ready('totals', 'board')) return;
+  if (!ready(boardTotals(), 'board')) return;
   const who = people();
   const v = measure();
-  let rows = totalsFor(keyOf(chosen())).filter((r) => v(r) > 0);
+  let rows = boardTotalsFor(keyOf(chosen())).filter((r) => v(r) > 0);
   const max = d3.max(rows, v) || 1;
   // the search marks the characters it finds (the rest fade) and scrolls the
   // list to the first of them
@@ -751,7 +845,9 @@ dash.draw('bars', (el) => {
     const p = who.get(r.id);
     const li = node('li', q.length ? (hit(r) ? 'zl-row zl-hit' : 'zl-row zl-miss') : 'zl-row');
     li.dataset.key = r.id;
-    li.append(node('span', 'zl-n', r[RANK[view.measure]]), icon(p.icon, 32), node('span', 'zl-name', p.name),
+    const name = node('span', 'zl-name', p.name);
+    if (view.period === 'window' && (p.w_incomplete || p.w_unreleased)) name.append(node('span', 'zl-so-far', p.w_unreleased ? 'all time' : 'so far'));
+    li.append(node('span', 'zl-n', r[RANK[view.measure]]), icon(p.icon, 32), name,
       view.measure === 'all' ? barLine(r.total, r.r18, max) : barLine(v(r), null, max));
     return li;
   }, first);
@@ -904,10 +1000,10 @@ dash.draw('scatter', (el) => {
   el.replaceChildren();
   onSearch.delete('scatter');
   startTools(el);
-  if (!ready('totals', 'board')) return;
+  if (!ready(boardTotals(), 'board')) return;
   const who = people();
   const v = measure();
-  const pts = totalsFor(keyOf(chosen())).filter((r) => v(r) > 0).map((r) => ({ ...r, p: who.get(r.id), amount: v(r) }));
+  const pts = boardTotalsFor(keyOf(chosen())).filter((r) => v(r) > 0).map((r) => ({ ...r, p: who.get(r.id), amount: v(r) }));
   if (!pts.length) return;
   const W = el.clientWidth || 600;
   const H = el.closest('.zl-full') ? Math.max(320, el.clientHeight) : 380;
@@ -1821,6 +1917,15 @@ document.querySelectorAll('.zl-sites input').forEach((box) => {
   box.addEventListener('change', () => {
     if (!document.querySelector('.zl-sites input:checked')) box.checked = true;
     redrawAll();
+  });
+});
+document.querySelectorAll('[data-period]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    view.period = btn.dataset.period;
+    document.querySelectorAll('[data-period]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+    dash.draw('podium');
+    dash.draw('bars');
+    dash.draw('scatter');
   });
 });
 document.querySelectorAll('[data-sort]').forEach((btn) => {
