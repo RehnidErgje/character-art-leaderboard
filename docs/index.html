@@ -236,6 +236,8 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 @media (max-width: 900px) {
   .zl-panel { position: static; width: auto; max-height: none; margin-top: var(--cds-gap-md); box-shadow: none; }
   .zl-netwrap:not(.zl-full .zl-netwrap) .zl-mates { max-height: 420px; overflow: auto; }
+  /* as specific as the rule above, or it would win and the list would take a page swipe */
+  .zl-pagescroll .zl-netwrap:not(.zl-full .zl-netwrap) .zl-mates { overflow: hidden; }
   /* full screen on a narrow screen: the panel is a sheet at the bottom of the
      network, the face and its share only; open (zl-open) it covers the
      network with the list */
