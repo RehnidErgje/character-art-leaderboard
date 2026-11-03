@@ -201,6 +201,8 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-chart { min-width: 0; }
 .zl-panel { position: absolute; top: var(--cds-pad-sm); right: var(--cds-pad-sm); z-index: 3; width: min(22rem, 45%); max-height: calc(100% - 2 * var(--cds-pad-sm)); overflow: auto; box-sizing: border-box; display: grid; gap: var(--cds-gap-sm); align-content: start; padding: var(--cds-pad-md); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-bg); box-shadow: var(--cds-shadow-popover); }
 .zl-panel-head { display: flex; align-items: center; gap: var(--cds-gap-sm); }
+/* the sheet's arrow (full screen, narrow): up to open, down to close */
+.zl-sheet-arrow { display: none; margin-left: auto; width: 0.6em; height: 0.6em; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(0.2em) rotate(-135deg); color: var(--color-fg-muted); }
 .zl-panel-head img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; }
 .zl-close { margin-left: auto; align-self: flex-start; width: 28px; height: 28px; padding: 0; border: 1px solid var(--color-border-line); border-radius: 50%; background: var(--color-panel); color: var(--color-fg-muted); font: inherit; font-size: 18px; line-height: 1; cursor: pointer; }
 .zl-close:hover { color: var(--color-fg); }
@@ -232,8 +234,15 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 [data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
 @media (max-width: 900px) {
   .zl-panel { position: static; width: auto; max-height: none; margin-top: var(--cds-gap-md); box-shadow: none; }
-  /* full screen on a narrow screen: the panel is a sheet over the bottom of the network */
-  .zl-full .zl-panel { position: absolute; top: auto; left: var(--cds-pad-sm); right: var(--cds-pad-sm); bottom: var(--cds-pad-sm); width: auto; max-height: 42%; margin: 0; overflow: auto; box-shadow: var(--cds-shadow-popover); }
+  /* full screen on a narrow screen: the panel is a sheet at the bottom of the
+     network, the face and its share only; open (zl-open) it covers the
+     network with the list */
+  .zl-full .zl-panel { position: absolute; top: auto; left: var(--cds-pad-sm); right: var(--cds-pad-sm); bottom: var(--cds-pad-sm); width: auto; max-height: none; margin: 0; overflow: hidden; cursor: pointer; box-shadow: var(--cds-shadow-popover); }
+  .zl-full .zl-panel:not(.zl-open) > :not(.zl-panel-head):not(.zl-bar) { display: none; }
+  .zl-full .zl-panel.zl-open { top: var(--cds-pad-sm); overflow: auto; }
+  .zl-full .zl-sheet-arrow { display: block; }
+  .zl-full .zl-sheet-arrow + .zl-close { margin-left: var(--cds-gap-sm); }
+  .zl-full .zl-panel.zl-open .zl-sheet-arrow { transform: translateY(0.15em) rotate(45deg); }
 }
 @media (max-width: 640px) {
   .zl-topbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
@@ -1521,19 +1530,16 @@ dash.draw('network', {
     const fingerOf = (source, id) => (source && source.changedTouches
       ? [...source.changedTouches].find((t) => id == null || t.identifier === id) || source.changedTouches[0]
       : source);
-    // In full screen a finger that lands on a face drags it; on the page one
-    // finger always scrolls (a tap picks a face) and two move and zoom. A
-    // second finger during a drag turns it into a two-finger move: the face
-    // is let go where it is.
+    // One finger scrolls the page (a tap picks a face) and two move and zoom;
+    // a face is dragged after a hold (below). A second finger during a drag
+    // turns it into a two-finger move: the face is let go where it is.
     let pinching = false;
     canvas.addEventListener('touchstart', (event) => {
       if (event.touches.length > 1) {
         pinching = true;
         autoFit = false;
         if (held) { held.fx = null; held.fy = null; held = null; tip.hidden = true; canvas.style.cursor = ''; sim.alphaTarget(0); }
-        return;
       }
-      if (full && left === 0 && faceAt(event.touches[0])) event.preventDefault();
     }, { passive: false });
     canvas.addEventListener('touchend', (event) => { if (!event.touches.length) pinching = false; });
     canvas.addEventListener('touchcancel', (event) => { if (!event.touches.length) pinching = false; });
@@ -1569,7 +1575,7 @@ dash.draw('network', {
       if (made.pending) { made.pending = false; dash.draw('network'); }
     };
     d3.select(canvas).call(d3.drag()
-      .filter((event) => left === 0 && (event.touches ? full && event.touches.length === 1 : event.button === 0))
+      .filter((event) => left === 0 && !event.touches && event.button === 0)
       .subject((event) => faceAt(fingerOf(event.sourceEvent) || event))
       .on('start', (event) => take(event.subject))
       .on('drag', (event) => {
@@ -1578,11 +1584,11 @@ dash.draw('network', {
       })
       .on('end', (event) => letGo(event.subject)));
 
-    // On the page one finger scrolls; a finger held still on a face for
-    // HOLD_MS takes it (a short buzz where the phone can), and the face
-    // follows the finger until it lifts. Moving first, or a second finger,
-    // leaves the page to scroll or the view to zoom.
-    const HOLD_MS = 300;
+    // A finger held still on a face for HOLD_MS takes it (a short buzz where
+    // the phone can), and the face follows the finger until it lifts. Moving
+    // first, or a second finger, leaves the page to scroll or the view to
+    // zoom. In full screen there is no page to scroll: a shorter hold.
+    const HOLD_MS = full ? 100 : 300;
     let press = null;
     const dropPress = () => {
       if (!press) return;
@@ -1592,7 +1598,7 @@ dash.draw('network', {
     };
     canvas.addEventListener('touchstart', (event) => {
       dropPress();
-      if (full || left !== 0 || event.touches.length !== 1) return;
+      if (left !== 0 || event.touches.length !== 1) return;
       const t = event.touches[0];
       const n = faceAt(t);
       if (!n) return;
@@ -1682,7 +1688,19 @@ dash.draw('focus-panel', (el) => {
   close.type = 'button';
   close.setAttribute('aria-label', `Close ${p.name}, show every line`);
   close.addEventListener('click', () => { view.focus = false; relight(); dash.draw('focus-panel'); });
-  head.append(icon(p.icon, 64), title, close);
+  // Full screen on a narrow screen the panel is a sheet: at the bottom only
+  // the face, its share and the arrow; a tap opens it over the network with
+  // the list, another closes it. A partner in the list is picked as anywhere.
+  const arrow = node('span', 'zl-sheet-arrow');
+  arrow.setAttribute('aria-hidden', 'true');
+  head.append(icon(p.icon, 64), title, arrow, close);
+  el.classList.toggle('zl-open', Boolean(view.sheetOpen));
+  el.onclick = (event) => {
+    if (!el.closest('.zl-full') || event.target.closest('.zl-close, .zl-mate')) return;
+    view.sheetOpen = !view.sheetOpen;
+    el.classList.toggle('zl-open', view.sheetOpen);
+    el.scrollTop = 0;
+  };
   el.append(head);
   if (view.measure !== 'safe') el.append(shareBar(row.share));
   el.append(node('p', 'zl-note', `Drawn together with ${fmt(mates.length)} other characters.`),
