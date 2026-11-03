@@ -227,7 +227,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
   </div>
   <div class="zl-card">
     <h3>Posts against R-18 share</h3>
-    <p class="zl-note">Each face is one character. Further right means more posts (log scale); higher means a larger R-18 share. Ctrl + scroll to zoom; hold the middle mouse button to move; double-click the background to reset.</p>
+    <p class="zl-note">Each face is one character. Further right means more posts (log scale); higher means a larger R-18 share. Ctrl + scroll to zoom; hold the middle mouse button to move; double-click the background to reset. On a touch screen: two fingers move and zoom.</p>
     <div class="zl-chart" data-draw="scatter" data-source="totals_zzz board_zzz totals_genshin board_genshin totals_hsr board_hsr"></div>
   </div>
 </section>
@@ -240,7 +240,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
     <div class="zl-tools">
       <h3>Who gets drawn with whom</h3>
     </div>
-    <p class="zl-note">Every character, each joined to its closest partners. Point at a face to light up everyone it is drawn with, click it to keep it on the right, drag it to pull its group around. Ctrl + scroll to zoom; hold the middle mouse button to move the view; double-click the background to reset.</p>
+    <p class="zl-note">Every character, each joined to its closest partners. Point at a face to light up everyone it is drawn with, click it to keep it on the right, drag it to pull its group around. Ctrl + scroll to zoom; hold the middle mouse button to move the view; double-click the background to reset. On a touch screen: tap a face to keep it, two fingers move and zoom.</p>
     <div class="zl-netwrap">
       <div class="zl-chart zl-net" data-draw="network" data-source="pair_totals_zzz totals_zzz board_zzz pair_totals_genshin totals_genshin board_genshin pair_totals_hsr totals_hsr board_hsr"></div>
       <aside class="zl-panel" data-draw="focus-panel" data-source="pair_totals_zzz totals_zzz board_zzz pair_totals_genshin totals_genshin board_genshin pair_totals_hsr totals_hsr board_hsr"></aside>
@@ -690,17 +690,60 @@ const wheelStep = (event) => -event.deltaY * (event.deltaMode === 1 ? 0.05 : eve
 
 // Ctrl + wheel zooms (the page's own Ctrl zoom is held back over the chart);
 // a plain wheel scrolls the page as anywhere else and briefly shows a hint.
+// On a touch screen one finger scrolls the page, and the hint says how to
+// move the chart instead.
 const wheelZoom = (target, box) => {
   const hint = node('div', 'zl-hint', 'Ctrl + scroll to zoom');
   hint.hidden = true;
   box.append(hint);
   let timer = null;
-  target.addEventListener('wheel', (event) => {
-    if (event.ctrlKey) { event.preventDefault(); return; }
+  const show = (text) => {
+    hint.textContent = text;
     hint.hidden = false;
     clearTimeout(timer);
     timer = setTimeout(() => { hint.hidden = true; }, 1200);
+  };
+  target.addEventListener('wheel', (event) => {
+    if (event.ctrlKey) { event.preventDefault(); return; }
+    show('Ctrl + scroll to zoom');
   }, { passive: false });
+  target.addEventListener('touchmove', (event) => {
+    if (event.touches.length === 1) show('Use two fingers to move and zoom');
+  }, { passive: true });
+};
+// Touch screens, as an embedded map: one finger scrolls the page (a tap still
+// picks a face), two fingers move and pinch-zoom the chart. d3.zoom's own
+// touch handling cannot do this: it starts on the first finger, which must
+// stay the page's. scale() turns screen pixels into the chart's own (an SVG
+// drawn through a viewBox). The zoom's limits and extent still hold.
+const touchZoom = (target, zoom, scale = () => 1) => {
+  target.style.touchAction = 'pan-x pan-y';
+  const at = (t) => {
+    const box = target.getBoundingClientRect();
+    const f = scale();
+    return [((t[0].clientX + t[1].clientX) / 2 - box.left) * f, ((t[0].clientY + t[1].clientY) / 2 - box.top) * f];
+  };
+  const apart = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY) || 1;
+  let start = null;
+  target.addEventListener('touchstart', (event) => {
+    if (event.touches.length !== 2) return;
+    event.preventDefault();
+    start = { from: d3.zoomTransform(target), at: at(event.touches), apart: apart(event.touches) };
+  }, { passive: false });
+  target.addEventListener('touchmove', (event) => {
+    if (!start || event.touches.length !== 2) return;
+    event.preventDefault();
+    const [kMin, kMax] = zoom.scaleExtent();
+    const k = Math.max(kMin, Math.min(kMax, start.from.k * apart(event.touches) / start.apart));
+    // the point of the chart first under the fingers stays under them
+    const [px, py] = start.from.invert(start.at);
+    const [mx, my] = at(event.touches);
+    const moved = d3.zoomIdentity.translate(mx - px * k, my - py * k).scale(k);
+    d3.select(target).call(zoom.transform, zoom.constrain()(moved, zoom.extent().apply(target, []), zoom.translateExtent()));
+  }, { passive: false });
+  const end = (event) => { if (event.touches.length < 2) start = null; };
+  target.addEventListener('touchend', end);
+  target.addEventListener('touchcancel', end);
 };
 // A small button in the corner that puts the view back; a double-click on
 // the background does the same.
@@ -751,7 +794,7 @@ dash.draw('scatter', (el) => {
   const H = 380;
   const I = W < 520 ? 22 : 30;
   const bottom = H - 34;
-  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).style('touch-action', 'none');
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
   const y0 = d3.scaleLinear([0, d3.max(pts, (d) => d.share)], [H - 40, I / 2 + 6]).nice();
   const yAxis = svg.append('g');
   yAxis.call(d3.axisLeft(y0).ticks(5, '.0%').tickSize(0)).attr('font-size', null).attr('font-family', null);
@@ -796,6 +839,7 @@ dash.draw('scatter', (el) => {
   svg.call(zoom).on('dblclick.zoom', null);
   middlePan(svg.node(), zoom, () => W / el.clientWidth);
   wheelZoom(svg.node(), el);
+  touchZoom(svg.node(), zoom, () => W / el.clientWidth);
   const reset = () => svg.call(zoom.transform, d3.zoomIdentity);
   resetButton(el, reset);
   svg.on('dblclick.reset', (event) => { if (!event.target.closest('.zl-pt')) reset(); });
@@ -980,7 +1024,7 @@ dash.draw('network', {
       paint();
     };
     canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-    canvas.style.display = 'block'; canvas.style.touchAction = 'none';
+    canvas.style.display = 'block';
     canvas.setAttribute('role', 'img');
     canvas.setAttribute('aria-label', 'Network of characters drawn together');
     el.append(canvas);
@@ -1222,6 +1266,9 @@ dash.draw('network', {
         event.subject.fx = null; event.subject.fy = null;
         if (made.pending) { made.pending = false; dash.draw('network'); }
       }));
+
+    // after d3.drag, which sets touch-action: none (no page scroll over the network)
+    touchZoom(canvas, zoom);
 
     setScale(sharp);
     light(focusId(chars));
