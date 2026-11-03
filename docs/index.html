@@ -165,7 +165,9 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-mate-body .zl-name { font-size: var(--cds-font-size-caption); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .zl-mate .zl-bar { height: 18px; }
 .zl-hint { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 4; pointer-events: none; padding: var(--cds-pad-sm) var(--cds-pad-md); border-radius: var(--cds-radius); background: var(--cds-surface-popover); border: 1px solid var(--cds-border); box-shadow: var(--cds-shadow-popover); font-size: var(--cds-font-size-body); }
-.zl-tools { position: absolute; top: var(--cds-pad-xs); right: var(--cds-pad-xs); z-index: 2; display: flex; gap: var(--cds-gap-xs); }
+.zl-tools { position: absolute; top: var(--cds-pad-xs); right: var(--cds-pad-xs); z-index: 2; display: flex; align-items: center; gap: var(--cds-gap-xs); }
+.zl-size-box { display: inline-flex; align-items: center; gap: var(--cds-gap-xs); padding: 2px var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-panel); color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.zl-size { width: 6rem; margin: 0; accent-color: var(--color-fg); }
 .zl-reset { font: inherit; font-size: var(--cds-font-size-caption); padding: 2px var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-panel); color: var(--color-fg-muted); cursor: pointer; }
 .zl-reset:hover { color: var(--color-fg); }
 .zl-reset:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
@@ -834,12 +836,6 @@ dash.draw('scatter', (el) => {
   const W = el.clientWidth || 600;
   const H = el.classList.contains('zl-full') ? Math.max(320, el.clientHeight) : 380;
   const I = W < 520 ? 22 : 30;
-  // Each face is as big as its room allows: half the way to its nearest
-  // neighbour on screen, between R_MIN and R_MAX. Faces never cover each
-  // other, and a face standing apart, or spread from the others by zooming
-  // in, shows large.
-  const R_MIN = 4;
-  const R_MAX = W < 520 ? 30 : 44;
   const bottom = H - 34;
   const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
   const y0 = d3.scaleLinear([0, d3.max(pts, (d) => d.share)], [H - 40, I / 2 + 6]).nice();
@@ -862,18 +858,13 @@ dash.draw('scatter', (el) => {
   const g = plot.selectAll('g').data(pts.sort((a, b) => b.amount - a.amount)).join('g').attr('class', 'zl-pt');
   const pic = g.append('image').attr('href', (d) => d.p.icon || '').attr('clip-path', 'url(#zl-clip-scatter)');
   const ring = g.append('circle');
+  // Face size: the slider beside the chart's buttons, the same for every face.
+  let face = view.face || I;
   const size = () => {
-    const at = pts.map((d) => [x(d.amount), y(d.share)]);
-    pts.forEach((d, i) => {
-      let near = Infinity;
-      for (let j = 0; j < at.length; j++) {
-        if (j !== i) near = Math.min(near, Math.hypot(at[i][0] - at[j][0], at[i][1] - at[j][1]));
-      }
-      d.r = Math.max(R_MIN, Math.min(R_MAX, near / 2 - 1));
-    });
-    pic.attr('x', (d) => -d.r).attr('y', (d) => -d.r).attr('width', (d) => 2 * d.r).attr('height', (d) => 2 * d.r);
-    ring.attr('r', (d) => d.r);
+    pic.attr('x', -face / 2).attr('y', -face / 2).attr('width', face).attr('height', face);
+    ring.attr('r', face / 2);
   };
+  size();
 
   let x = x0;
   let y = y0;
@@ -885,7 +876,6 @@ dash.draw('scatter', (el) => {
     grid.selectAll('line').data(y.ticks(5)).join('line')
       .attr('x1', left).attr('x2', W).attr('y1', (d) => y(d)).attr('y2', (d) => y(d)).style('stroke', 'var(--cds-chart-grid)');
     g.attr('transform', (d) => `translate(${x(d.amount)},${y(d.share)})`);
-    size();
   };
   place();
 
@@ -900,6 +890,13 @@ dash.draw('scatter', (el) => {
   wheelZoom(svg.node(), el);
   touchZoom(svg.node(), zoom, () => W / el.clientWidth);
   const reset = () => svg.call(zoom.transform, d3.zoomIdentity);
+  const slider = node('input', 'zl-size');
+  Object.assign(slider, { type: 'range', min: 10, max: 80, step: 2, value: face });
+  slider.setAttribute('aria-label', 'Face size');
+  slider.addEventListener('input', () => { face = Number(slider.value); view.face = face; size(); });
+  const sizeBox = node('label', 'zl-size-box', 'Face size');
+  sizeBox.append(slider);
+  tools(el).append(sizeBox);
   resetButton(el, reset);
   fullButton(el, el, () => dash.draw('scatter'));
   svg.on('dblclick.reset', (event) => { if (!event.target.closest('.zl-pt')) reset(); });
@@ -910,7 +907,7 @@ dash.draw('scatter', (el) => {
     tip.hidden = false;
     const k = el.clientWidth / W;
     tip.style.left = Math.max(0, Math.min(el.clientWidth - tip.offsetWidth, x(d.amount) * k - tip.offsetWidth / 2)) + 'px';
-    tip.style.top = Math.max(0, (y(d.share) - d.r) * k - tip.offsetHeight - 6) + 'px';
+    tip.style.top = Math.max(0, (y(d.share) - face / 2) * k - tip.offsetHeight - 6) + 'px';
   }).on('pointerleave', () => { tip.hidden = true; });
 });
 
@@ -1252,14 +1249,17 @@ dash.draw('network', {
 
     // Wheel zooms, the middle button pans; the left button belongs to the faces.
     // The whole network fits the box at 1x, so the view zooms in only. It may
-    // move off the network by at most half its size each way, so the network
-    // can never be lost outside the box.
+    // move off the network by at most its own size each way, so the network
+    // can never be lost outside the box. Sharp again only once the view has
+    // rested a moment: two fingers end a zoom on every move, and switching
+    // the canvas size each time made it flicker.
+    let sharpTimer = null;
     const zoom = d3.zoom().scaleExtent([1, 20])
       .extent([[0, 0], [W, H]])
-      .translateExtent([[-W / 2, -H / 2], [W * 1.5, H * 1.5]])
+      .translateExtent([[-W, -H], [W * 2, H * 2]])
       .filter((event) => event.type === 'wheel' && event.ctrlKey)
       .wheelDelta(wheelStep)
-      .on('end', () => setScale(sharp))
+      .on('end', () => { clearTimeout(sharpTimer); sharpTimer = setTimeout(() => setScale(sharp), 200); })
       .on('zoom', (event) => { view2d = event.transform; tip.hidden = true; setScale(1); paint(); });
     // The wheel over the network only zooms: at a zoom limit d3 lets the wheel
     // through, and the page would scroll instead.
@@ -1274,8 +1274,8 @@ dash.draw('network', {
     // even outside the window; a move with the button no longer down, a lost
     // capture or the window losing focus ends the pan too, so it never sticks.
     const keepInside = (t) => {
-      const x = Math.min(W / 2 * t.k, Math.max(W - W * 1.5 * t.k, t.x));
-      const y = Math.min(H / 2 * t.k, Math.max(H - H * 1.5 * t.k, t.y));
+      const x = Math.min(W * t.k, Math.max(W - W * 2 * t.k, t.x));
+      const y = Math.min(H * t.k, Math.max(H - H * 2 * t.k, t.y));
       return d3.zoomIdentity.translate(x, y).scale(t.k);
     };
     let pan = null;
