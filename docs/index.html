@@ -1,0 +1,1366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Character Art Leaderboard</title>
+<meta name="description" content="How much fan art each character of Zenless Zone Zero, Genshin Impact and Honkai: Star Rail has on Danbooru, Rule34 and pixiv, the R-18 share, and who is drawn together.">
+<style>
+:root {
+  color-scheme: light dark;
+  --color-bg: #faf9f5; --color-panel: #ffffff; --color-fg: #141413; --color-fg-muted: #6b6a65;
+  --color-border-line: rgb(20 20 19 / .13); --color-warn: #a86a00;
+  --cds-border: rgb(20 20 19 / .1); --cds-chart-grid: rgb(20 20 19 / .08);
+  --cds-surface-popover: #ffffff; --cds-shadow-popover: 0 8px 24px #0000001f, 0 2px 6px #00000014;
+  --cds-text-secondary: #6b6a65;
+  --cds-dur-slow: .45s;
+  --cds-font-size-body: .8125rem; --cds-font-size-caption: .6875rem; --cds-font-size-heading: .875rem; --cds-font-size-title: 1.25rem;
+  --cds-font-weight-medium: 500;
+  --cds-gap-xs: .375rem; --cds-gap-sm: .5rem; --cds-gap-md: .75rem; --cds-gap-xl: 2rem;
+  --cds-pad-xs: .25rem; --cds-pad-sm: .375rem; --cds-pad-md: .5rem; --cds-pad-lg: .75rem;
+  --cds-radius: .375rem;
+  --font-anthropic-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-anthropic-serif: ui-serif, Georgia, "Times New Roman", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #262624; --color-panel: #30302e; --color-fg: #f5f4ef; --color-fg-muted: #a6a39a;
+    --color-border-line: rgb(255 255 255 / .14); --color-warn: #e0a440;
+    --cds-border: rgb(255 255 255 / .12); --cds-chart-grid: rgb(255 255 255 / .08);
+    --cds-surface-popover: #30302e; --cds-shadow-popover: 0 8px 24px #00000052, 0 2px 6px #0003;
+    --cds-text-secondary: #a6a39a;
+  }
+}
+[hidden] { display: none !important; }
+.dash-loading body::after { content: ''; position: fixed; top: 14px; right: 18px; z-index: 10; width: 20px; height: 20px; border: 2.5px solid var(--color-border-line); border-top-color: var(--color-fg); border-radius: 50%; animation: dash-spin .7s linear infinite; }
+@keyframes dash-spin { to { transform: rotate(1turn); } }
+body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-family: var(--font-anthropic-sans); font-size: var(--cds-font-size-body); line-height: 1.45; }
+#dash-root { max-width: 1240px; margin: 0 auto; padding: 24px 16px 32px; }
+.site-foot { max-width: 1240px; margin: 0 auto; padding: 0 16px 32px; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+</style>
+<script>window.DASH_DATASETS = {"board_genshin": "data/genshin/board.json", "pairs_genshin": "data/genshin/pairs.json", "board_hsr": "data/hsr/board.json", "pairs_hsr": "data/hsr/pairs.json", "board_zzz": "data/zzz/board.json", "pairs_zzz": "data/zzz/pairs.json"};</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="dash-lite.js"></script>
+</head>
+<body>
+<div id="dash-root">
+<style>
+.zl { display: grid; gap: var(--cds-gap-xl); font-family: var(--font-anthropic-sans); }
+/* while a switch redraws: a spinner in the corner, the parts dimmed until all are redrawn */
+.zl [data-draw] { transition: opacity .15s; }
+.zl.zl-busy [data-draw] { opacity: .55; }
+.zl.zl-busy::after { content: ''; position: fixed; top: 14px; right: 18px; z-index: 10; width: 20px; height: 20px; border: 2.5px solid var(--color-border-line); border-top-color: var(--color-fg); border-radius: 50%; animation: zl-spin .7s linear infinite; }
+@keyframes zl-spin { to { transform: rotate(1turn); } }
+@media (prefers-reduced-motion: reduce) { .zl.zl-busy::after { animation-duration: 2s; } }
+.zl-head { display: grid; gap: var(--cds-gap-xs); }
+.zl-head h1 { margin: 0; font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); text-wrap: balance; }
+.zl p { margin: 0; }
+.zl-muted, .zl-note { color: var(--color-fg-muted); }
+.zl-note { font-size: var(--cds-font-size-caption); max-width: 75ch; }
+.zl-warn { color: var(--color-warn); font-weight: var(--cds-font-weight-medium); }
+.zl-warn:empty { display: none; }
+.zl-group { display: flex; align-items: center; gap: var(--cds-gap-sm); margin: 0; padding: 0; border: 0; }
+.zl-group > legend, .zl-group > .zl-group-name { float: left; padding: 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.zl-sites { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px; border: 1px solid var(--color-border-line); border-radius: calc(var(--cds-radius) + 3px); }
+.zl-chip { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 var(--cds-pad-md); border: 1.5px solid var(--color-border-line); border-radius: var(--cds-radius); color: var(--color-fg-muted); font-weight: 500; cursor: pointer; user-select: none; }
+.zl-chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.zl-chip img { width: 16px; height: 16px; image-rendering: pixelated; filter: grayscale(1); opacity: 0.5; }
+.zl-chip:has(input:checked) img { filter: none; opacity: 1; }
+.zl-chip[data-site="danbooru"]:has(input:checked) { background: #ba9570; border-color: #a4815f; color: #2b1d10; }
+.zl-chip[data-site="rule34"]:has(input:checked) { background: #aae5a4; border-color: #336633; color: #003300; }
+.zl-chip[data-site="pixiv"]:has(input:checked) { background: #0096fa; border-color: #0096fa; color: #ffffff; }
+.zl-chip:has(input:focus-visible) { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+.zl-seg button[data-measure="r18"][aria-pressed="true"] { background: #ff4060; color: #ffffff; }
+.zl-seg button[data-measure="safe"][aria-pressed="true"] { background: #1d9e75; color: #ffffff; }
+.zl-sec { display: grid; gap: var(--cds-gap-md); }
+.zl-topbar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--cds-gap-sm); padding-block: var(--cds-pad-sm); background: var(--color-bg); border-bottom: 1px solid var(--color-border-line); }
+.zl-topbar-left { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cds-gap-md); }
+.zl-game { position: relative; }
+.zl-game > summary { list-style: none; display: inline-flex; align-items: center; gap: var(--cds-gap-sm); height: 48px; padding: 4px var(--cds-pad-md); border-radius: var(--cds-radius); background: #141413; color: #faf9f5; cursor: pointer; user-select: none; }
+.zl-game img { display: block; height: 40px; width: auto; }
+.zl-game > summary::-webkit-details-marker { display: none; }
+.zl-game > summary::after { content: ''; width: 0.4em; height: 0.4em; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-0.15em) rotate(45deg); }
+.zl-game[open] > summary::after { transform: translateY(0.1em) rotate(-135deg); }
+.zl-game > summary:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+.zl-game-menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 6; display: grid; min-width: 14rem; margin: 0; padding: var(--cds-pad-xs); list-style: none; background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); box-shadow: 0 6px 20px rgb(0 0 0 / 0.15); }
+.zl-game-menu { gap: 4px; min-width: 0; background: #141413; border-color: #141413; }
+.zl-game-menu button { display: block; width: 100%; padding: 6px var(--cds-pad-md); border: 1px solid transparent; border-radius: calc(var(--cds-radius) - 2px); background: none; cursor: pointer; }
+.zl-game-menu button:hover, .zl-game-menu button:focus-visible { background: #30302e; outline: none; }
+.zl-game-menu button[aria-current="true"] { border-color: #faf9f5; }
+.zl-sec > h2 { margin: 0; font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); }
+.zl .zl-lead b { font-weight: 600; }
+.zl-card { display: grid; gap: var(--cds-gap-sm); min-width: 0; align-content: start; background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); }
+.zl-card h3 { margin: 0; font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); }
+.zl-grid { display: grid; gap: var(--cds-gap-md); grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); }
+.zl-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--cds-gap-sm); }
+.zl-seg { display: inline-flex; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); overflow: hidden; }
+.zl-seg button { font: inherit; font-size: var(--cds-font-size-caption); padding: var(--cds-pad-xs) var(--cds-pad-sm); border: 0; background: transparent; color: var(--color-fg-muted); cursor: pointer; }
+.zl-seg button + button { border-left: 1px solid var(--color-border-line); }
+.zl-seg button[aria-pressed="true"] { background: var(--color-fg); color: var(--color-bg); }
+.zl-seg button:focus-visible, .zl-search:focus-visible, .zl-focus:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+.zl-search, .zl-focus { font: inherit; padding: var(--cds-pad-xs) var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-bg); color: var(--color-fg); }
+.zl-search { width: min(100%, 14rem); }
+.zl-key { display: flex; flex-wrap: wrap; gap: var(--cds-gap-md); margin: 0; padding: 0; list-style: none; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.zl-key li { display: flex; align-items: center; gap: var(--cds-gap-xs); }
+.zl-sw { width: 12px; height: 12px; border-radius: 3px; }
+.zl-sw-all { background: var(--zl-all); }
+.zl-sw-r18 { background: var(--zl-r18); }
+.zl-sw-main, .zl-sw-mid { display: inline-block; vertical-align: -1px; height: 4px; width: 16px; border-radius: 2px; }
+.zl-sw-main { background: #e8578f; }
+.zl-sw-mid { background: var(--zl-c0); }
+.zl { --zl-all: color-mix(in srgb, var(--zl-c0, currentColor) 32%, transparent); --zl-r18: var(--zl-c0, currentColor); }
+
+/* A bar: the light part is all posts, the dark part R-18 with its share inside. */
+.zl-bar { position: relative; height: 22px; border-radius: 5px; background: var(--zl-all); min-width: 4px; }
+.zl-bar-r18 { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--zl-r18); display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; box-sizing: border-box; color: #fff; font-size: var(--cds-font-size-caption); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; }
+.zl-barline { display: grid; grid-template-columns: minmax(0, 1fr) 4.75rem; align-items: center; gap: var(--cds-gap-sm); min-width: 0; }
+.zl-track { min-width: 0; }
+.zl-bar-dark { background: var(--zl-r18); }
+.zl-count { font-variant-numeric: tabular-nums; font-weight: var(--cds-font-weight-medium); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.zl-podium { display: grid; gap: var(--cds-gap-md); grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); min-height: 230px; }
+.zl-place { display: grid; justify-items: center; align-content: start; gap: var(--cds-gap-xs); text-align: center; padding: var(--cds-pad-lg); background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); }
+.zl-place img { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; background: var(--color-bg); }
+.zl-place .zl-rank { font-family: var(--font-anthropic-serif); font-size: var(--cds-font-size-heading); color: var(--color-fg-muted); }
+.zl-place .zl-name { font-weight: var(--cds-font-weight-medium); }
+.zl-place .zl-big { font-family: var(--font-anthropic-serif); font-size: var(--cds-font-size-title); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.zl-place .zl-bar { width: 100%; }
+
+.zl-list { position: relative; display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; max-height: 660px; overflow: auto; }
+.zl-row { display: grid; grid-template-columns: 1.8rem 32px minmax(6rem, 10rem) 1fr; align-items: center; gap: var(--cds-gap-sm); }
+.zl-row img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: var(--color-bg); }
+.zl-row .zl-n { color: var(--color-fg-muted); text-align: right; font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
+.zl-row .zl-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zl-pair { grid-template-columns: 1.8rem 52px minmax(7rem, 14rem) 1fr; }
+.zl-duo { position: relative; width: 52px; height: 32px; }
+.zl-duo img { position: absolute; top: 0; border: 2px solid var(--color-panel); }
+.zl-duo img + img { left: 20px; }
+
+.zl-chart { position: relative; min-height: 380px; }
+.zl-chart svg { display: block; overflow: visible; }
+.zl-chart text { fill: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.zl-net { min-height: 520px; overflow: hidden; border-radius: var(--cds-radius); }
+.zl-pt circle { fill: none; stroke: var(--color-border-line); stroke-width: 1.5; }
+.zl-pt:hover circle { stroke: var(--color-fg); stroke-width: 2; }
+.zl-netwrap { display: grid; gap: var(--cds-gap-md); grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem); align-items: start; }
+.zl-panel { display: grid; gap: var(--cds-gap-sm); align-content: start; min-height: 420px; padding: var(--cds-pad-md); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-bg); }
+.zl-panel-head { display: flex; align-items: center; gap: var(--cds-gap-sm); }
+.zl-panel-head img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; }
+.zl-close { margin-left: auto; align-self: flex-start; width: 28px; height: 28px; padding: 0; border: 1px solid var(--color-border-line); border-radius: 50%; background: var(--color-panel); color: var(--color-fg-muted); font: inherit; font-size: 18px; line-height: 1; cursor: pointer; }
+.zl-close:hover { color: var(--color-fg); }
+.zl-close:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+.zl-panel-title .zl-name { font-family: var(--font-anthropic-serif); font-size: var(--cds-font-size-heading); }
+.zl-panel-sub { margin: var(--cds-gap-xs) 0 0; font-size: var(--cds-font-size-caption); font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); text-transform: uppercase; letter-spacing: .04em; }
+.zl-mates { position: relative; display: grid; gap: var(--cds-gap-sm); margin: 0; padding: 0 var(--cds-pad-xs) 0 0; list-style: none; max-height: 560px; overflow: auto; }
+.zl-mate { display: grid; grid-template-columns: 32px 1fr; gap: var(--cds-gap-sm); align-items: center; }
+.zl-mate img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+.zl-mate-body { display: grid; gap: 3px; min-width: 0; }
+.zl-mate-body .zl-name { font-size: var(--cds-font-size-caption); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zl-mate .zl-bar { height: 18px; }
+.zl-hint { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 4; pointer-events: none; padding: var(--cds-pad-sm) var(--cds-pad-md); border-radius: var(--cds-radius); background: var(--cds-surface-popover); border: 1px solid var(--cds-border); box-shadow: var(--cds-shadow-popover); font-size: var(--cds-font-size-body); }
+.zl-reset { position: absolute; top: var(--cds-pad-xs); right: var(--cds-pad-xs); z-index: 2; font: inherit; font-size: var(--cds-font-size-caption); padding: 2px var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-panel); color: var(--color-fg-muted); cursor: pointer; }
+.zl-reset:hover { color: var(--color-fg); }
+.zl-reset:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+.zl-tip { position: absolute; pointer-events: none; z-index: 3; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.zl-tip strong { display: block; }
+.zl-tip span { display: block; color: var(--cds-text-secondary); }
+[data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
+@media (max-width: 900px) { .zl-netwrap { grid-template-columns: 1fr; } }
+@media (max-width: 640px) {
+  .zl-row { grid-template-columns: 1.4rem 28px minmax(4.5rem, 7rem) 1fr; }
+  .zl-pair { grid-template-columns: 1.4rem 48px minmax(5rem, 8rem) 1fr; }
+}
+</style>
+<div class="zl">
+<header class="zl-head">
+  <h1><span data-game-title="zzz">Zenless Zone Zero agents</span><span data-game-title="genshin" hidden>Genshin Impact characters</span><span data-game-title="hsr" hidden>Honkai: Star Rail characters</span></h1>
+  <p class="zl-muted">How much fan art each character has, how much of it is R-18, and who gets drawn together.</p>
+</header>
+
+<div class="zl-topbar">
+  <div class="zl-topbar-left">
+  <details class="zl-game">
+    <summary aria-label="Game shown: Zenless Zone Zero agents" data-game-summary><img data-game-logo="zzz" src="assets/logos/zzz.webp" alt=""><img data-game-logo="genshin" src="assets/logos/genshin.webp" alt="" hidden><img data-game-logo="hsr" src="assets/logos/hsr.webp" alt="" hidden></summary>
+    <ul class="zl-game-menu">
+      <li><button type="button" data-game="zzz"><img src="assets/logos/zzz.webp" alt="Zenless Zone Zero agents"></button></li>
+      <li><button type="button" data-game="genshin"><img src="assets/logos/genshin.webp" alt="Genshin Impact characters"></button></li>
+      <li><button type="button" data-game="hsr"><img src="assets/logos/hsr.webp" alt="Honkai: Star Rail characters"></button></li>
+    </ul>
+  </details>
+  <fieldset class="zl-group">
+    <legend>Sources</legend>
+    <div class="zl-sites">
+    <label class="zl-chip" data-site="danbooru"><input type="checkbox" value="danbooru" checked><img src="assets/sites/danbooru.svg" alt="">Danbooru</label>
+  <label class="zl-chip" data-site="rule34"><input type="checkbox" value="rule34" checked><img src="assets/sites/rule34.png" alt="">Rule34</label>
+  <label class="zl-chip" data-site="pixiv"><input type="checkbox" value="pixiv" checked><img src="assets/sites/pixiv.png" alt="">pixiv</label>
+    </div>
+  </fieldset>
+  </div>
+  <div class="zl-group"><span class="zl-group-name" aria-hidden="true">Content</span>
+  <div class="zl-seg" role="group" aria-label="Content">
+    <button type="button" data-measure="all" aria-pressed="true">All art</button>
+    <button type="button" data-measure="r18" aria-pressed="false">R-18 only</button>
+    <button type="button" data-measure="safe" aria-pressed="false">Without R-18</button>
+  </div>
+  </div>
+</div>
+<p class="zl-warn" data-draw="missing" data-source="board_zzz board_genshin board_hsr">—</p>
+<p class="zl-note">Totals add the chosen sites together, so a picture posted on two of them counts twice. Inside one site a picture counts once, even when it has several of a character's tags. R-18 is Danbooru rating:explicit, Rule34 rating:explicit, pixiv&#x27;s R-18 search (with R-18G).</p>
+
+<section class="zl-sec" id="leaderboard">
+  <h2>Leaderboard</h2>
+  <p class="zl-lead">Most art: <b data-draw="lead-top" data-source="leaders_zzz leaders_genshin leaders_hsr" data-field="top_name">—</b>. Highest R-18 share among characters with at least <span data-draw="min-posts">—</span> posts: <b data-draw="lead-lewd" data-source="leaders_zzz leaders_genshin leaders_hsr" data-field="lewd_name">—</b>, <b data-draw="lead-lewd-share" data-source="leaders_zzz leaders_genshin leaders_hsr" data-field="lewd_share">—</b>.</p>
+  <div class="zl-podium" data-draw="podium" data-source="totals_zzz board_zzz totals_genshin board_genshin totals_hsr board_hsr"></div>
+  <div class="zl-card">
+    <div class="zl-tools">
+      <h3>Every character</h3>
+      <div class="zl-seg" role="group" aria-label="Sort by">
+        <button type="button" data-sort="total" aria-pressed="true">Most posts</button>
+        <button type="button" data-sort="share" aria-pressed="false">Highest R-18 share</button>
+      </div>
+      <input class="zl-search" type="search" id="find-character" placeholder="Find a character" aria-label="Find a character">
+    </div>
+    <ul class="zl-key" data-legend="all"><li><span class="zl-sw zl-sw-all"></span>All posts (count at the end)</li><li><span class="zl-sw zl-sw-r18"></span>R-18 part (share inside)</li></ul>
+    <ul class="zl-key" data-legend="r18" hidden><li><span class="zl-sw zl-sw-r18"></span>R-18 posts (count at the end)</li></ul>
+    <ul class="zl-key" data-legend="safe" hidden><li><span class="zl-sw zl-sw-all"></span>Posts without R-18 (count at the end)</li></ul>
+    <ol class="zl-list" data-draw="bars" data-source="totals_zzz board_zzz totals_genshin board_genshin totals_hsr board_hsr"></ol>
+  </div>
+  <div class="zl-card">
+    <h3>Posts against R-18 share</h3>
+    <p class="zl-note">Each face is one character. Further right means more posts (log scale); higher means a larger R-18 share. Ctrl + scroll to zoom; hold the middle mouse button to move; double-click the background to reset.</p>
+    <div class="zl-chart" data-draw="scatter" data-source="totals_zzz board_zzz totals_genshin board_genshin totals_hsr board_hsr"></div>
+  </div>
+</section>
+
+<section class="zl-sec" id="crossovers">
+  <h2>Crossovers</h2>
+  <p class="zl-lead">Most drawn pair: <b data-draw="pair-top" data-source="pair_totals_zzz board_zzz pair_totals_genshin board_genshin pair_totals_hsr board_hsr">—</b>.</p>
+  <p class="zl-note">A crossover is a post tagged with both characters' main tags. Pairs are counted on <span data-draw="pair-sites" data-source="pairs_zzz board_zzz pairs_genshin board_genshin pairs_hsr board_hsr">—</span>.</p>
+  <div class="zl-card">
+    <div class="zl-tools">
+      <h3>Who gets drawn with whom</h3>
+    </div>
+    <p class="zl-note">Every character, each joined to its closest partners. Point at a face to light up everyone it is drawn with, click it to keep it on the right, drag it to pull its group around. Ctrl + scroll to zoom; hold the middle mouse button to move the view; double-click the background to reset.</p>
+    <div class="zl-netwrap">
+      <div class="zl-chart zl-net" data-draw="network" data-source="pair_totals_zzz totals_zzz board_zzz pair_totals_genshin totals_genshin board_genshin pair_totals_hsr totals_hsr board_hsr"></div>
+      <aside class="zl-panel" data-draw="focus-panel" data-source="pair_totals_zzz totals_zzz board_zzz pair_totals_genshin totals_genshin board_genshin pair_totals_hsr totals_hsr board_hsr"></aside>
+    </div>
+    <ul class="zl-key"><li>Face size: how much art the character has</li><li>Line width: how much art the two share</li><li>Lines: pairs that stand out among a character's pairs (disparity filter)</li><li>Around a lit face: every partner gets a ring; <span class="zl-sw zl-sw-main"></span> pink lines go to its main group of partners, <span class="zl-sw zl-sw-mid"></span> blue lines to the middle group (each group: partners with about the same amount of art, at most 2× apart); a line's width compares all pairs</li><li>R-18 of a pair is counted from 20 posts on a site</li></ul>
+  </div>
+  <div class="zl-card">
+    <div class="zl-tools">
+      <h3>Every pair, most drawn first</h3>
+      <input class="zl-search" type="search" id="find-pair" data-find="pairs" placeholder="Find a character" aria-label="Find a pair by a character's name">
+    </div>
+    <ul class="zl-key" data-legend="all"><li><span class="zl-sw zl-sw-all"></span>Posts together</li><li><span class="zl-sw zl-sw-r18"></span>R-18 part</li></ul>
+    <ul class="zl-key" data-legend="r18" hidden><li><span class="zl-sw zl-sw-r18"></span>R-18 posts together</li></ul>
+    <ul class="zl-key" data-legend="safe" hidden><li><span class="zl-sw zl-sw-all"></span>Posts together without R-18</li></ul>
+    <ol class="zl-list" data-draw="pairs-top" data-source="pair_totals_zzz board_zzz pair_totals_genshin board_genshin pair_totals_hsr board_hsr"></ol>
+  </div>
+</section>
+</div>
+<script>
+const SITES = ["danbooru", "rule34", "pixiv"];
+const LABELS = {"danbooru": "Danbooru", "rule34": "Rule34", "pixiv": "pixiv"};
+const MIN_POSTS = 500;
+const fmt = d3.format(',');
+const short = (n) => (n >= 10000 ? d3.format('.3~s')(n).replace('k', 'K') : fmt(n));
+const pct = d3.format('.1%');
+const pct0 = d3.format('.0%');
+const GAMES = [{"id": "zzz", "short": "ZZZ", "title": "Zenless Zone Zero agents", "logo": "assets/logos/zzz.webp"}, {"id": "genshin", "short": "Genshin", "title": "Genshin Impact characters", "logo": "assets/logos/genshin.webp"}, {"id": "hsr", "short": "HSR", "title": "Honkai: Star Rail characters", "logo": "assets/logos/hsr.webp"}];
+const savedGame = () => { try { return localStorage.getItem('tagstats-game'); } catch (e) { return null; } };
+const view = { sort: 'total', query: '', pairQuery: '', focus: null, measure: 'all',
+               game: GAMES.some((g) => g.id === savedGame()) ? savedGame() : GAMES[0].id };
+
+// What the page counts: all art, only R-18, or only art without R-18. A pair's
+// R-18 is counted only from 20 posts on a site, so for small pairs "without
+// R-18" is all of their posts.
+const MEASURE = {
+  all: (row) => row.total,
+  r18: (row) => row.r18 ?? 0,
+  safe: (row) => row.total - (row.r18 ?? 0),
+};
+const WORD = { all: 'posts', r18: 'R-18 posts', safe: 'posts without R-18' };
+const RANK = { all: 'rank', r18: 'rank_r18', safe: 'rank_safe' };
+const measure = () => MEASURE[view.measure];
+
+// Every non-empty combination of sites, as "danbooru+pixiv": the key the calcs use.
+const keyOf = (sites) => sites.slice().sort().join('+');
+const chosen = () => {
+  const on = [];
+  document.querySelectorAll('.zl-sites input').forEach((box) => { if (box.checked) on.push(box.value); });
+  return on.length ? on : SITES.slice();
+};
+
+dash.calc('totals_zzz', {
+  inputs: ['board_zzz'],
+  title: 'ZZZ: Posts per character for each choice of sites',
+  description: 'Posts and R-18 posts added up over the chosen sites, the R-18 share, and the rank by all posts, by R-18 posts and by posts without R-18.',
+  fn: (board) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const keys = [];
+    for (let m = 1; m < 1 << sites.length; m++) keys.push(sites.filter((s, i) => m & (1 << i)).sort().join('+'));
+    const out = [];
+    for (const key of keys) {
+      const parts = key.split('+');
+      const rows = board.map((r) => {
+        const has = parts.filter((s) => r[s + '_total'] != null);
+        const total = has.length ? d3.sum(has, (s) => r[s + '_total']) : null;
+        const r18 = has.length ? d3.sum(has, (s) => r[s + '_r18'] ?? 0) : null;
+        return { sites: key, id: r.id, total, r18, share: total ? r18 / total : null };
+      });
+      const has = rows.filter((r) => r.total != null);
+      has.sort((a, b) => b.total - a.total).forEach((r, i) => { r.rank = i + 1; });
+      has.sort((a, b) => b.r18 - a.r18).forEach((r, i) => { r.rank_r18 = i + 1; });
+      has.sort((a, b) => (b.total - b.r18) - (a.total - a.r18)).forEach((r, i) => { r.rank_safe = i + 1; });
+      out.push(...rows);
+    }
+    return out;
+  },
+});
+
+dash.calc('leaders_zzz', {
+  inputs: ['totals_zzz', 'board_zzz'],
+  title: 'ZZZ: Leaders for each choice of sites',
+  description: 'The character with the most art (all, R-18 only, or without R-18), and the highest R-18 share among characters with at least 500 posts.',
+  fn: (totals, board) => {
+    const names = new Map(board.map((r) => [r.id, r.name]));
+    const value = { all: (r) => r.total, r18: (r) => r.r18, safe: (r) => r.total - r.r18 };
+    return d3.groups(totals, (r) => r.sites).flatMap(([key, rows]) => {
+      const has = rows.filter((r) => r.total != null);
+      const lewd = d3.greatest(has.filter((r) => r.total >= 500), (r) => r.share);
+      return Object.entries(value).map(([mode, v]) => {
+        const top = d3.greatest(has, v);
+        return { sites: key, mode, top_name: top ? names.get(top.id) : null, top_total: top ? v(top) : null,
+                 lewd_name: lewd ? names.get(lewd.id) : null, lewd_share: lewd ? lewd.share : null };
+      });
+    });
+  },
+});
+
+dash.calc('pair_totals_zzz', {
+  inputs: ['pairs_zzz', 'totals_zzz'],
+  title: 'ZZZ: Crossovers for each choice of sites',
+  description: 'Posts with both characters added up over the chosen sites that have crossover counts, and affinity: posts together divided by the less drawn character\'s posts on those sites.',
+  fn: (pairs, totals) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const counted = new Set(pairs.map((p) => p.site));
+    const byKey = new Map(totals.map((r) => [r.sites + '|' + r.id, r.total]));
+    const grouped = d3.group(pairs, (p) => p.a + '|' + p.b);
+    const out = [];
+    for (let m = 1; m < 1 << sites.length; m++) {
+      const parts = sites.filter((s, i) => m & (1 << i)).sort();
+      const key = parts.join('+');
+      const used = parts.filter((s) => counted.has(s));
+      if (!used.length) continue;
+      const usedKey = used.join('+');
+      for (const [pair, rows] of grouped) {
+        const mine = rows.filter((p) => used.includes(p.site));
+        if (!mine.length) continue;
+        const total = d3.sum(mine, (p) => p.total);
+        const [a, b] = pair.split('|');
+        const least = Math.min(byKey.get(usedKey + '|' + a) || Infinity, byKey.get(usedKey + '|' + b) || Infinity);
+        out.push({ sites: key, a, b, total, r18: d3.sum(mine, (p) => p.r18 ?? 0),
+                   affinity: Number.isFinite(least) && least > 0 ? total / least : null });
+      }
+    }
+    return out;
+  },
+});
+
+dash.calc('totals_genshin', {
+  inputs: ['board_genshin'],
+  title: 'Genshin: Posts per character for each choice of sites',
+  description: 'Posts and R-18 posts added up over the chosen sites, the R-18 share, and the rank by all posts, by R-18 posts and by posts without R-18.',
+  fn: (board) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const keys = [];
+    for (let m = 1; m < 1 << sites.length; m++) keys.push(sites.filter((s, i) => m & (1 << i)).sort().join('+'));
+    const out = [];
+    for (const key of keys) {
+      const parts = key.split('+');
+      const rows = board.map((r) => {
+        const has = parts.filter((s) => r[s + '_total'] != null);
+        const total = has.length ? d3.sum(has, (s) => r[s + '_total']) : null;
+        const r18 = has.length ? d3.sum(has, (s) => r[s + '_r18'] ?? 0) : null;
+        return { sites: key, id: r.id, total, r18, share: total ? r18 / total : null };
+      });
+      const has = rows.filter((r) => r.total != null);
+      has.sort((a, b) => b.total - a.total).forEach((r, i) => { r.rank = i + 1; });
+      has.sort((a, b) => b.r18 - a.r18).forEach((r, i) => { r.rank_r18 = i + 1; });
+      has.sort((a, b) => (b.total - b.r18) - (a.total - a.r18)).forEach((r, i) => { r.rank_safe = i + 1; });
+      out.push(...rows);
+    }
+    return out;
+  },
+});
+
+dash.calc('leaders_genshin', {
+  inputs: ['totals_genshin', 'board_genshin'],
+  title: 'Genshin: Leaders for each choice of sites',
+  description: 'The character with the most art (all, R-18 only, or without R-18), and the highest R-18 share among characters with at least 500 posts.',
+  fn: (totals, board) => {
+    const names = new Map(board.map((r) => [r.id, r.name]));
+    const value = { all: (r) => r.total, r18: (r) => r.r18, safe: (r) => r.total - r.r18 };
+    return d3.groups(totals, (r) => r.sites).flatMap(([key, rows]) => {
+      const has = rows.filter((r) => r.total != null);
+      const lewd = d3.greatest(has.filter((r) => r.total >= 500), (r) => r.share);
+      return Object.entries(value).map(([mode, v]) => {
+        const top = d3.greatest(has, v);
+        return { sites: key, mode, top_name: top ? names.get(top.id) : null, top_total: top ? v(top) : null,
+                 lewd_name: lewd ? names.get(lewd.id) : null, lewd_share: lewd ? lewd.share : null };
+      });
+    });
+  },
+});
+
+dash.calc('pair_totals_genshin', {
+  inputs: ['pairs_genshin', 'totals_genshin'],
+  title: 'Genshin: Crossovers for each choice of sites',
+  description: 'Posts with both characters added up over the chosen sites that have crossover counts, and affinity: posts together divided by the less drawn character\'s posts on those sites.',
+  fn: (pairs, totals) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const counted = new Set(pairs.map((p) => p.site));
+    const byKey = new Map(totals.map((r) => [r.sites + '|' + r.id, r.total]));
+    const grouped = d3.group(pairs, (p) => p.a + '|' + p.b);
+    const out = [];
+    for (let m = 1; m < 1 << sites.length; m++) {
+      const parts = sites.filter((s, i) => m & (1 << i)).sort();
+      const key = parts.join('+');
+      const used = parts.filter((s) => counted.has(s));
+      if (!used.length) continue;
+      const usedKey = used.join('+');
+      for (const [pair, rows] of grouped) {
+        const mine = rows.filter((p) => used.includes(p.site));
+        if (!mine.length) continue;
+        const total = d3.sum(mine, (p) => p.total);
+        const [a, b] = pair.split('|');
+        const least = Math.min(byKey.get(usedKey + '|' + a) || Infinity, byKey.get(usedKey + '|' + b) || Infinity);
+        out.push({ sites: key, a, b, total, r18: d3.sum(mine, (p) => p.r18 ?? 0),
+                   affinity: Number.isFinite(least) && least > 0 ? total / least : null });
+      }
+    }
+    return out;
+  },
+});
+
+dash.calc('totals_hsr', {
+  inputs: ['board_hsr'],
+  title: 'HSR: Posts per character for each choice of sites',
+  description: 'Posts and R-18 posts added up over the chosen sites, the R-18 share, and the rank by all posts, by R-18 posts and by posts without R-18.',
+  fn: (board) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const keys = [];
+    for (let m = 1; m < 1 << sites.length; m++) keys.push(sites.filter((s, i) => m & (1 << i)).sort().join('+'));
+    const out = [];
+    for (const key of keys) {
+      const parts = key.split('+');
+      const rows = board.map((r) => {
+        const has = parts.filter((s) => r[s + '_total'] != null);
+        const total = has.length ? d3.sum(has, (s) => r[s + '_total']) : null;
+        const r18 = has.length ? d3.sum(has, (s) => r[s + '_r18'] ?? 0) : null;
+        return { sites: key, id: r.id, total, r18, share: total ? r18 / total : null };
+      });
+      const has = rows.filter((r) => r.total != null);
+      has.sort((a, b) => b.total - a.total).forEach((r, i) => { r.rank = i + 1; });
+      has.sort((a, b) => b.r18 - a.r18).forEach((r, i) => { r.rank_r18 = i + 1; });
+      has.sort((a, b) => (b.total - b.r18) - (a.total - a.r18)).forEach((r, i) => { r.rank_safe = i + 1; });
+      out.push(...rows);
+    }
+    return out;
+  },
+});
+
+dash.calc('leaders_hsr', {
+  inputs: ['totals_hsr', 'board_hsr'],
+  title: 'HSR: Leaders for each choice of sites',
+  description: 'The character with the most art (all, R-18 only, or without R-18), and the highest R-18 share among characters with at least 500 posts.',
+  fn: (totals, board) => {
+    const names = new Map(board.map((r) => [r.id, r.name]));
+    const value = { all: (r) => r.total, r18: (r) => r.r18, safe: (r) => r.total - r.r18 };
+    return d3.groups(totals, (r) => r.sites).flatMap(([key, rows]) => {
+      const has = rows.filter((r) => r.total != null);
+      const lewd = d3.greatest(has.filter((r) => r.total >= 500), (r) => r.share);
+      return Object.entries(value).map(([mode, v]) => {
+        const top = d3.greatest(has, v);
+        return { sites: key, mode, top_name: top ? names.get(top.id) : null, top_total: top ? v(top) : null,
+                 lewd_name: lewd ? names.get(lewd.id) : null, lewd_share: lewd ? lewd.share : null };
+      });
+    });
+  },
+});
+
+dash.calc('pair_totals_hsr', {
+  inputs: ['pairs_hsr', 'totals_hsr'],
+  title: 'HSR: Crossovers for each choice of sites',
+  description: 'Posts with both characters added up over the chosen sites that have crossover counts, and affinity: posts together divided by the less drawn character\'s posts on those sites.',
+  fn: (pairs, totals) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const counted = new Set(pairs.map((p) => p.site));
+    const byKey = new Map(totals.map((r) => [r.sites + '|' + r.id, r.total]));
+    const grouped = d3.group(pairs, (p) => p.a + '|' + p.b);
+    const out = [];
+    for (let m = 1; m < 1 << sites.length; m++) {
+      const parts = sites.filter((s, i) => m & (1 << i)).sort();
+      const key = parts.join('+');
+      const used = parts.filter((s) => counted.has(s));
+      if (!used.length) continue;
+      const usedKey = used.join('+');
+      for (const [pair, rows] of grouped) {
+        const mine = rows.filter((p) => used.includes(p.site));
+        if (!mine.length) continue;
+        const total = d3.sum(mine, (p) => p.total);
+        const [a, b] = pair.split('|');
+        const least = Math.min(byKey.get(usedKey + '|' + a) || Infinity, byKey.get(usedKey + '|' + b) || Infinity);
+        out.push({ sites: key, a, b, total, r18: d3.sum(mine, (p) => p.r18 ?? 0),
+                   affinity: Number.isFinite(least) && least > 0 ? total / least : null });
+      }
+    }
+    return out;
+  },
+});
+
+
+
+// the shown game's dataset or calc: board -> board_<game>
+const D = (id) => dash.data(`${id}_${view.game}`);
+const ready = (...ids) => ids.every((id) => D(id).status === 'ok');
+const people = () => new Map(D('board').data.map((r) => [r.id, r]));
+const totalsFor = (key) => D('totals').data.filter((r) => r.sites === key && r.total != null);
+const pairsFor = (key) => D('pair_totals').data.filter((r) => r.sites === key && r.total > 0);
+const leader = () => {
+  const l = D('leaders');
+  return l.status === 'ok' ? l.data.find((r) => r.sites === keyOf(chosen()) && r.mode === view.measure) : null;
+};
+const leaderWhere = () => `sites=${encodeURIComponent(keyOf(chosen()))}&mode=${view.measure}`;
+const text = (el, value) => { el.textContent = value == null ? '—' : value; };
+const icon = (src, size) => { const img = document.createElement('img'); img.src = src || ''; img.alt = ''; if (size) { img.width = size; img.height = size; } return img; };
+const node = (tag, cls, content) => { const e = document.createElement(tag); if (cls) e.className = cls; if (content != null) e.textContent = content; return e; };
+
+// One bar: width is the amount against the longest bar, the count sits in
+// its own column after it. With r18 given, the dark part is R-18 with its
+// share written inside; without, the whole bar takes the colour of what the
+// page counts (dark for R-18 only, light for all art or art without R-18).
+const barLine = (total, r18, max, label) => {
+  const line = node('div', 'zl-barline');
+  const track = node('div', 'zl-track');
+  const bar = node('div', 'zl-bar');
+  bar.style.width = ((max ? total / max : 1) * 100).toFixed(2) + '%';
+  if (r18 != null && total) {
+    const part = node('div', 'zl-bar-r18');
+    part.style.width = ((r18 / total) * 100).toFixed(2) + '%';
+    part.append(node('span', null, pct0(r18 / total)));
+    bar.append(part);
+  } else if (view.measure === 'r18') {
+    bar.classList.add('zl-bar-dark');
+  }
+  track.append(bar);
+  line.append(track, node('span', 'zl-count', label ?? short(total)));
+  return line;
+};
+// After drawing, hide a share that does not fit inside its dark part. Every
+// width is read first and the labels removed after, so the browser lays the
+// page out once and not again after each removal. scope: an element, or the
+// rows just added to a list.
+const fitLabels = (scope) => {
+  const parts = (Array.isArray(scope) ? scope : [scope]).flatMap((s) => [...s.querySelectorAll('.zl-bar-r18')]);
+  parts.filter((p) => p.firstElementChild && p.firstElementChild.offsetWidth + 10 > p.clientWidth)
+    .forEach((p) => p.firstElementChild.remove());
+};
+// A long list is built CHUNK rows at a time: the first ones at once, more as
+// it is scrolled near its end. A switch then never builds thousands of rows,
+// two faces each, that sit below the list's visible part.
+const CHUNK = 60;
+const lazyRows = (el, rows, makeRow) => {
+  let shown = 0;
+  const more = () => {
+    const batch = rows.slice(shown, shown + CHUNK).map(makeRow);
+    shown += batch.length;
+    el.append(...batch);
+    fitLabels(batch);
+  };
+  more();
+  el.onscroll = () => { if (shown < rows.length && el.scrollTop + el.clientHeight > el.scrollHeight - 400) more(); };
+};
+const tipLines = (tip, lines) => {
+  tip.replaceChildren(...lines.map((t, i) => node(i ? 'span' : 'strong', null, t)));
+};
+// A list's tip lives inside the list (position: relative) and opens below the row.
+const withTip = (el, row, lines) => {
+  row.addEventListener('pointerenter', () => {
+    const tip = el.__tip;
+    tipLines(tip, lines());
+    tip.hidden = false;
+    const box = el.getBoundingClientRect();
+    const r = row.getBoundingClientRect();
+    tip.style.left = Math.max(0, Math.min(box.width - tip.offsetWidth, r.left - box.left + 48)) + 'px';
+    tip.style.top = (r.bottom - box.top + el.scrollTop + 4) + 'px';
+  });
+  row.addEventListener('pointerleave', () => { el.__tip.hidden = true; });
+};
+const addTip = (el) => { const tip = node('div', 'zl-tip'); tip.hidden = true; el.__tip = tip; el.append(tip); return tip; };
+// A switch redraws every part, each in a task of its own, top of the page
+// first, so the page keeps answering clicks and scrolling between them.
+// Meanwhile the page carries zl-busy: a spinner, and the old parts dimmed.
+// The first part waits a moment, so the pressed button and the spinner show
+// before any drawing starts.
+const PARTS = ['missing', 'lead-top', 'lead-lewd', 'lead-lewd-share', 'podium', 'bars', 'scatter',
+  'pair-top', 'pair-sites', 'network', 'focus-panel', 'pairs-top'];
+let redrawTimer = null;
+const redrawAll = () => {
+  document.querySelectorAll('.zl').forEach((root) => root.classList.add('zl-busy'));
+  clearTimeout(redrawTimer);
+  const todo = PARTS.slice();
+  const next = () => {
+    const name = todo.shift();
+    if (name) { dash.draw(name); redrawTimer = setTimeout(next, 0); return; }
+    document.querySelectorAll('.zl').forEach((root) => root.classList.remove('zl-busy'));
+  };
+  redrawTimer = setTimeout(next, 30);
+};
+
+dash.onData(() => {
+  document.querySelector('.zl').style.setProperty('--zl-c0', dash.colors[0]);
+});
+
+dash.draw('lead-top', (el) => { const l = leader(); el.dataset.where = leaderWhere(); text(el, l && l.top_name); });
+dash.draw('lead-lewd', (el) => { const l = leader(); el.dataset.where = leaderWhere(); text(el, l && l.lewd_name); });
+dash.draw('lead-lewd-share', (el) => { const l = leader(); el.dataset.where = leaderWhere(); text(el, l && l.lewd_share != null ? pct0(l.lewd_share) : null); });
+dash.draw('min-posts', (el) => { el.textContent = fmt(MIN_POSTS); });
+
+// Chosen sites that have no counts yet: say so instead of showing an empty page.
+dash.draw('missing', (el) => {
+  const b = D('board');
+  if (b.status === 'loading') { el.textContent = '—'; return; }
+  if (b.status !== 'ok') { el.textContent = `No counts for ${game().title} yet: collection is still running.`; return; }
+  const empty = chosen().filter((s) => !b.data.some((r) => r[s + '_total'] != null)).map((s) => LABELS[s]);
+  el.textContent = empty.length ? `No counts yet for ${empty.join(', ')}: these figures leave ${empty.length > 1 ? 'them' : 'it'} out.` : '';
+});
+
+dash.draw('podium', (el) => {
+  el.replaceChildren();
+  if (!ready('totals', 'board')) return;
+  const who = people();
+  const v = measure();
+  totalsFor(keyOf(chosen())).filter((r) => v(r) > 0).sort((a, b) => v(b) - v(a)).slice(0, 3).forEach((r, i) => {
+    const p = who.get(r.id);
+    const card = node('div', 'zl-place');
+    const bar = node('div', 'zl-bar');
+    const part = node('div', 'zl-bar-r18');
+    part.append(node('span', null, `${pct0(r.share)} R-18`));
+    part.style.width = (r.share * 100).toFixed(1) + '%';
+    bar.append(part);
+    card.append(node('div', 'zl-rank', `#${i + 1}`), icon(p.icon, 84), node('div', 'zl-name', p.name),
+      node('div', 'zl-big', fmt(v(r))), node('div', 'zl-note', WORD[view.measure]), bar);
+    el.append(card);
+  });
+  fitLabels(el);
+});
+
+dash.draw('bars', (el) => {
+  el.replaceChildren();
+  if (!ready('totals', 'board')) return;
+  addTip(el);
+  const who = people();
+  const v = measure();
+  let rows = totalsFor(keyOf(chosen())).filter((r) => v(r) > 0);
+  const max = d3.max(rows, v) || 1;
+  const q = view.query.trim().toLowerCase();
+  if (q) rows = rows.filter((r) => who.get(r.id).name.toLowerCase().includes(q));
+  const by = view.sort === 'share' ? (r) => r.share ?? -1 : v;
+  rows.sort((a, b) => by(b) - by(a));
+  el.scrollTop = 0;
+  lazyRows(el, rows, (r) => {
+    const p = who.get(r.id);
+    const li = node('li', 'zl-row');
+    li.dataset.key = r.id;
+    li.append(node('span', 'zl-n', r[RANK[view.measure]]), icon(p.icon, 32), node('span', 'zl-name', p.name),
+      view.measure === 'all' ? barLine(r.total, r.r18, max) : barLine(v(r), null, max));
+    withTip(el, li, () => [p.name, `${fmt(r.total)} posts, #${r.rank}`, `${fmt(r.r18)} R-18 (${pct(r.share)})`]);
+    return li;
+  });
+});
+
+// The middle button pans; the pointer is captured and the button state
+// checked on every move, so a release outside the window ends the pan. Used
+// by the scatter; zoom is a d3.zoom whose translateBy keeps its own bounds.
+// d3 zooms ten times faster with Ctrl held (it takes it for a touchpad
+// pinch); with Ctrl as the zoom key the step stays the plain wheel's.
+const wheelStep = (event) => -event.deltaY * (event.deltaMode === 1 ? 0.05 : event.deltaMode ? 1 : 0.002);
+
+// Ctrl + wheel zooms (the page's own Ctrl zoom is held back over the chart);
+// a plain wheel scrolls the page as anywhere else and briefly shows a hint.
+const wheelZoom = (target, box) => {
+  const hint = node('div', 'zl-hint', 'Ctrl + scroll to zoom');
+  hint.hidden = true;
+  box.append(hint);
+  let timer = null;
+  target.addEventListener('wheel', (event) => {
+    if (event.ctrlKey) { event.preventDefault(); return; }
+    hint.hidden = false;
+    clearTimeout(timer);
+    timer = setTimeout(() => { hint.hidden = true; }, 1200);
+  }, { passive: false });
+};
+// A small button in the corner that puts the view back; a double-click on
+// the background does the same.
+const resetButton = (box, reset) => {
+  const button = node('button', 'zl-reset', 'Reset view');
+  button.type = 'button';
+  button.addEventListener('click', reset);
+  box.append(button);
+};
+
+const middlePan = (target, zoom, scale) => {
+  let pan = null;
+  const end = () => {
+    if (!pan) return;
+    if (target.hasPointerCapture(pan.id)) target.releasePointerCapture(pan.id);
+    pan = null;
+    target.style.cursor = '';
+  };
+  target.addEventListener('pointerdown', (event) => {
+    if (event.button !== 1) return;
+    event.preventDefault();
+    target.setPointerCapture(event.pointerId);
+    pan = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    target.style.cursor = 'grabbing';
+  });
+  target.addEventListener('pointermove', (event) => {
+    if (!pan) return;
+    if (!(event.buttons & 4)) { end(); return; }
+    const k = d3.zoomTransform(target).k;
+    const f = scale();
+    d3.select(target).call(zoom.translateBy, (event.clientX - pan.x) * f / k, (event.clientY - pan.y) * f / k);
+    pan.x = event.clientX; pan.y = event.clientY;
+  });
+  target.addEventListener('pointerup', (event) => { if (event.button === 1) end(); });
+  target.addEventListener('lostpointercapture', end);
+  target.addEventListener('auxclick', (event) => { if (event.button === 1) event.preventDefault(); });
+  window.addEventListener('blur', end);
+};
+
+dash.draw('scatter', (el) => {
+  el.replaceChildren();
+  if (!ready('totals', 'board')) return;
+  const who = people();
+  const v = measure();
+  const pts = totalsFor(keyOf(chosen())).filter((r) => v(r) > 0).map((r) => ({ ...r, p: who.get(r.id), amount: v(r) }));
+  if (!pts.length) return;
+  const W = el.clientWidth || 600;
+  const H = 380;
+  const I = W < 520 ? 22 : 30;
+  const bottom = H - 34;
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).style('touch-action', 'none');
+  const y0 = d3.scaleLinear([0, d3.max(pts, (d) => d.share)], [H - 40, I / 2 + 6]).nice();
+  const yAxis = svg.append('g');
+  yAxis.call(d3.axisLeft(y0).ticks(5, '.0%').tickSize(0)).attr('font-size', null).attr('font-family', null);
+  const left = Math.ceil(d3.max(yAxis.selectAll('text').nodes(), (n) => n.getComputedTextLength()) || 30) + 10;
+  yAxis.attr('transform', `translate(${left - 6},0)`);
+  const x0 = d3.scaleLog(d3.extent(pts, (d) => d.amount), [left + I / 2, W - I / 2 - 4]).nice();
+  // points and grid stay inside the plot area while zoomed
+  svg.append('clipPath').attr('id', 'zl-clip-plot').append('rect')
+    .attr('x', left).attr('y', 0).attr('width', W - left).attr('height', bottom);
+  svg.append('clipPath').attr('id', 'zl-clip-scatter').attr('clipPathUnits', 'objectBoundingBox')
+    .append('circle').attr('cx', 0.5).attr('cy', 0.5).attr('r', 0.5);
+  const grid = svg.insert('g', ':first-child').attr('clip-path', 'url(#zl-clip-plot)');
+  const xAxis = svg.append('g').attr('transform', `translate(0,${bottom})`);
+  svg.append('text').attr('x', W).attr('y', H - 2).attr('text-anchor', 'end')
+    .text(`${WORD[view.measure][0].toUpperCase()}${WORD[view.measure].slice(1)} (log scale)`);
+  const plot = svg.append('g').attr('clip-path', 'url(#zl-clip-plot)');
+  const tip = node('div', 'zl-tip'); tip.hidden = true; el.append(tip);
+  const g = plot.selectAll('g').data(pts.sort((a, b) => b.amount - a.amount)).join('g').attr('class', 'zl-pt');
+  g.append('image').attr('href', (d) => d.p.icon || '').attr('x', -I / 2).attr('y', -I / 2)
+    .attr('width', I).attr('height', I).attr('clip-path', 'url(#zl-clip-scatter)');
+  g.append('circle').attr('r', I / 2);
+
+  let x = x0;
+  let y = y0;
+  const place = () => {
+    yAxis.call(d3.axisLeft(y).ticks(5, '.0%').tickSize(0)).attr('font-size', null).attr('font-family', null);
+    yAxis.select('.domain').remove();
+    xAxis.call(d3.axisBottom(x).ticks(W < 520 ? 3 : 6, '~s').tickSize(0)).attr('font-size', null).attr('font-family', null);
+    xAxis.select('.domain').remove();
+    grid.selectAll('line').data(y.ticks(5)).join('line')
+      .attr('x1', left).attr('x2', W).attr('y1', (d) => y(d)).attr('y2', (d) => y(d)).style('stroke', 'var(--cds-chart-grid)');
+    g.attr('transform', (d) => `translate(${x(d.amount)},${y(d.share)})`);
+  };
+  place();
+
+  const zoom = d3.zoom().scaleExtent([1, 20])
+    .extent([[left, 0], [W, bottom]])
+    .translateExtent([[left, 0], [W, bottom]])
+    .filter((event) => event.type === 'wheel' && event.ctrlKey)
+      .wheelDelta(wheelStep)
+    .on('zoom', (event) => { x = event.transform.rescaleX(x0); y = event.transform.rescaleY(y0); tip.hidden = true; place(); });
+  svg.call(zoom).on('dblclick.zoom', null);
+  middlePan(svg.node(), zoom, () => W / el.clientWidth);
+  wheelZoom(svg.node(), el);
+  const reset = () => svg.call(zoom.transform, d3.zoomIdentity);
+  resetButton(el, reset);
+  svg.on('dblclick.reset', (event) => { if (!event.target.closest('.zl-pt')) reset(); });
+
+  g.on('pointerenter', function (event, d) {
+    this.parentNode.append(this);
+    tipLines(tip, [d.p.name, `${fmt(d.amount)} ${WORD[view.measure]}`, `${pct(d.share)} R-18`]);
+    tip.hidden = false;
+    const k = el.clientWidth / W;
+    tip.style.left = Math.max(0, Math.min(el.clientWidth - tip.offsetWidth, x(d.amount) * k - tip.offsetWidth / 2)) + 'px';
+    tip.style.top = Math.max(0, y(d.share) * k - I / 2 - tip.offsetHeight - 6) + 'px';
+  }).on('pointerleave', () => { tip.hidden = true; });
+});
+
+const pairName = (who, r) => `${who.get(r.a).name} × ${who.get(r.b).name}`;
+dash.draw('pair-top', (el) => {
+  if (!ready('pair_totals', 'board')) return text(el, null);
+  const v = measure();
+  const top = d3.greatest(pairsFor(keyOf(chosen())).filter((r) => v(r) > 0), v);
+  text(el, top ? pairName(people(), top) : null);
+});
+dash.draw('pair-sites', (el) => {
+  const p = D('pairs');
+  if (p.status !== 'ok') return text(el, null);
+  const b = D('board');
+  const n = b.status === 'ok' ? b.data.length : 0;
+  const expected = (n * (n - 1)) / 2;
+  const done = d3.rollup(p.data, (v) => v.length, (r) => r.site);
+  const on = chosen().filter((s) => done.has(s)).map((s) =>
+    done.get(s) < expected ? `${LABELS[s]} (${fmt(done.get(s))} of ${fmt(expected)} pairs so far, the most drawn characters first)` : LABELS[s]);
+  const off = chosen().filter((s) => !done.has(s)).map((s) => LABELS[s]);
+  text(el, (on.join(', ') || 'none of the chosen sites') + (off.length ? `; not yet on ${off.join(', ')}` : ''));
+});
+
+// The network's characters and pairs for the chosen sites and measure.
+const netData = () => {
+  const key = keyOf(chosen());
+  const val = measure();
+  const chars = totalsFor(key).filter((r) => val(r) > 0).sort((a, b) => val(b) - val(a));
+  const own = new Map(chars.map((r) => [r.id, val(r)]));
+  const pairs = pairsFor(key).filter((r) => val(r) > 0 && own.has(r.a) && own.has(r.b))
+    .map((l) => ({ ...l, v: val(l), near: val(l) / Math.min(own.get(l.a), own.get(l.b)) }));
+  return { key, val, chars, own, pairs };
+};
+// The selected character: the one clicked, or the most drawn.
+// view.focus false: the selection was closed, the network shows every line
+const focusId = (chars) => (view.focus === false ? null
+  : chars.some((r) => r.id === view.focus) ? view.focus : chars[0] && chars[0].id);
+// Lights the network for the current selection; set by the network drawing,
+// so the panel's close button can put the network back to all lines.
+let relight = () => {};
+const partnersOf = (pairs, id) => pairs.filter((l) => l.a === id || l.b === id)
+  .map((l) => ({ ...l, other: l.a === id ? l.b : l.a })).sort((a, b) => b.v - a.v);
+
+// Groups of a face's partners (sorted most first) that share about the same
+// amount of art. A group starts at its biggest partner and spans at most
+// TIER_SPAN times down from it; inside that span it ends at the largest drop
+// of at least TIER_JUMP from one partner to the next, else at the span's end.
+// So a partner far above the rest is a group of its own, partners close
+// together stay together however many they are, and a smooth slope is cut
+// by the span. Returns the index after the group that starts at `start`.
+const TIER_SPAN = 2;
+const TIER_JUMP = 1.3;
+const tierEnd = (mates, start) => {
+  if (start >= mates.length) return start;
+  let end = start + 1;
+  while (end < mates.length && mates[end].v * TIER_SPAN >= mates[start].v) end++;
+  let best = 1;
+  let cut = end;
+  for (let i = start; i < Math.min(end, mates.length - 1); i++) {
+    const drop = mates[i].v / mates[i + 1].v;
+    if (drop >= TIER_JUMP && drop > best) { best = drop; cut = i + 1; }
+  }
+  return cut;
+};
+
+// dash.colors and theme tokens can be CSS expressions (var(), color-mix());
+// a canvas needs the computed colour.
+const resolveColor = (value, el) => {
+  const probe = document.createElement('span');
+  probe.style.color = value;
+  el.append(probe);
+  const color = getComputedStyle(probe).color;
+  probe.remove();
+  return color;
+};
+
+// Faces cut round once, kept as small canvases the network draws directly.
+const roundCache = new Map();
+const roundFace = (src) => {
+  if (!src) return Promise.resolve(null);
+  if (!roundCache.has(src)) {
+    roundCache.set(src, new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        // full size of the icon (256 px), so a zoomed face stays sharp
+        const size = Math.max(img.naturalWidth, img.naturalHeight) || 256;
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.beginPath(); ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2); ctx.clip();
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, size, size);
+        resolve(canvas);
+      };
+      img.onerror = () => resolve(null);
+      img.src = src;
+    }));
+  }
+  return roundCache.get(src);
+};
+
+// Each worked-out layout of the network, by game, sites, content and width:
+// node id -> [x, y].
+const layouts = new Map();
+// A network of every character, drawn on one canvas: one pass per frame, and
+// a frame only when something changed (the layout moving during a drag, the
+// pointer, zoom, a face loading). The layout settles once over the first
+// frames and rests until a face is dragged. A dragged face pulls its partners
+// along, the wheel zooms and the middle button pans. Pointing at a face
+// lights up its partners; a click keeps that face selected for the panel.
+dash.draw('network', {
+  mount: () => ({ sim: null }),
+  unmount: (el, made) => { if (made.sim) made.sim.stop(); },
+  update: (el, made) => {
+    // A redraw while a face is held would swap the canvas under the pointer
+    // (the face stops after a few pixels): it waits for the drop. Nothing the
+    // network shows changed (a resize of the same width, the same data): no
+    // new layout at all.
+    if (made.isHeld && made.isHeld()) { made.pending = true; return; }
+    const inputs = ['pair_totals', 'board', 'totals'].map((id) => D(id).data);
+    const sig = `${view.game}|${keyOf(chosen())}|${view.measure}|${el.clientWidth}`;
+    if (made.sim && made.sig === sig && inputs.every((d, i) => d === made.inputs[i])) return;
+    if (made.sim) made.sim.stop();
+    made.sim = null;
+    el.replaceChildren();
+    if (!ready('pair_totals', 'board', 'totals')) return;
+    const who = people();
+    const { val, chars, pairs } = netData();
+    if (!chars.length) return;
+
+    // Lines: the network's backbone by the disparity filter (Serrano, Boguna
+    // and Vespignani, 2009). A pair stays when, for at least one of the two,
+    // it carries clearly more of that character's crossover art than an even
+    // split over all of its partners would (significance ALPHA).
+    const ALPHA = 0.05;
+    const sum = new Map();
+    const degree = new Map();
+    for (const l of pairs) {
+      for (const id of [l.a, l.b]) { sum.set(id, (sum.get(id) || 0) + l.v); degree.set(id, (degree.get(id) || 0) + 1); }
+    }
+    const alphaFor = (l, id) => (degree.get(id) <= 1 ? 0 : Math.pow(1 - l.v / sum.get(id), degree.get(id) - 1));
+    const shown = pairs.filter((l) => Math.min(alphaFor(l, l.a), alphaFor(l, l.b)) < ALPHA);
+
+    const W = el.clientWidth || 700;
+    const H = Math.round(Math.max(500, Math.min(760, W * 0.8)));
+    const narrow = W < 520;
+    // A face's area is in proportion to its art; a line's width to the art
+    // the two share against the biggest pair in the network.
+    const face = d3.scaleSqrt([0, d3.max(chars, val)], [0, narrow ? 24 : 38]);
+    const pairMax = d3.max(pairs, (l) => l.v) || 1;
+    const lineWidth = (v) => 1 + (narrow ? 6 : 10) * Math.sqrt(v / pairMax);
+    const nodes = chars.map((r, i) => ({
+      id: r.id, r: Math.max(6, face(val(r))), row: r, img: null,
+      x: W / 2 + Math.cos(i * 2.4) * (30 + i * 5), y: H / 2 + Math.sin(i * 2.4) * (25 + i * 4),
+    }));
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+    const edges = shown.map((l) => ({ source: l.a, target: l.b, l }));
+    const maxNear = d3.max(shown, (l) => l.near) || 1;
+
+    // Sharp (device pixels, at most 2x) at rest; 1x while the layout moves or
+    // the view zooms, which is a quarter of the pixels on a 2x screen.
+    const sharp = Math.min(window.devicePixelRatio || 1, 2);
+    let dpr = sharp;
+    const canvas = document.createElement('canvas');
+    let sized = false;
+    const setScale = (scale) => {
+      if (scale === dpr && sized) return;
+      sized = true;
+      dpr = scale;
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      paint();
+    };
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    canvas.style.display = 'block'; canvas.style.touchAction = 'none';
+    canvas.setAttribute('role', 'img');
+    canvas.setAttribute('aria-label', 'Network of characters drawn together');
+    el.append(canvas);
+    const ctx = canvas.getContext('2d');
+    const tip = node('div', 'zl-tip'); tip.hidden = true; el.append(tip);
+    const ink = resolveColor(dash.colors[0], el);
+    let view2d = d3.zoomIdentity;
+
+    // What is lit: the face, each partner's strength against its biggest
+    // partner, and the partners that get a line. Every partner gets a ring,
+    // never fainter than RING_MIN. Lines go to two groups of partners, the
+    // main one and the middle one (see tiers); the rest get only the ring.
+    const RING_MIN = 0.35;
+    const TIER_ALPHA = [0.95, 0.7];
+    const MAIN = '#e8578f';
+    const tierInk = (tier) => (tier === 0 ? MAIN : ink);
+    let lit = null;
+    const light = (id) => {
+      if (id == null) { lit = null; paint(); return; }
+      const mates = partnersOf(pairs, id).filter((l) => l.v > 0);
+      const top = d3.max(mates, (l) => l.v) || 1;
+      const first = tierEnd(mates, 0);
+      const second = tierEnd(mates, first);
+      lit = {
+        id,
+        strength: new Map(mates.map((l) => [l.other, l.v / top])),
+        tier: new Map(mates.slice(0, second).map((l, i) => [l.other, i < first ? 0 : 1])),
+        lines: mates.slice(0, second).map((l, i) => ({ other: byId.get(l.other), v: l.v, tier: i < first ? 0 : 1 }))
+          .reverse(),
+      };
+      paint();
+    };
+
+    // At most one frame per FRAME_MS (about 60 a second): a 144 or 240 Hz
+    // screen would otherwise get a new picture, and a new window composition,
+    // on every refresh.
+    const FRAME_MS = 16;
+    let queued = false;
+    let lastFrame = 0;
+    const paint = () => { if (!queued) { queued = true; requestAnimationFrame(render); } };
+    function render(now) {
+      if (now - lastFrame < FRAME_MS) { requestAnimationFrame(render); return; }
+      lastFrame = now;
+      queued = false;
+      nodes.forEach((n) => { n.x = Math.max(n.r + 2, Math.min(W - n.r - 2, n.x)); n.y = Math.max(n.r + 2, Math.min(H - n.r - 2, n.y)); });
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      ctx.translate(view2d.x, view2d.y);
+      ctx.scale(view2d.k, view2d.k);
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = ink;
+      ctx.imageSmoothingQuality = 'high';
+      // the backbone: thin, and barely there while a face is lit
+      ctx.globalAlpha = lit ? 0.05 : 0.35;
+      for (const e of edges) {
+        ctx.lineWidth = Math.max(0.75, (narrow ? 10 : 16) * e.l.v / pairMax);
+        ctx.beginPath(); ctx.moveTo(e.source.x, e.source.y); ctx.lineTo(e.target.x, e.target.y); ctx.stroke();
+      }
+      // the lit face's lines: brightness against its biggest partner
+      if (lit) {
+        const from = byId.get(lit.id);
+        for (const m of lit.lines) {
+          ctx.globalAlpha = TIER_ALPHA[m.tier];
+          ctx.strokeStyle = tierInk(m.tier);
+          ctx.lineWidth = lineWidth(m.v);
+          ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(m.other.x, m.other.y); ctx.stroke();
+        }
+      }
+      // faces and rings
+      for (const n of nodes) {
+        const s = lit ? lit.strength.get(n.id) : undefined;
+        const picked = lit && n.id === lit.id;
+        const faceAlpha = !lit || picked ? 1 : s != null ? 0.5 + 0.5 * Math.sqrt(s) : 0.4;
+        ctx.globalAlpha = faceAlpha;
+        if (n.img) ctx.drawImage(n.img, n.x - n.r, n.y - n.r, n.r * 2, n.r * 2);
+        else { ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.fill(); }
+        ctx.globalAlpha = picked ? 1 : s != null ? RING_MIN + (1 - RING_MIN) * Math.sqrt(s) : 0.3;
+        ctx.lineWidth = picked ? 3.5 : s != null ? 2 + 2 * s : 1.5;
+        ctx.strokeStyle = lit && lit.tier.has(n.id) ? tierInk(lit.tier.get(n.id)) : ink;
+        ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      if (held) place(held);
+    }
+
+    const pointer = (event) => {
+      const [x, y] = d3.pointer(event, canvas);
+      return view2d.invert([x, y]);
+    };
+    const faceAt = (event) => {
+      const [x, y] = pointer(event);
+      const n = sim.find(x, y);
+      return n && Math.hypot(n.x - x, n.y - y) <= n.r ? n : null;
+    };
+    const place = (n) => {
+      const [sx, sy] = view2d.apply([n.x, n.y]);
+      tip.hidden = false;
+      tip.style.left = Math.max(0, Math.min(W - tip.offsetWidth, sx - tip.offsetWidth / 2)) + 'px';
+      tip.style.top = Math.max(0, sy - n.r * view2d.k - tip.offsetHeight - 6) + 'px';
+    };
+    const pick = (id) => { view.focus = id; light(id); dash.draw('focus-panel'); };
+    const unpick = () => { view.focus = false; light(null); dash.draw('focus-panel'); };
+
+    // The layout is worked out before it is shown, then rests until a drag.
+    const sim = d3.forceSimulation(nodes)
+      .force('link', d3.forceLink(edges).id((d) => d.id).distance((e) => 60 + 110 * (1 - e.l.near / maxNear)).strength(0.25))
+      .force('charge', d3.forceManyBody().strength(-200))
+      .force('collide', d3.forceCollide((d) => d.r + 4))
+      .force('x', d3.forceX(W / 2).strength(0.06))
+      .force('y', d3.forceY(H / 2).strength(0.08))
+      .alphaMin(0.02)
+      .stop();
+    // The layout is worked out about 8 ms a frame and drawn as it settles, so
+    // the page keeps answering. One already worked out for this game, sites
+    // and content (with any faces dragged since) is put back at once.
+    const saved = layouts.get(sig);
+    const known = saved && nodes.every((n) => saved.has(n.id));
+    if (known) nodes.forEach((n) => { [n.x, n.y] = saved.get(n.id); });
+    let left = known ? 0 : 300;
+    const keep = () => layouts.set(sig, new Map(nodes.map((n) => [n.id, [n.x, n.y]])));
+    const settle = () => {
+      if (made.sim !== sim) return; // a newer drawing took its place
+      const until = performance.now() + 8;
+      while (left > 0 && performance.now() < until) { sim.tick(); left--; }
+      if (left > 0) { setScale(1); paint(); requestAnimationFrame(settle); return; }
+      keep();
+      setScale(sharp);
+      paint();
+    };
+    // While the layout moves it is drawn at 1x; once it stops, once more sharp.
+    sim.on('tick', () => { setScale(1); paint(); });
+    sim.on('end', () => { setScale(sharp); keep(); });
+
+    let held = null;
+    let hover = null;
+    canvas.addEventListener('pointermove', (event) => {
+      if (held || pan) return;
+      const n = faceAt(event);
+      if (n === hover) return;
+      hover = n;
+      canvas.style.cursor = n ? 'pointer' : '';
+      light(n ? n.id : focusId(chars));
+      if (n) { tipLines(tip, [who.get(n.id).name]); place(n); } else tip.hidden = true;
+    });
+    canvas.addEventListener('pointerleave', () => {
+      if (held) return;
+      hover = null;
+      tip.hidden = true;
+      light(focusId(chars));
+    });
+    // a click on a face selects it; on the background, closes the selection
+    canvas.addEventListener('click', (event) => {
+      const n = faceAt(event);
+      if (n) pick(n.id); else if (view.focus !== false) unpick();
+    });
+
+    // Wheel zooms, the middle button pans; the left button belongs to the faces.
+    // The whole network fits the box at 1x, so the view zooms in only. It may
+    // move off the network by at most half its size each way, so the network
+    // can never be lost outside the box.
+    const zoom = d3.zoom().scaleExtent([1, 20])
+      .extent([[0, 0], [W, H]])
+      .translateExtent([[-W / 2, -H / 2], [W * 1.5, H * 1.5]])
+      .filter((event) => event.type === 'wheel' && event.ctrlKey)
+      .wheelDelta(wheelStep)
+      .on('end', () => setScale(sharp))
+      .on('zoom', (event) => { view2d = event.transform; tip.hidden = true; setScale(1); paint(); });
+    // The wheel over the network only zooms: at a zoom limit d3 lets the wheel
+    // through, and the page would scroll instead.
+    wheelZoom(canvas, el);
+    d3.select(canvas).call(zoom).on('dblclick.zoom', null);
+    const resetView = () => { d3.select(canvas).call(zoom.transform, d3.zoomIdentity); setScale(sharp); };
+    resetButton(el, resetView);
+    canvas.addEventListener('dblclick', (event) => { if (!faceAt(event)) resetView(); });
+
+    // The middle button pans. The pointer is captured, so the release is seen
+    // even outside the window; a move with the button no longer down, a lost
+    // capture or the window losing focus ends the pan too, so it never sticks.
+    const keepInside = (t) => {
+      const x = Math.min(W / 2 * t.k, Math.max(W - W * 1.5 * t.k, t.x));
+      const y = Math.min(H / 2 * t.k, Math.max(H - H * 1.5 * t.k, t.y));
+      return d3.zoomIdentity.translate(x, y).scale(t.k);
+    };
+    let pan = null;
+    const endPan = () => {
+      if (!pan) return;
+      if (canvas.hasPointerCapture(pan.id)) canvas.releasePointerCapture(pan.id);
+      pan = null;
+      canvas.style.cursor = '';
+      setScale(sharp);
+    };
+    canvas.addEventListener('pointerdown', (event) => {
+      if (event.button !== 1) return;
+      event.preventDefault();
+      canvas.setPointerCapture(event.pointerId);
+      pan = { id: event.pointerId, x: event.clientX, y: event.clientY, from: view2d };
+      canvas.style.cursor = 'grabbing';
+      tip.hidden = true;
+    });
+    canvas.addEventListener('pointermove', (event) => {
+      if (!pan) return;
+      if (!(event.buttons & 4)) { endPan(); return; }
+      view2d = keepInside(d3.zoomIdentity.translate(pan.from.x + event.clientX - pan.x, pan.from.y + event.clientY - pan.y).scale(pan.from.k));
+      canvas.__zoom = view2d; // the wheel zoom goes on from here
+      setScale(1);
+      paint();
+    });
+    canvas.addEventListener('pointerup', (event) => { if (event.button === 1) endPan(); });
+    canvas.addEventListener('lostpointercapture', endPan);
+    canvas.addEventListener('auxclick', (event) => { if (event.button === 1) event.preventDefault(); });
+    window.addEventListener('blur', endPan);
+    d3.select(canvas).call(d3.drag()
+      .filter((event) => event.button === 0 && left === 0)
+      .subject((event) => faceAt(event.sourceEvent || event))
+      .on('start', (event) => {
+        const n = event.subject;
+        held = n;
+        if (view.focus !== n.id) pick(n.id);
+        canvas.style.cursor = 'grabbing';
+        tipLines(tip, [who.get(n.id).name]);
+        // The layout rests with alpha far below alphaMin; raised only by
+        // alphaTarget, it would stop again on the first tick (the first two
+        // drags froze). It starts above alphaMin and rises from there.
+        if (!event.active) sim.alphaTarget(0.3).alpha(Math.max(sim.alpha(), 0.05)).restart();
+        n.fx = n.x; n.fy = n.y;
+      })
+      .on('drag', (event) => {
+        const [x, y] = pointer(event.sourceEvent);
+        event.subject.fx = x; event.subject.fy = y;
+        // the held face follows the pointer even between ticks
+        event.subject.x = x; event.subject.y = y;
+        paint();
+      })
+      .on('end', (event) => {
+        held = null;
+        canvas.style.cursor = '';
+        tip.hidden = true;
+        if (!event.active) sim.alphaTarget(0);
+        event.subject.fx = null; event.subject.fy = null;
+        if (made.pending) { made.pending = false; dash.draw('network'); }
+      }));
+
+    setScale(sharp);
+    light(focusId(chars));
+    relight = () => light(focusId(chars));
+    nodes.forEach((n) => roundFace(who.get(n.id).icon).then((img) => { n.img = img; paint(); }));
+    made.sim = sim;
+    made.sig = sig;
+    made.inputs = inputs;
+    made.isHeld = () => held != null;
+    settle();
+  },
+});
+
+// The panel beside the network: the selected character and its partners.
+dash.draw('focus-panel', (el) => {
+  el.replaceChildren();
+  if (!ready('pair_totals', 'board', 'totals')) return;
+  const who = people();
+  const { val, chars, pairs } = netData();
+  const id = focusId(chars);
+  if (!id) {
+    if (chars.length) el.append(node('p', 'zl-note', 'Click a face in the network to see who that character is drawn with.'));
+    return;
+  }
+  const row = chars.find((r) => r.id === id);
+  const p = who.get(id);
+  const mates = partnersOf(pairs, id);
+  const head = node('div', 'zl-panel-head');
+  const title = node('div', 'zl-panel-title');
+  title.append(node('div', 'zl-name', p.name), node('div', 'zl-note', `#${row.rank} · ${fmt(row.total)} posts`));
+  const close = node('button', 'zl-close', '×');
+  close.type = 'button';
+  close.setAttribute('aria-label', `Close ${p.name}, show every line`);
+  close.addEventListener('click', () => { view.focus = false; relight(); dash.draw('focus-panel'); });
+  head.append(icon(p.icon, 64), title, close);
+  const bar = node('div', 'zl-bar');
+  const part = node('div', 'zl-bar-r18');
+  part.append(node('span', null, `${pct0(row.share)} R-18`));
+  part.style.width = (row.share * 100).toFixed(1) + '%';
+  bar.append(part);
+  el.append(head, bar, node('p', 'zl-note', `Drawn together with ${fmt(mates.length)} other characters.`),
+    node('h4', 'zl-panel-sub', view.measure === 'r18' ? 'Most R-18 art with' : view.measure === 'safe' ? 'Most art without R-18 with' : 'Most art with'));
+  const list = node('ol', 'zl-mates');
+  const top = mates;
+  const max = d3.max(top, (l) => l.v) || 1;
+  addTip(list);
+  for (const l of top) {
+    const li = node('li', 'zl-mate');
+    li.dataset.key = l.a + '|' + l.b;
+    const body = node('div', 'zl-mate-body');
+    body.append(node('div', 'zl-name', who.get(l.other).name),
+      view.measure === 'all' ? barLine(l.total, l.r18, max) : barLine(l.v, null, max));
+    li.append(icon(who.get(l.other).icon, 32), body);
+    withTip(list, li, () => [`${p.name} × ${who.get(l.other).name}`, `${fmt(l.total)} posts together`,
+      `${pct(l.total / row.total)} of ${p.name}'s art`, l.total >= 20 ? `${pct0(l.r18 / l.total)} R-18` : '']);
+    list.append(li);
+  }
+  el.append(list);
+  fitLabels(el);
+});
+
+dash.draw('pairs-top', (el) => {
+  el.replaceChildren();
+  if (!ready('pair_totals', 'board')) return;
+  addTip(el);
+  const who = people();
+  const q = view.pairQuery.trim().toLowerCase();
+  const v = measure();
+  const ranked = pairsFor(keyOf(chosen())).filter((r) => v(r) > 0).sort((a, b) => v(b) - v(a)).map((r, i) => ({ ...r, place: i + 1 }));
+  // bars keep the scale of the whole list, so a search does not stretch them
+  const max = d3.max(ranked, v) || 1;
+  const rows = ranked.filter((r) => !q || who.get(r.a).name.toLowerCase().includes(q) || who.get(r.b).name.toLowerCase().includes(q));
+  el.scrollTop = 0;
+  lazyRows(el, rows, (r) => {
+    const li = node('li', 'zl-row zl-pair');
+    li.dataset.key = r.a + '|' + r.b;
+    const duo = node('span', 'zl-duo');
+    duo.append(icon(who.get(r.a).icon, 32), icon(who.get(r.b).icon, 32));
+    li.append(node('span', 'zl-n', r.place), duo, node('span', 'zl-name', pairName(who, r)),
+      view.measure === 'all' ? barLine(r.total, r.r18, max) : barLine(v(r), null, max));
+    withTip(el, li, () => [pairName(who, r), `${fmt(r.total)} posts together`, `${fmt(r.r18)} R-18 (${pct(r.r18 / r.total)})`]);
+    return li;
+  });
+});
+
+const game = () => GAMES.find((g) => g.id === view.game);
+const showGame = () => {
+  // only hidden and aria-* change here: the text and logos are in the HTML
+  document.querySelectorAll('[data-game-title], [data-game-logo]').forEach((e) => {
+    e.hidden = (e.dataset.gameTitle || e.dataset.gameLogo) !== view.game;
+  });
+  document.querySelectorAll('[data-game-summary]').forEach((e) => e.setAttribute('aria-label', `Game shown: ${game().title}`));
+  document.querySelectorAll('[data-game]').forEach((b) => b.setAttribute('aria-current', String(b.dataset.game === view.game)));
+};
+showGame();
+const switcher = document.querySelector('.zl-game');
+document.querySelectorAll('[data-game]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    switcher.open = false;
+    if (btn.dataset.game === view.game) return;
+    view.game = btn.dataset.game;
+    view.focus = null;
+    try { localStorage.setItem('tagstats-game', view.game); } catch (e) { /* only this visit */ }
+    showGame();
+    redrawAll();
+  });
+});
+document.addEventListener('click', (event) => { if (!switcher.contains(event.target)) switcher.open = false; });
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && switcher.open) { switcher.open = false; switcher.querySelector('summary').focus(); } });
+
+document.querySelectorAll('.zl-sites input').forEach((box) => {
+  box.addEventListener('change', () => {
+    if (!document.querySelector('.zl-sites input:checked')) box.checked = true;
+    redrawAll();
+  });
+});
+document.querySelectorAll('[data-sort]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    view.sort = btn.dataset.sort;
+    document.querySelectorAll('[data-sort]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+    dash.draw('bars');
+  });
+});
+document.querySelectorAll('[data-measure]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    view.measure = btn.dataset.measure;
+    document.querySelectorAll('[data-measure]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+    document.querySelectorAll('[data-legend]').forEach((key) => { key.hidden = key.dataset.legend !== view.measure; });
+    redrawAll();
+  });
+});
+document.querySelectorAll('.zl-search').forEach((input) => {
+  input.addEventListener('input', () => {
+    if (input.dataset.find === 'pairs') { view.pairQuery = input.value; dash.draw('pairs-top'); }
+    else { view.query = input.value; dash.draw('bars'); }
+  });
+});
+</script>
+</div>
+<footer class="site-foot">Counts of tag searches on Danbooru, Rule34 and pixiv, collected 2026-11-03. Only numbers are shown, no pictures from those sites. Character icons from the games' fandom wikis, © their publishers.</footer>
+</body>
+</html>
