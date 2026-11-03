@@ -137,6 +137,13 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-duo img + img { left: 20px; }
 
 .zl-chart { position: relative; min-height: 380px; }
+/* full screen: the chart (or the network with its panel) fixed over the page */
+.zl-full { position: fixed !important; inset: 0; z-index: 1000; margin: 0; max-width: none; box-sizing: border-box; background: var(--color-bg); }
+.zl-chart.zl-full { min-height: 0; height: 100dvh; }
+.zl-netwrap.zl-full { padding: var(--cds-pad-md); align-items: stretch; }
+.zl-netwrap.zl-full .zl-net { min-height: 0; height: calc(100dvh - 2 * var(--cds-pad-md)); }
+.zl-netwrap.zl-full .zl-panel { max-height: calc(100dvh - 2 * var(--cds-pad-md)); overflow: auto; }
+.zl-noscroll, .zl-noscroll body { overflow: hidden; }
 .zl-chart svg { display: block; overflow: visible; }
 .zl-chart text { fill: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
 .zl-net { min-height: 520px; overflow: hidden; border-radius: var(--cds-radius); }
@@ -158,14 +165,18 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-mate-body .zl-name { font-size: var(--cds-font-size-caption); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .zl-mate .zl-bar { height: 18px; }
 .zl-hint { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 4; pointer-events: none; padding: var(--cds-pad-sm) var(--cds-pad-md); border-radius: var(--cds-radius); background: var(--cds-surface-popover); border: 1px solid var(--cds-border); box-shadow: var(--cds-shadow-popover); font-size: var(--cds-font-size-body); }
-.zl-reset { position: absolute; top: var(--cds-pad-xs); right: var(--cds-pad-xs); z-index: 2; font: inherit; font-size: var(--cds-font-size-caption); padding: 2px var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-panel); color: var(--color-fg-muted); cursor: pointer; }
+.zl-tools { position: absolute; top: var(--cds-pad-xs); right: var(--cds-pad-xs); z-index: 2; display: flex; gap: var(--cds-gap-xs); }
+.zl-reset { font: inherit; font-size: var(--cds-font-size-caption); padding: 2px var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-panel); color: var(--color-fg-muted); cursor: pointer; }
 .zl-reset:hover { color: var(--color-fg); }
 .zl-reset:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
 .zl-tip { position: absolute; pointer-events: none; z-index: 3; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .zl-tip strong { display: block; }
 .zl-tip span { display: block; color: var(--cds-text-secondary); }
 [data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
-@media (max-width: 900px) { .zl-netwrap { grid-template-columns: 1fr; } }
+@media (max-width: 900px) {
+  .zl-netwrap { grid-template-columns: 1fr; }
+  .zl-netwrap.zl-full .zl-panel { display: none; }
+}
 @media (max-width: 640px) {
   .zl-row { grid-template-columns: 1.4rem 28px minmax(4.5rem, 7rem) 1fr; }
   .zl-pair { grid-template-columns: 1.4rem 48px minmax(5rem, 8rem) 1fr; }
@@ -744,12 +755,45 @@ const touchZoom = (target, zoom, scale = () => 1) => {
 };
 // A small button in the corner that puts the view back; a double-click on
 // the background does the same.
+const tools = (box) => box.querySelector(':scope > .zl-tools') || box.appendChild(node('div', 'zl-tools'));
 const resetButton = (box, reset) => {
   const button = node('button', 'zl-reset', 'Reset view');
   button.type = 'button';
   button.addEventListener('click', reset);
-  box.append(button);
+  tools(box).append(button);
 };
+// Full screen for a chart (target: what fills the screen, the chart or the
+// chart with its panel). The box is fixed over the whole page at once, which
+// is all an iPhone allows; where the browser has a full-screen mode for any
+// element (desktop, Android) it is asked for as well. redraw runs the
+// drawing again at the new size; Esc or the button ends it.
+const setFull = (target, on) => {
+  target.classList.toggle('zl-full', on);
+  document.documentElement.classList.toggle('zl-noscroll', on);
+  if (target.zlRedraw) target.zlRedraw();
+};
+const fullButton = (box, target, redraw) => {
+  target.zlRedraw = redraw;
+  const on = target.classList.contains('zl-full');
+  const button = node('button', 'zl-reset', on ? 'Exit full screen' : 'Full screen');
+  button.type = 'button';
+  button.addEventListener('click', () => {
+    if (on) {
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      setFull(target, false);
+      return;
+    }
+    setFull(target, true);
+    if (target.requestFullscreen && document.fullscreenEnabled) target.requestFullscreen().catch(() => {});
+  });
+  tools(box).append(button);
+};
+const leaveFull = () => document.querySelectorAll('.zl-full').forEach((e) => setFull(e, false));
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement) leaveFull();
+  else if (document.fullscreenElement.zlRedraw) document.fullscreenElement.zlRedraw();
+});
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !document.fullscreenElement) leaveFull(); });
 
 const middlePan = (target, zoom, scale) => {
   let pan = null;
@@ -788,8 +832,14 @@ dash.draw('scatter', (el) => {
   const pts = totalsFor(keyOf(chosen())).filter((r) => v(r) > 0).map((r) => ({ ...r, p: who.get(r.id), amount: v(r) }));
   if (!pts.length) return;
   const W = el.clientWidth || 600;
-  const H = 380;
+  const H = el.classList.contains('zl-full') ? Math.max(320, el.clientHeight) : 380;
   const I = W < 520 ? 22 : 30;
+  // Each face is as big as its room allows: half the way to its nearest
+  // neighbour on screen, between R_MIN and R_MAX. Faces never cover each
+  // other, and a face standing apart, or spread from the others by zooming
+  // in, shows large.
+  const R_MIN = 4;
+  const R_MAX = W < 520 ? 30 : 44;
   const bottom = H - 34;
   const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
   const y0 = d3.scaleLinear([0, d3.max(pts, (d) => d.share)], [H - 40, I / 2 + 6]).nice();
@@ -810,9 +860,20 @@ dash.draw('scatter', (el) => {
   const plot = svg.append('g').attr('clip-path', 'url(#zl-clip-plot)');
   const tip = node('div', 'zl-tip'); tip.hidden = true; el.append(tip);
   const g = plot.selectAll('g').data(pts.sort((a, b) => b.amount - a.amount)).join('g').attr('class', 'zl-pt');
-  g.append('image').attr('href', (d) => d.p.icon || '').attr('x', -I / 2).attr('y', -I / 2)
-    .attr('width', I).attr('height', I).attr('clip-path', 'url(#zl-clip-scatter)');
-  g.append('circle').attr('r', I / 2);
+  const pic = g.append('image').attr('href', (d) => d.p.icon || '').attr('clip-path', 'url(#zl-clip-scatter)');
+  const ring = g.append('circle');
+  const size = () => {
+    const at = pts.map((d) => [x(d.amount), y(d.share)]);
+    pts.forEach((d, i) => {
+      let near = Infinity;
+      for (let j = 0; j < at.length; j++) {
+        if (j !== i) near = Math.min(near, Math.hypot(at[i][0] - at[j][0], at[i][1] - at[j][1]));
+      }
+      d.r = Math.max(R_MIN, Math.min(R_MAX, near / 2 - 1));
+    });
+    pic.attr('x', (d) => -d.r).attr('y', (d) => -d.r).attr('width', (d) => 2 * d.r).attr('height', (d) => 2 * d.r);
+    ring.attr('r', (d) => d.r);
+  };
 
   let x = x0;
   let y = y0;
@@ -824,6 +885,7 @@ dash.draw('scatter', (el) => {
     grid.selectAll('line').data(y.ticks(5)).join('line')
       .attr('x1', left).attr('x2', W).attr('y1', (d) => y(d)).attr('y2', (d) => y(d)).style('stroke', 'var(--cds-chart-grid)');
     g.attr('transform', (d) => `translate(${x(d.amount)},${y(d.share)})`);
+    size();
   };
   place();
 
@@ -839,6 +901,7 @@ dash.draw('scatter', (el) => {
   touchZoom(svg.node(), zoom, () => W / el.clientWidth);
   const reset = () => svg.call(zoom.transform, d3.zoomIdentity);
   resetButton(el, reset);
+  fullButton(el, el, () => dash.draw('scatter'));
   svg.on('dblclick.reset', (event) => { if (!event.target.closest('.zl-pt')) reset(); });
 
   g.on('pointerenter', function (event, d) {
@@ -847,7 +910,7 @@ dash.draw('scatter', (el) => {
     tip.hidden = false;
     const k = el.clientWidth / W;
     tip.style.left = Math.max(0, Math.min(el.clientWidth - tip.offsetWidth, x(d.amount) * k - tip.offsetWidth / 2)) + 'px';
-    tip.style.top = Math.max(0, y(d.share) * k - I / 2 - tip.offsetHeight - 6) + 'px';
+    tip.style.top = Math.max(0, (y(d.share) - d.r) * k - tip.offsetHeight - 6) + 'px';
   }).on('pointerleave', () => { tip.hidden = true; });
 });
 
@@ -968,7 +1031,8 @@ dash.draw('network', {
     // new layout at all.
     if (made.isHeld && made.isHeld()) { made.pending = true; return; }
     const inputs = ['pair_totals', 'board', 'totals'].map((id) => D(id).data);
-    const sig = `${view.game}|${keyOf(chosen())}|${view.measure}|${el.clientWidth}`;
+    const full = Boolean(el.closest('.zl-full'));
+    const sig = `${view.game}|${keyOf(chosen())}|${view.measure}|${el.clientWidth}|${full ? el.clientHeight : ''}`;
     if (made.sim && made.sig === sig && inputs.every((d, i) => d === made.inputs[i])) return;
     if (made.sim) made.sim.stop();
     made.sim = null;
@@ -992,7 +1056,7 @@ dash.draw('network', {
     const shown = pairs.filter((l) => Math.min(alphaFor(l, l.a), alphaFor(l, l.b)) < ALPHA);
 
     const W = el.clientWidth || 700;
-    const H = Math.round(Math.max(500, Math.min(760, W * 0.8)));
+    const H = full ? Math.max(320, el.clientHeight) : Math.round(Math.max(500, Math.min(760, W * 0.8)));
     const narrow = W < 520;
     // A face's area is in proportion to its art; a line's width to the art
     // the two share against the biggest pair in the network.
@@ -1137,8 +1201,9 @@ dash.draw('network', {
       .force('link', d3.forceLink(edges).id((d) => d.id).distance((e) => (60 + 110 * (1 - e.l.near / maxNear)) * Math.sqrt(room)).strength(0.25))
       .force('charge', d3.forceManyBody().strength(-200 * room))
       .force('collide', d3.forceCollide((d) => d.r + 4))
-      .force('x', d3.forceX(W / 2).strength(hold))
-      .force('y', d3.forceY(H / 2).strength((d) => hold(d) * 1.3))
+      // the box's short side holds harder (a tall phone screen in full screen)
+      .force('x', d3.forceX(W / 2).strength((d) => hold(d) * Math.max(1, H / W)))
+      .force('y', d3.forceY(H / 2).strength((d) => hold(d) * 1.3 * Math.max(1, W / H)))
       .alphaMin(0.02)
       .stop();
     // The layout is worked out about 8 ms a frame and drawn as it settles, so
@@ -1202,6 +1267,7 @@ dash.draw('network', {
     d3.select(canvas).call(zoom).on('dblclick.zoom', null);
     const resetView = () => { d3.select(canvas).call(zoom.transform, d3.zoomIdentity); setScale(sharp); };
     resetButton(el, resetView);
+    fullButton(el, el.closest('.zl-netwrap') || el, () => dash.draw('network'));
     canvas.addEventListener('dblclick', (event) => { if (!faceAt(event)) resetView(); });
 
     // The middle button pans. The pointer is captured, so the release is seen
