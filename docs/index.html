@@ -1087,10 +1087,17 @@ dash.draw('network', {
     const byId = new Map(nodes.map((n) => [n.id, n]));
     const edges = shown.map((l) => ({ source: l.a, target: l.b, l }));
     const maxNear = d3.max(shown, (l) => l.near) || 1;
+    const backbone = d3.group(edges, (e) => Math.round(Math.max(0.75, (narrow ? 10 : 16) * e.l.v / pairMax) * 2) / 2);
 
-    // Sharp (device pixels, at most 2x) at rest; 1x while the layout moves or
-    // the view zooms, which is a quarter of the pixels on a 2x screen.
-    const sharp = Math.min(window.devicePixelRatio || 1, 2);
+    // Sharp (device pixels, at most 2x) at rest; while the layout moves or the
+    // view zooms, the canvas has at most MOVE_PIXELS and the browser stretches
+    // it to the box. Full screen on a big monitor then costs a frame no more
+    // than the box in the page does (it had tens of millions of pixels to
+    // redraw on every frame of a drag); at rest it has at most REST_PIXELS.
+    const MOVE_PIXELS = 1.5e6;
+    const REST_PIXELS = 8e6;
+    const moving = Math.min(1, Math.sqrt(MOVE_PIXELS / (W * H)));
+    const sharp = Math.max(moving, Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(REST_PIXELS / (W * H))));
     let dpr = sharp;
     const canvas = document.createElement('canvas');
     let sized = false;
@@ -1157,11 +1164,14 @@ dash.draw('network', {
       ctx.strokeStyle = ink;
       // the best (slow) shrinking of faces only once nothing moves
       ctx.imageSmoothingQuality = held || zooming || sim.alpha() >= sim.alphaMin() ? 'low' : 'high';
-      // the backbone: thin, and barely there while a face is lit
+      // the backbone: thin, and barely there while a face is lit; one path
+      // for each line width (in half pixels), not one stroke for each line
       ctx.globalAlpha = lit ? 0.05 : 0.35;
-      for (const e of edges) {
-        ctx.lineWidth = Math.max(0.75, (narrow ? 10 : 16) * e.l.v / pairMax);
-        ctx.beginPath(); ctx.moveTo(e.source.x, e.source.y); ctx.lineTo(e.target.x, e.target.y); ctx.stroke();
+      for (const [width, list] of backbone) {
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        for (const e of list) { ctx.moveTo(e.source.x, e.source.y); ctx.lineTo(e.target.x, e.target.y); }
+        ctx.stroke();
       }
       // the lit face's lines: brightness against its biggest partner
       if (lit) {
@@ -1199,11 +1209,15 @@ dash.draw('network', {
       const n = sim.find(x, y);
       return n && Math.hypot(n.x - x, n.y - y) <= n.r ? n : null;
     };
+    // The tip's size is read once per face shown: reading it on every frame of
+    // a drag made the browser lay out the whole page each time.
+    let tipSize = null;
     const place = (n) => {
       const [sx, sy] = view2d.apply([n.x, n.y]);
       tip.hidden = false;
-      tip.style.left = Math.max(0, Math.min(W - tip.offsetWidth, sx - tip.offsetWidth / 2)) + 'px';
-      tip.style.top = Math.max(0, sy - n.r * view2d.k - tip.offsetHeight - 6) + 'px';
+      if (!tipSize || tipSize.id !== n.id) tipSize = { id: n.id, w: tip.offsetWidth, h: tip.offsetHeight };
+      tip.style.left = Math.max(0, Math.min(W - tipSize.w, sx - tipSize.w / 2)) + 'px';
+      tip.style.top = Math.max(0, sy - n.r * view2d.k - tipSize.h - 6) + 'px';
     };
     const pick = (id) => { view.focus = id; light(id); dash.draw('focus-panel'); };
     const unpick = () => { view.focus = false; light(null); dash.draw('focus-panel'); };
@@ -1237,13 +1251,13 @@ dash.draw('network', {
       if (made.sim !== sim) return; // a newer drawing took its place
       const until = performance.now() + 8;
       while (left > 0 && performance.now() < until) { sim.tick(); left--; }
-      if (left > 0) { setScale(1); paint(); requestAnimationFrame(settle); return; }
+      if (left > 0) { setScale(moving); paint(); requestAnimationFrame(settle); return; }
       keep();
       setScale(sharp);
       paint();
     };
     // While the layout moves it is drawn at 1x; once it stops, once more sharp.
-    sim.on('tick', () => { setScale(1); paint(); });
+    sim.on('tick', () => { setScale(moving); paint(); });
     sim.on('end', () => { setScale(sharp); keep(); paint(); });
 
     let held = null;
@@ -1285,7 +1299,7 @@ dash.draw('network', {
         clearTimeout(sharpTimer);
         sharpTimer = setTimeout(() => { zooming = false; setScale(sharp); paint(); }, 200);
       })
-      .on('zoom', (event) => { view2d = event.transform; zooming = true; tip.hidden = true; setScale(1); paint(); });
+      .on('zoom', (event) => { view2d = event.transform; zooming = true; tip.hidden = true; setScale(moving); paint(); });
     // The wheel over the network only zooms: at a zoom limit d3 lets the wheel
     // through, and the page would scroll instead.
     wheelZoom(canvas, el);
@@ -1324,7 +1338,7 @@ dash.draw('network', {
       if (!(event.buttons & 4)) { endPan(); return; }
       view2d = keepInside(d3.zoomIdentity.translate(pan.from.x + event.clientX - pan.x, pan.from.y + event.clientY - pan.y).scale(pan.from.k));
       canvas.__zoom = view2d; // the wheel zoom goes on from here
-      setScale(1);
+      setScale(moving);
       paint();
     });
     canvas.addEventListener('pointerup', (event) => { if (event.button === 1) endPan(); });
