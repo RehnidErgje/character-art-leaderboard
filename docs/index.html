@@ -202,11 +202,12 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-panel { position: absolute; top: var(--cds-pad-sm); right: var(--cds-pad-sm); z-index: 3; width: min(22rem, 45%); max-height: calc(100% - 2 * var(--cds-pad-sm)); overflow: auto; box-sizing: border-box; display: grid; gap: var(--cds-gap-sm); align-content: start; padding: var(--cds-pad-md); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-bg); box-shadow: var(--cds-shadow-popover); }
 .zl-panel-head { display: flex; align-items: center; gap: var(--cds-gap-sm); }
 /* the sheet's arrow (full screen, narrow): up to open, down to close */
-.zl-sheet-arrow { display: none; margin-left: auto; width: 0.6em; height: 0.6em; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(0.2em) rotate(-135deg); color: var(--color-fg-muted); }
+.zl-sheet-arrow { display: block; flex: none; margin: 0 4px 0 auto; width: 0.6em; height: 0.6em; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-0.15em) rotate(45deg); color: var(--color-fg-muted); }
+/* the panel folds to the face and its share; open, the arrow turns */
+.zl-panel-head, .zl-panel > .zl-bar { cursor: pointer; }
+.zl-panel:not(.zl-open) > :not(.zl-panel-head):not(.zl-bar) { display: none; }
+.zl-panel.zl-open .zl-sheet-arrow { transform: translateY(0.2em) rotate(-135deg); }
 .zl-panel-head img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; }
-.zl-close { margin-left: auto; align-self: flex-start; width: 28px; height: 28px; padding: 0; border: 1px solid var(--color-border-line); border-radius: 50%; background: var(--color-panel); color: var(--color-fg-muted); font: inherit; font-size: 18px; line-height: 1; cursor: pointer; }
-.zl-close:hover { color: var(--color-fg); }
-.zl-close:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
 .zl-panel-title .zl-name { font-family: var(--font-anthropic-serif); font-size: var(--cds-font-size-heading); }
 .zl-panel-sub { margin: var(--cds-gap-xs) 0 0; font-size: var(--cds-font-size-caption); font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); text-transform: uppercase; letter-spacing: .04em; }
 .zl-mates { position: relative; display: grid; gap: var(--cds-gap-sm); margin: 0; padding: 0 var(--cds-pad-xs) 0 0; list-style: none; max-height: 560px; overflow: auto; }
@@ -238,12 +239,11 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
   /* full screen on a narrow screen: the panel is a sheet at the bottom of the
      network, the face and its share only; open (zl-open) it covers the
      network with the list */
-  .zl-full .zl-panel { position: absolute; top: auto; left: var(--cds-pad-sm); right: var(--cds-pad-sm); bottom: var(--cds-pad-sm); width: auto; max-height: none; margin: 0; overflow: hidden; cursor: pointer; box-shadow: var(--cds-shadow-popover); }
-  .zl-full .zl-panel:not(.zl-open) > :not(.zl-panel-head):not(.zl-bar) { display: none; }
+  .zl-full .zl-panel { position: absolute; top: auto; left: var(--cds-pad-sm); right: var(--cds-pad-sm); bottom: var(--cds-pad-sm); width: auto; max-height: none; margin: 0; overflow: hidden; box-shadow: var(--cds-shadow-popover); }
   .zl-full .zl-panel.zl-open { top: var(--cds-pad-sm); overflow: auto; }
-  .zl-full .zl-sheet-arrow { display: block; }
-  .zl-full .zl-panel .zl-close { display: none; }
-  .zl-full .zl-panel.zl-open .zl-sheet-arrow { transform: translateY(0.15em) rotate(45deg); }
+  /* the sheet opens up: its arrow the other way round */
+  .zl-full .zl-panel .zl-sheet-arrow { transform: translateY(0.2em) rotate(-135deg); }
+  .zl-full .zl-panel.zl-open .zl-sheet-arrow { transform: translateY(-0.15em) rotate(45deg); }
 }
 @media (max-width: 640px) {
   .zl-topbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
@@ -1704,21 +1704,21 @@ dash.draw('focus-panel', (el) => {
   const head = node('div', 'zl-panel-head');
   const title = node('div', 'zl-panel-title');
   title.append(node('div', 'zl-name', p.name), node('div', 'zl-note', `#${row.rank} · ${fmt(row.total)} posts`));
-  const close = node('button', 'zl-close', '×');
-  close.type = 'button';
-  close.setAttribute('aria-label', `Close ${p.name}, show every line`);
-  close.addEventListener('click', () => { view.focus = false; relight(); dash.draw('focus-panel'); });
-  // Full screen on a narrow screen the panel is a sheet: at the bottom only
-  // the face, its share and the arrow; a tap opens it over the network with
-  // the list, another closes it. A partner in the list is picked as anywhere.
+  // A tap on the face's row or its share opens or folds the list; the arrow
+  // says which (open: it points the way the panel folds). Full screen on a
+  // narrow screen the panel is a sheet at the bottom, folded at first, and
+  // opens up over the network; elsewhere it opens down, and starts open.
+  // The selection itself goes with a click on the network's background.
   const arrow = node('span', 'zl-sheet-arrow');
   arrow.setAttribute('aria-hidden', 'true');
-  head.append(icon(p.icon, 64), title, arrow, close);
-  el.classList.toggle('zl-open', Boolean(view.sheetOpen));
+  head.append(icon(p.icon, 64), title, arrow);
+  const sheet = Boolean(el.closest('.zl-full')) && matchMedia('(max-width: 900px)').matches;
+  const isOpen = () => (sheet ? Boolean(view.sheetOpen) : view.panelOpen !== false);
+  el.classList.toggle('zl-open', isOpen());
   el.onclick = (event) => {
-    if (!el.closest('.zl-full') || event.target.closest('.zl-close, .zl-mate')) return;
-    view.sheetOpen = !view.sheetOpen;
-    el.classList.toggle('zl-open', view.sheetOpen);
+    if (!event.target.closest('.zl-panel-head, .zl-panel > .zl-bar')) return;
+    if (sheet) view.sheetOpen = !isOpen(); else view.panelOpen = !isOpen();
+    el.classList.toggle('zl-open', isOpen());
     el.scrollTop = 0;
   };
   el.append(head);
