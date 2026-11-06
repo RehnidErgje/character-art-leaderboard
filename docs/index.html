@@ -4,19 +4,26 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Character Art Leaderboard</title>
-<meta name="description" content="How much fan art each character of Zenless Zone Zero, Genshin Impact and Honkai: Star Rail has on Danbooru, Rule34 and pixiv, the R-18 share, and who is drawn together.">
+<meta name="description" content="How much fan art each character of Zenless Zone Zero, Genshin Impact, Honkai: Star Rail and Wuthering Waves has on Danbooru, Rule34 and pixiv, the R-18 share, and who is drawn together.">
 <!-- the card a shared link shows (Discord, Telegram, Reddit, X): docs/preview.png -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rehnidergje.github.io/character-art-leaderboard/">
 <meta property="og:title" content="Character Art Leaderboard">
-<meta property="og:description" content="How much fan art each Zenless Zone Zero, Genshin Impact and Honkai: Star Rail character has, the R-18 share, and who gets drawn together.">
+<meta property="og:description" content="How much fan art each Zenless Zone Zero, Genshin Impact, Honkai: Star Rail and Wuthering Waves character has, the R-18 share, and who gets drawn together.">
 <meta property="og:image" content="https://rehnidergje.github.io/character-art-leaderboard/preview.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<!-- the theme before anything is drawn: the one picked with the page's button, else the system's -->
+<script>
+var saved = null;
+try { saved = localStorage.getItem('tagstats-theme'); } catch (e) {}
+document.documentElement.dataset.theme = saved === 'light' || saved === 'dark' ? saved
+  : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+</script>
 <style>
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   --color-bg: #faf9f5; --color-panel: #ffffff; --color-fg: #141413; --color-fg-muted: #6b6a65;
   --color-border-line: rgb(20 20 19 / .13); --color-warn: #a86a00;
   --cds-border: rgb(20 20 19 / .1); --cds-chart-grid: rgb(20 20 19 / .08);
@@ -31,14 +38,13 @@
   --font-anthropic-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-anthropic-serif: ui-serif, Georgia, "Times New Roman", serif;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #262624; --color-panel: #30302e; --color-fg: #f5f4ef; --color-fg-muted: #a6a39a;
-    --color-border-line: rgb(255 255 255 / .14); --color-warn: #e0a440;
-    --cds-border: rgb(255 255 255 / .12); --cds-chart-grid: rgb(255 255 255 / .08);
-    --cds-surface-popover: #30302e; --cds-shadow-popover: 0 8px 24px #00000052, 0 2px 6px #0003;
-    --cds-text-secondary: #a6a39a;
-  }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #262624; --color-panel: #30302e; --color-fg: #f5f4ef; --color-fg-muted: #a6a39a;
+  --color-border-line: rgb(255 255 255 / .14); --color-warn: #e0a440;
+  --cds-border: rgb(255 255 255 / .12); --cds-chart-grid: rgb(255 255 255 / .08);
+  --cds-surface-popover: #30302e; --cds-shadow-popover: 0 8px 24px #00000052, 0 2px 6px #0003;
+  --cds-text-secondary: #a6a39a;
 }
 [hidden] { display: none !important; }
 .dash-loading body::after { content: ''; position: fixed; top: 14px; right: 18px; z-index: 10; width: 20px; height: 20px; border: 2.5px solid var(--color-border-line); border-top-color: var(--color-fg); border-radius: 50%; animation: dash-spin .7s linear infinite; }
@@ -47,7 +53,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 #dash-root { max-width: 1240px; margin: 0 auto; padding: 24px 16px 32px; }
 .site-foot { max-width: 1240px; margin: 0 auto; padding: 0 16px 32px; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
 </style>
-<script>window.DASH_DATASETS = {"board_genshin": "data/genshin/board.json", "pairs_genshin": "data/genshin/pairs.json", "board_hsr": "data/hsr/board.json", "pairs_hsr": "data/hsr/pairs.json", "board_zzz": "data/zzz/board.json", "pairs_zzz": "data/zzz/pairs.json"};</script>
+<script>window.DASH_DATASETS = {"board_genshin": "data/genshin/board.json", "pairs_genshin": "data/genshin/pairs.json", "board_hsr": "data/hsr/board.json", "pairs_hsr": "data/hsr/pairs.json", "board_wuwa": "data/wuwa/board.json", "pairs_wuwa": "data/wuwa/pairs.json", "board_zzz": "data/zzz/board.json", "pairs_zzz": "data/zzz/pairs.json"};</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pixi.js@8.22.0/dist/pixi.min.js"></script>
 <script src="dash-lite.js"></script>
@@ -103,6 +109,24 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
   .zl-noscroll .zl-topbar-right > * { flex-shrink: 0; }
   .zl-noscroll .zl-topbar-right > .zl-search { flex-shrink: 1; min-width: 7rem; }
 }
+/* the filters under "More filters": a row of the top bar, open or closed */
+.zl-more { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: var(--cds-font-size-caption); padding: var(--cds-pad-xs) var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: transparent; color: var(--color-fg-muted); cursor: pointer; white-space: nowrap; }
+.zl-more::after { content: ''; width: 0.4em; height: 0.4em; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-0.15em) rotate(45deg); }
+.zl-more[aria-expanded="true"]::after { transform: translateY(0.1em) rotate(-135deg); }
+.zl-more.zl-on { color: var(--color-fg); border-color: var(--color-fg); }
+/* The theme button: a sun on the light theme, and on the dark one its rays pull in,
+   the disc grows and a bite slides over it to make a moon. */
+.zl-theme { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 0; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: transparent; color: var(--color-fg-muted); cursor: pointer; }
+.zl-theme:hover { color: var(--color-fg); border-color: var(--color-fg); }
+.zl-theme:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+.zl-theme svg * { transform-origin: 12px 12px; transition: transform .45s cubic-bezier(.4, 0, .2, 1), opacity .3s ease; }
+:root[data-theme="dark"] .zl-theme-disc { transform: scale(1.65); }
+:root[data-theme="dark"] .zl-theme-bite { transform: translateX(-9px); }
+:root[data-theme="dark"] .zl-theme-rays { transform: rotate(45deg) scale(.6); opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .zl-theme svg * { transition: none; } }
+.zl-more:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+.zl-morepanel { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: flex-end; gap: var(--cds-gap-sm) var(--cds-gap-xl); padding-top: var(--cds-pad-sm); border-top: 1px solid var(--color-border-line); }
+.zl-morepanel[hidden] { display: none; }
 .zl-game { position: relative; }
 .zl-game > summary { list-style: none; display: inline-flex; align-items: center; gap: var(--cds-gap-sm); height: 48px; padding: 4px var(--cds-pad-md); border-radius: var(--cds-radius); background: #141413; color: #faf9f5; cursor: pointer; user-select: none; }
 .zl-game img { display: block; height: 40px; width: auto; }
@@ -135,15 +159,18 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-sw { width: 12px; height: 12px; border-radius: 3px; }
 .zl-sw-all { background: var(--zl-all); }
 .zl-sw-r18 { background: var(--zl-r18); }
-.zl-sw-main, .zl-sw-mid { display: inline-block; vertical-align: -1px; height: 4px; width: 16px; border-radius: 2px; }
-.zl-sw-main { background: #e8578f; }
-.zl-sw-mid { background: var(--zl-c0); }
+/* A network line's colour scale, from a weak pair (0, light blue) through green to a
+   strong one (3, rose). Gold sits between green and rose: those two mix to grey. */
+.zl { --zl-line-0: #2f8fd0; --zl-line-1: #2e9e6b; --zl-line-2: #c9930a; --zl-line-3: #d6336e; }
+:root[data-theme="dark"] .zl { --zl-line-0: #56b4e9; --zl-line-1: #4cc38a; --zl-line-2: #e8b93c; --zl-line-3: #e8578f; }
+.zl-sw-line { display: inline-block; flex: none; height: 6px; width: 120px; border-radius: 3px; background: linear-gradient(90deg, var(--zl-line-3), var(--zl-line-2), var(--zl-line-1), var(--zl-line-0)); }
 /* R-18 is rose; hearts fly over it (see the heart layer in the script) */
 .zl { --zl-all: color-mix(in srgb, var(--color-fg) 16%, transparent); --zl-r18: linear-gradient(90deg, #a8204f, #e0457b); }
 
 /* A bar: the light part is all posts, the dark part R-18 with its share inside. */
-.zl-bar { position: relative; height: 22px; border-radius: 5px; background: var(--zl-all); min-width: 4px; }
-.zl-bar-r18 { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--zl-r18); display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; box-sizing: border-box; color: #fff; font-size: var(--cds-font-size-caption); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; }
+.zl-bar { position: relative; height: 22px; border-radius: 5px; background: var(--zl-all); }
+.zl-bar-r18 { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--zl-r18); display: flex; align-items: center; justify-content: flex-end; color: #fff; font-size: var(--cds-font-size-caption); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; }
+.zl-bar-r18 > span { padding-right: 6px; }
 .zl-barline { display: grid; grid-template-columns: minmax(0, 1fr) 4.75rem; align-items: center; gap: var(--cds-gap-sm); min-width: 0; }
 .zl-track { min-width: 0; }
 .zl-bar-dark { background: var(--zl-r18); }
@@ -199,6 +226,12 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
    right), no title or notes, the chart (and the network's panel) filling the rest */
 .zl-card.zl-full { display: flex; flex-direction: column; gap: var(--cds-gap-sm); padding: var(--cds-pad-sm) var(--cds-pad-md) var(--cds-pad-md); border: 0; border-radius: 0; }
 .zl-full .zl-cardhead h3, .zl-full .zl-hint-short, .zl-full > .zl-key { display: none; }
+.zl-range { position: relative; flex: none; display: inline-block; width: 160px; height: 16px; margin-inline: 6px; background: linear-gradient(var(--color-border-line), var(--color-border-line)) center / 100% 2px no-repeat; }
+.zl-range .zl-sw-line { position: absolute; top: 5px; background-repeat: no-repeat; }
+.zl-range-end { position: absolute; top: 0; width: 10px; height: 16px; margin-left: -5px; padding: 0; border: 1.5px solid var(--color-panel); border-radius: 3px; background: var(--color-fg); cursor: ew-resize; touch-action: none; }
+.zl-range-end:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+/* what the network's colours mean stays in full screen */
+.zl-full > .zl-key.zl-key-line { display: flex; flex: none; }
 .zl-full .zl-cardhead { display: none; }
 .zl-full .zl-chart { flex: 1; min-height: 0; }
 .zl-full .zl-netwrap { flex: 1; min-height: 0; }
@@ -208,6 +241,14 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-net { min-height: 520px; overflow: hidden; border-radius: var(--cds-radius); }
 .zl-pt circle { fill: none; stroke: var(--color-border-line); stroke-width: 1.5; }
 .zl-pt:hover circle { stroke: var(--color-fg); stroke-width: 2; }
+.zl-pt-front { pointer-events: none; }
+.zl-pt-front circle { stroke: var(--color-fg); stroke-width: 2; }
+.zl-grid-major { stroke: var(--cds-chart-grid); }
+.zl-grid-minor { stroke: var(--cds-chart-grid); opacity: 0.4; }
+.zl-guide line { stroke: var(--color-fg); stroke-dasharray: 3 3; opacity: 0.8; pointer-events: none; }
+.zl-guide-chip { pointer-events: none; }
+.zl-guide-chip rect { fill: var(--cds-surface-popover); stroke: var(--cds-border); }
+.zl-chart .zl-guide-chip text { fill: var(--color-fg); font-variant-numeric: tabular-nums; }
 /* the network takes the whole width; the selected character's panel floats over its right side */
 .zl-netwrap { position: relative; min-width: 0; }
 .zl-chart { min-width: 0; }
@@ -244,6 +285,8 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-tip { position: absolute; pointer-events: none; z-index: 3; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .zl-tip strong { display: block; }
 .zl-tip span { display: block; color: var(--cds-text-secondary); }
+.zl-tip-card:not([hidden]) { display: flex; align-items: center; gap: var(--cds-gap-sm); }
+.zl-tip-card img { flex: none; border-radius: 50%; object-fit: cover; }
 [data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
 @media (max-width: 900px) {
   .zl-panel { position: static; width: auto; max-height: none; margin-top: var(--cds-gap-md); box-shadow: none; }
@@ -273,6 +316,12 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
   .zl-topbar-right > .zl-group { order: 4; flex: 1 1 100%; }
   .zl-topbar-right > .zl-group .zl-seg { display: flex; width: 100%; }
   .zl-topbar-right > .zl-group .zl-seg button { flex: 1; padding-block: 6px; }
+  .zl-more, .zl-theme { order: 3; }
+  .zl-morepanel { order: 6; justify-content: flex-start; }
+  .zl-morepanel .zl-group { flex: 1 1 100%; }
+  .zl-morepanel .zl-seg { display: flex; flex: 1; }
+  .zl-morepanel .zl-seg button { flex: 1; padding-block: 6px; }
+  .zl-topbar .zl-morepanel .zl-group > .zl-group-name { display: inline; }
   .zl-bar-tools { order: 5; flex: 1 1 100%; display: flex; justify-content: flex-end; }
   .zl-row { grid-template-columns: 1.4rem 28px minmax(4.5rem, 7rem) 1fr; }
   .zl-pair { grid-template-columns: 1.4rem 48px minmax(5rem, 8rem) 1fr; }
@@ -286,17 +335,18 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 </style>
 <div class="zl">
 <header class="zl-head">
-  <h1><span data-game-title="zzz">Zenless Zone Zero agents</span><span data-game-title="genshin" hidden>Genshin Impact characters</span><span data-game-title="hsr" hidden>Honkai: Star Rail characters</span></h1>
+  <h1><span data-game-title="zzz">Zenless Zone Zero agents</span><span data-game-title="genshin" hidden>Genshin Impact characters</span><span data-game-title="hsr" hidden>Honkai: Star Rail characters</span><span data-game-title="wuwa" hidden>Wuthering Waves characters</span></h1>
 </header>
 
 <div class="zl-topbar">
   <div class="zl-topbar-left">
   <details class="zl-game">
-    <summary aria-label="Game shown: Zenless Zone Zero agents" data-game-summary><img data-game-logo="zzz" src="assets/logos/zzz.webp" alt=""><img data-game-logo="genshin" src="assets/logos/genshin.webp" alt="" hidden><img data-game-logo="hsr" src="assets/logos/hsr.webp" alt="" hidden></summary>
+    <summary aria-label="Game shown: Zenless Zone Zero agents" data-game-summary><img data-game-logo="zzz" src="assets/logos/zzz.webp" alt=""><img data-game-logo="genshin" src="assets/logos/genshin.webp" alt="" hidden><img data-game-logo="hsr" src="assets/logos/hsr.webp" alt="" hidden><img data-game-logo="wuwa" src="assets/logos/wuwa.webp" alt="" hidden></summary>
     <ul class="zl-game-menu">
       <li><button type="button" data-game="zzz"><img src="assets/logos/zzz.webp" alt="Zenless Zone Zero agents"></button></li>
       <li><button type="button" data-game="genshin"><img src="assets/logos/genshin.webp" alt="Genshin Impact characters"></button></li>
       <li><button type="button" data-game="hsr"><img src="assets/logos/hsr.webp" alt="Honkai: Star Rail characters"></button></li>
+      <li><button type="button" data-game="wuwa"><img src="assets/logos/wuwa.webp" alt="Wuthering Waves characters"></button></li>
     </ul>
   </details>
   <fieldset class="zl-group">
@@ -317,34 +367,40 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
     <button type="button" data-measure="safe" aria-pressed="false">Without R-18</button>
   </div>
   </div>
+  <button type="button" class="zl-more" id="more" aria-expanded="false" aria-controls="more-panel">More filters</button>
+  <button type="button" class="zl-theme" id="theme"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><mask id="zl-theme-cut"><rect width="24" height="24" fill="#fff"/><circle class="zl-theme-bite" cx="25" cy="8" r="6.5" fill="#000"/></mask><circle class="zl-theme-disc" cx="12" cy="12" r="5" fill="currentColor" mask="url(#zl-theme-cut)"/><g class="zl-theme-rays" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="20.5" y1="12.0" x2="22.5" y2="12.0"/><line x1="18.0" y1="18.0" x2="19.4" y2="19.4"/><line x1="12.0" y1="20.5" x2="12.0" y2="22.5"/><line x1="6.0" y1="18.0" x2="4.6" y2="19.4"/><line x1="3.5" y1="12.0" x2="1.5" y2="12.0"/><line x1="6.0" y1="6.0" x2="4.6" y2="4.6"/><line x1="12.0" y1="3.5" x2="12.0" y2="1.5"/><line x1="18.0" y1="6.0" x2="19.4" y2="4.6"/></g></svg></button>
   <div class="zl-bar-tools"></div>
   </div>
+  <div class="zl-morepanel" id="more-panel" hidden>
+  <div class="zl-group"><span class="zl-group-name" aria-hidden="true">Period</span>
+  <div class="zl-seg" role="group" aria-label="Period">
+    <button type="button" data-period="all" aria-pressed="true">All time</button>
+    <button type="button" data-period="window" aria-pressed="false" title="Art up to 3 months after each character's release, art from before release included; a pair: up to 3 months after the newer one's release">First 3 months</button>
+  </div>
+  </div>
+  </div>
 </div>
-<p class="zl-warn" data-draw="missing" data-source="board_zzz board_genshin board_hsr">—</p>
+<p class="zl-warn" data-draw="missing" data-source="board_zzz board_genshin board_hsr board_wuwa">—</p>
 
 <section class="zl-sec" id="leaderboard">
   <div class="zl-sechead">
     <h2>Leaderboard</h2>
     <div class="zl-sechead-tools">
-    <div class="zl-seg" role="group" aria-label="Period">
-      <button type="button" data-period="all" aria-pressed="true">All time</button>
-      <button type="button" data-period="window" aria-pressed="false" title="Art up to 3 months after each character's release, art from before release included">First 3 months</button>
-    </div>
     <div class="zl-seg" role="group" aria-label="Sort by">
       <button type="button" data-sort="total" aria-pressed="true">Most posts</button>
       <button type="button" data-sort="share" aria-pressed="false">Highest R-18 share</button>
     </div>
     </div>
   </div>
-  <div class="zl-podium" data-draw="podium" data-source="totals_zzz totals_window_zzz board_zzz totals_genshin totals_window_genshin board_genshin totals_hsr totals_window_hsr board_hsr"></div>
+  <div class="zl-podium" data-draw="podium" data-source="totals_zzz totals_window_zzz board_zzz totals_genshin totals_window_genshin board_genshin totals_hsr totals_window_hsr board_hsr totals_wuwa totals_window_wuwa board_wuwa"></div>
   <div class="zl-card">
     <div class="zl-tools">
       <h3>Every character</h3>
     </div>
-    <ul class="zl-key" data-legend="all"><li><span class="zl-sw zl-sw-all"></span>All posts (count at the end)</li><li><span class="zl-sw zl-sw-r18"></span>R-18 part (share inside)</li></ul>
+    <ul class="zl-key" data-legend="all"><li><span class="zl-sw zl-sw-r18"></span>R-18 part (share inside)</li><li><span class="zl-sw zl-sw-all"></span>All posts (count at the end)</li></ul>
     <ul class="zl-key" data-legend="r18" hidden><li><span class="zl-sw zl-sw-r18"></span>R-18 posts (count at the end)</li></ul>
     <ul class="zl-key" data-legend="safe" hidden><li><span class="zl-sw zl-sw-all"></span>Posts without R-18 (count at the end)</li></ul>
-    <ol class="zl-list" data-draw="bars" data-source="totals_zzz totals_window_zzz board_zzz totals_genshin totals_window_genshin board_genshin totals_hsr totals_window_hsr board_hsr"></ol>
+    <ol class="zl-list" data-draw="bars" data-source="totals_zzz totals_window_zzz board_zzz totals_genshin totals_window_genshin board_genshin totals_hsr totals_window_hsr board_hsr totals_wuwa totals_window_wuwa board_wuwa"></ol>
   </div>
   <div class="zl-card">
     <div class="zl-cardhead">
@@ -352,7 +408,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
       <span class="zl-hint-short"><span class="zl-mouse">Hold Ctrl and scroll to zoom</span><span class="zl-touch">Two fingers to zoom</span></span>
       <div class="zl-ctools"></div>
     </div>
-    <div class="zl-chart" data-draw="scatter" data-source="totals_zzz totals_window_zzz board_zzz totals_genshin totals_window_genshin board_genshin totals_hsr totals_window_hsr board_hsr"></div>
+    <div class="zl-chart" data-draw="scatter" data-source="totals_zzz totals_window_zzz board_zzz totals_genshin totals_window_genshin board_genshin totals_hsr totals_window_hsr board_hsr totals_wuwa totals_window_wuwa board_wuwa"></div>
   </div>
 </section>
 
@@ -365,19 +421,19 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
       <div class="zl-ctools"></div>
     </div>
     <div class="zl-netwrap">
-      <div class="zl-chart zl-net" data-draw="network" data-source="pair_totals_zzz totals_zzz board_zzz pair_totals_genshin totals_genshin board_genshin pair_totals_hsr totals_hsr board_hsr"></div>
-      <aside class="zl-panel" data-draw="focus-panel" data-source="pair_totals_zzz totals_zzz board_zzz pair_totals_genshin totals_genshin board_genshin pair_totals_hsr totals_hsr board_hsr"></aside>
+      <div class="zl-chart zl-net" data-draw="network" data-source="pair_totals_zzz totals_zzz totals_window_zzz board_zzz pair_totals_genshin totals_genshin totals_window_genshin board_genshin pair_totals_hsr totals_hsr totals_window_hsr board_hsr pair_totals_wuwa totals_wuwa totals_window_wuwa board_wuwa"></div>
+      <aside class="zl-panel" data-draw="focus-panel" data-source="pair_totals_zzz totals_zzz totals_window_zzz board_zzz pair_totals_genshin totals_genshin totals_window_genshin board_genshin pair_totals_hsr totals_hsr totals_window_hsr board_hsr pair_totals_wuwa totals_wuwa totals_window_wuwa board_wuwa"></aside>
     </div>
-    <ul class="zl-key"><li><span class="zl-sw zl-sw-main"></span>Main partners</li><li><span class="zl-sw zl-sw-mid"></span>Next partners</li></ul>
+    <ul class="zl-key zl-key-line"><li>Compared to their top partner:</li><li>100%<span class="zl-range" id="line-range" title="Each end of a line shows how this pair compares with that character's top partner. Double-click to reset."><span class="zl-sw zl-sw-line"></span><button type="button" class="zl-range-end" role="slider" aria-label="Weakest pairs kept"></button></span><span id="line-low">0%</span></li><li>Drag to hide weaker links</li></ul>
   </div>
   <div class="zl-card">
     <div class="zl-tools">
       <h3>Every pair, most drawn first</h3>
     </div>
-    <ul class="zl-key" data-legend="all"><li><span class="zl-sw zl-sw-all"></span>Posts together</li><li><span class="zl-sw zl-sw-r18"></span>R-18 part</li></ul>
+    <ul class="zl-key" data-legend="all"><li><span class="zl-sw zl-sw-r18"></span>R-18 part</li><li><span class="zl-sw zl-sw-all"></span>Posts together</li></ul>
     <ul class="zl-key" data-legend="r18" hidden><li><span class="zl-sw zl-sw-r18"></span>R-18 posts together</li></ul>
     <ul class="zl-key" data-legend="safe" hidden><li><span class="zl-sw zl-sw-all"></span>Posts together without R-18</li></ul>
-    <ol class="zl-list" data-draw="pairs-top" data-source="pair_totals_zzz board_zzz pair_totals_genshin board_genshin pair_totals_hsr board_hsr"></ol>
+    <ol class="zl-list" data-draw="pairs-top" data-source="pair_totals_zzz board_zzz pair_totals_genshin board_genshin pair_totals_hsr board_hsr pair_totals_wuwa board_wuwa"></ol>
   </div>
 </section>
 </div>
@@ -388,9 +444,9 @@ const fmt = d3.format(',');
 const short = (n) => (n >= 10000 ? d3.format('.3~s')(n).replace('k', 'K') : fmt(n));
 const pct = d3.format('.1%');
 const pct0 = d3.format('.0%');
-const GAMES = [{"id": "zzz", "short": "ZZZ", "title": "Zenless Zone Zero agents", "logo": "assets/logos/zzz.webp"}, {"id": "genshin", "short": "Genshin", "title": "Genshin Impact characters", "logo": "assets/logos/genshin.webp"}, {"id": "hsr", "short": "HSR", "title": "Honkai: Star Rail characters", "logo": "assets/logos/hsr.webp"}];
+const GAMES = [{"id": "zzz", "short": "ZZZ", "title": "Zenless Zone Zero agents", "logo": "assets/logos/zzz.webp"}, {"id": "genshin", "short": "Genshin", "title": "Genshin Impact characters", "logo": "assets/logos/genshin.webp"}, {"id": "hsr", "short": "HSR", "title": "Honkai: Star Rail characters", "logo": "assets/logos/hsr.webp"}, {"id": "wuwa", "short": "WuWa", "title": "Wuthering Waves characters", "logo": "assets/logos/wuwa.webp"}];
 const savedGame = () => { try { return localStorage.getItem('tagstats-game'); } catch (e) { return null; } };
-// The game shown: the link's ?game= (zzz, genshin, hsr) first, so a shared
+// The game shown: the link's ?game= (zzz, genshin, hsr, wuwa) first, so a shared
 // link opens that game; else the one this browser showed last; else the first.
 const linkGame = () => new URLSearchParams(location.search).get('game');
 const knownGame = (id) => GAMES.some((g) => g.id === id);
@@ -478,13 +534,18 @@ dash.calc('totals_window_zzz', {
 });
 
 dash.calc('pair_totals_zzz', {
-  inputs: ['pairs_zzz', 'totals_zzz'],
+  inputs: ['pairs_zzz', 'totals_zzz', 'totals_window_zzz'],
   title: 'ZZZ: Crossovers for each choice of sites',
-  description: 'Posts with both characters added up over the chosen sites that have crossover counts, and affinity: posts together divided by the less drawn character\'s posts on those sites.',
-  fn: (pairs, totals) => {
+  description: 'Posts with both characters added up over the chosen sites that have crossover counts, and affinity: posts together divided by the less drawn character\'s posts on those sites; all time and up to 3 months after the newer character\'s release.',
+  fn: (pairs, totals, totalsWindow) => {
     const sites = ["danbooru", "rule34", "pixiv"];
     const counted = new Set(pairs.map((p) => p.site));
     const byKey = new Map(totals.map((r) => [r.sites + '|' + r.id, r.total]));
+    const byKeyWindow = new Map(totalsWindow.map((r) => [r.sites + '|' + r.id, r.total]));
+    const affinityOf = (map, usedKey, a, b, total) => {
+      const least = Math.min(map.get(usedKey + '|' + a) || Infinity, map.get(usedKey + '|' + b) || Infinity);
+      return Number.isFinite(least) && least > 0 ? total / least : null;
+    };
     const grouped = d3.group(pairs, (p) => p.a + '|' + p.b);
     const out = [];
     for (let m = 1; m < 1 << sites.length; m++) {
@@ -497,10 +558,12 @@ dash.calc('pair_totals_zzz', {
         const mine = rows.filter((p) => used.includes(p.site));
         if (!mine.length) continue;
         const total = d3.sum(mine, (p) => p.total);
+        const wTotal = d3.sum(mine, (p) => p.w_total ?? 0);
         const [a, b] = pair.split('|');
-        const least = Math.min(byKey.get(usedKey + '|' + a) || Infinity, byKey.get(usedKey + '|' + b) || Infinity);
         out.push({ sites: key, a, b, total, r18: d3.sum(mine, (p) => p.r18 ?? 0),
-                   affinity: Number.isFinite(least) && least > 0 ? total / least : null });
+                   affinity: affinityOf(byKey, usedKey, a, b, total),
+                   w_total: wTotal, w_r18: d3.sum(mine, (p) => p.w_r18 ?? 0),
+                   w_affinity: affinityOf(byKeyWindow, usedKey, a, b, wTotal) });
       }
     }
     return out;
@@ -562,13 +625,18 @@ dash.calc('totals_window_genshin', {
 });
 
 dash.calc('pair_totals_genshin', {
-  inputs: ['pairs_genshin', 'totals_genshin'],
+  inputs: ['pairs_genshin', 'totals_genshin', 'totals_window_genshin'],
   title: 'Genshin: Crossovers for each choice of sites',
-  description: 'Posts with both characters added up over the chosen sites that have crossover counts, and affinity: posts together divided by the less drawn character\'s posts on those sites.',
-  fn: (pairs, totals) => {
+  description: 'Posts with both characters added up over the chosen sites that have crossover counts, and affinity: posts together divided by the less drawn character\'s posts on those sites; all time and up to 3 months after the newer character\'s release.',
+  fn: (pairs, totals, totalsWindow) => {
     const sites = ["danbooru", "rule34", "pixiv"];
     const counted = new Set(pairs.map((p) => p.site));
     const byKey = new Map(totals.map((r) => [r.sites + '|' + r.id, r.total]));
+    const byKeyWindow = new Map(totalsWindow.map((r) => [r.sites + '|' + r.id, r.total]));
+    const affinityOf = (map, usedKey, a, b, total) => {
+      const least = Math.min(map.get(usedKey + '|' + a) || Infinity, map.get(usedKey + '|' + b) || Infinity);
+      return Number.isFinite(least) && least > 0 ? total / least : null;
+    };
     const grouped = d3.group(pairs, (p) => p.a + '|' + p.b);
     const out = [];
     for (let m = 1; m < 1 << sites.length; m++) {
@@ -581,10 +649,12 @@ dash.calc('pair_totals_genshin', {
         const mine = rows.filter((p) => used.includes(p.site));
         if (!mine.length) continue;
         const total = d3.sum(mine, (p) => p.total);
+        const wTotal = d3.sum(mine, (p) => p.w_total ?? 0);
         const [a, b] = pair.split('|');
-        const least = Math.min(byKey.get(usedKey + '|' + a) || Infinity, byKey.get(usedKey + '|' + b) || Infinity);
         out.push({ sites: key, a, b, total, r18: d3.sum(mine, (p) => p.r18 ?? 0),
-                   affinity: Number.isFinite(least) && least > 0 ? total / least : null });
+                   affinity: affinityOf(byKey, usedKey, a, b, total),
+                   w_total: wTotal, w_r18: d3.sum(mine, (p) => p.w_r18 ?? 0),
+                   w_affinity: affinityOf(byKeyWindow, usedKey, a, b, wTotal) });
       }
     }
     return out;
@@ -646,13 +716,18 @@ dash.calc('totals_window_hsr', {
 });
 
 dash.calc('pair_totals_hsr', {
-  inputs: ['pairs_hsr', 'totals_hsr'],
+  inputs: ['pairs_hsr', 'totals_hsr', 'totals_window_hsr'],
   title: 'HSR: Crossovers for each choice of sites',
-  description: 'Posts with both characters added up over the chosen sites that have crossover counts, and affinity: posts together divided by the less drawn character\'s posts on those sites.',
-  fn: (pairs, totals) => {
+  description: 'Posts with both characters added up over the chosen sites that have crossover counts, and affinity: posts together divided by the less drawn character\'s posts on those sites; all time and up to 3 months after the newer character\'s release.',
+  fn: (pairs, totals, totalsWindow) => {
     const sites = ["danbooru", "rule34", "pixiv"];
     const counted = new Set(pairs.map((p) => p.site));
     const byKey = new Map(totals.map((r) => [r.sites + '|' + r.id, r.total]));
+    const byKeyWindow = new Map(totalsWindow.map((r) => [r.sites + '|' + r.id, r.total]));
+    const affinityOf = (map, usedKey, a, b, total) => {
+      const least = Math.min(map.get(usedKey + '|' + a) || Infinity, map.get(usedKey + '|' + b) || Infinity);
+      return Number.isFinite(least) && least > 0 ? total / least : null;
+    };
     const grouped = d3.group(pairs, (p) => p.a + '|' + p.b);
     const out = [];
     for (let m = 1; m < 1 << sites.length; m++) {
@@ -665,10 +740,103 @@ dash.calc('pair_totals_hsr', {
         const mine = rows.filter((p) => used.includes(p.site));
         if (!mine.length) continue;
         const total = d3.sum(mine, (p) => p.total);
+        const wTotal = d3.sum(mine, (p) => p.w_total ?? 0);
         const [a, b] = pair.split('|');
-        const least = Math.min(byKey.get(usedKey + '|' + a) || Infinity, byKey.get(usedKey + '|' + b) || Infinity);
         out.push({ sites: key, a, b, total, r18: d3.sum(mine, (p) => p.r18 ?? 0),
-                   affinity: Number.isFinite(least) && least > 0 ? total / least : null });
+                   affinity: affinityOf(byKey, usedKey, a, b, total),
+                   w_total: wTotal, w_r18: d3.sum(mine, (p) => p.w_r18 ?? 0),
+                   w_affinity: affinityOf(byKeyWindow, usedKey, a, b, wTotal) });
+      }
+    }
+    return out;
+  },
+});
+
+dash.calc('totals_wuwa', {
+  inputs: ['board_wuwa'],
+  title: 'WuWa: Posts per character for each choice of sites',
+  description: 'Posts and R-18 posts added up over the chosen sites, the R-18 share, and the rank by all posts, by R-18 posts and by posts without R-18.',
+  fn: (board) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const keys = [];
+    for (let m = 1; m < 1 << sites.length; m++) keys.push(sites.filter((s, i) => m & (1 << i)).sort().join('+'));
+    const out = [];
+    for (const key of keys) {
+      const parts = key.split('+');
+      const rows = board.map((r) => {
+        const has = parts.filter((s) => r[s + '_total'] != null);
+        const total = has.length ? d3.sum(has, (s) => r[s + '_total']) : null;
+        const r18 = has.length ? d3.sum(has, (s) => r[s + '_r18'] ?? 0) : null;
+        return { sites: key, id: r.id, total, r18, share: total ? r18 / total : null };
+      });
+      const has = rows.filter((r) => r.total != null);
+      has.sort((a, b) => b.total - a.total).forEach((r, i) => { r.rank = i + 1; });
+      has.sort((a, b) => b.r18 - a.r18).forEach((r, i) => { r.rank_r18 = i + 1; });
+      has.sort((a, b) => (b.total - b.r18) - (a.total - a.r18)).forEach((r, i) => { r.rank_safe = i + 1; });
+      out.push(...rows);
+    }
+    return out;
+  },
+});
+
+dash.calc('totals_window_wuwa', {
+  inputs: ['board_wuwa'],
+  title: 'WuWa: Posts per character up to 3 months after release',
+  description: 'Posts and R-18 posts up to 3 months after each character\'s release (art before release included), added up over the chosen sites, the R-18 share, and the rank by all posts, by R-18 posts and by posts without R-18.',
+  fn: (board) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const keys = [];
+    for (let m = 1; m < 1 << sites.length; m++) keys.push(sites.filter((s, i) => m & (1 << i)).sort().join('+'));
+    const out = [];
+    for (const key of keys) {
+      const parts = key.split('+');
+      const rows = board.map((r) => {
+        const has = parts.filter((s) => r['w_' + s + '_total'] != null);
+        const total = has.length ? d3.sum(has, (s) => r['w_' + s + '_total']) : null;
+        const r18 = has.length ? d3.sum(has, (s) => r['w_' + s + '_r18'] ?? 0) : null;
+        return { sites: key, id: r.id, total, r18, share: total ? r18 / total : null };
+      });
+      const has = rows.filter((r) => r.total != null);
+      has.sort((a, b) => b.total - a.total).forEach((r, i) => { r.rank = i + 1; });
+      has.sort((a, b) => b.r18 - a.r18).forEach((r, i) => { r.rank_r18 = i + 1; });
+      has.sort((a, b) => (b.total - b.r18) - (a.total - a.r18)).forEach((r, i) => { r.rank_safe = i + 1; });
+      out.push(...rows);
+    }
+    return out;
+  },
+});
+
+dash.calc('pair_totals_wuwa', {
+  inputs: ['pairs_wuwa', 'totals_wuwa', 'totals_window_wuwa'],
+  title: 'WuWa: Crossovers for each choice of sites',
+  description: 'Posts with both characters added up over the chosen sites that have crossover counts, and affinity: posts together divided by the less drawn character\'s posts on those sites; all time and up to 3 months after the newer character\'s release.',
+  fn: (pairs, totals, totalsWindow) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const counted = new Set(pairs.map((p) => p.site));
+    const byKey = new Map(totals.map((r) => [r.sites + '|' + r.id, r.total]));
+    const byKeyWindow = new Map(totalsWindow.map((r) => [r.sites + '|' + r.id, r.total]));
+    const affinityOf = (map, usedKey, a, b, total) => {
+      const least = Math.min(map.get(usedKey + '|' + a) || Infinity, map.get(usedKey + '|' + b) || Infinity);
+      return Number.isFinite(least) && least > 0 ? total / least : null;
+    };
+    const grouped = d3.group(pairs, (p) => p.a + '|' + p.b);
+    const out = [];
+    for (let m = 1; m < 1 << sites.length; m++) {
+      const parts = sites.filter((s, i) => m & (1 << i)).sort();
+      const key = parts.join('+');
+      const used = parts.filter((s) => counted.has(s));
+      if (!used.length) continue;
+      const usedKey = used.join('+');
+      for (const [pair, rows] of grouped) {
+        const mine = rows.filter((p) => used.includes(p.site));
+        if (!mine.length) continue;
+        const total = d3.sum(mine, (p) => p.total);
+        const wTotal = d3.sum(mine, (p) => p.w_total ?? 0);
+        const [a, b] = pair.split('|');
+        out.push({ sites: key, a, b, total, r18: d3.sum(mine, (p) => p.r18 ?? 0),
+                   affinity: affinityOf(byKey, usedKey, a, b, total),
+                   w_total: wTotal, w_r18: d3.sum(mine, (p) => p.w_r18 ?? 0),
+                   w_affinity: affinityOf(byKeyWindow, usedKey, a, b, wTotal) });
       }
     }
     return out;
@@ -697,11 +865,16 @@ const searchLit = () => document.activeElement === searchBox && queryWords().len
 const onSearch = new Map();
 const searched = (kind) => onSearch.forEach((f) => f(kind));
 const totalsFor = (key) => D('totals').data.filter((r) => r.sites === key && r.total != null);
-// The leaderboard's totals: all time, or up to 3 months after release (the
-// network and the pairs are all time).
+// The leaderboard's totals: all time, or up to 3 months after release; the
+// pairs follow the same switch (up to 3 months after the newer character's
+// release).
 const boardTotals = () => (view.period === 'window' ? 'totals_window' : 'totals');
 const boardTotalsFor = (key) => D(boardTotals()).data.filter((r) => r.sites === key && r.total != null);
-const pairsFor = (key) => D('pair_totals').data.filter((r) => r.sites === key && r.total > 0);
+const pairsFor = (key) => D('pair_totals').data
+  .filter((r) => r.sites === key)
+  .map((r) => (view.period === 'window'
+    ? { ...r, total: r.w_total, r18: r.w_r18 } : r))
+  .filter((r) => r.total > 0);
 const text = (el, value) => { el.textContent = value == null ? '—' : value; };
 const icon = (src, size) => { const img = document.createElement('img'); img.src = src || ''; img.alt = ''; if (size) { img.width = size; img.height = size; } return img; };
 const node = (tag, cls, content) => { const e = document.createElement(tag); if (cls) e.className = cls; if (content != null) e.textContent = content; return e; };
@@ -733,7 +906,7 @@ const barLine = (total, r18, max, label) => {
 // rows just added to a list.
 const fitLabels = (scope) => {
   const parts = (Array.isArray(scope) ? scope : [scope]).flatMap((s) => [...s.querySelectorAll('.zl-bar-r18')]);
-  parts.filter((p) => p.firstElementChild && p.firstElementChild.offsetWidth + 10 > p.clientWidth)
+  parts.filter((p) => p.firstElementChild && p.firstElementChild.offsetWidth + 4 > p.clientWidth)
     .forEach((p) => p.firstElementChild.remove());
 };
 // A long list is built CHUNK rows at a time: the first ones at once, more as
@@ -1043,11 +1216,41 @@ dash.draw('scatter', (el) => {
     .append('circle').attr('cx', 0.5).attr('cy', 0.5).attr('r', 0.5);
   const grid = svg.insert('g', ':first-child').attr('clip-path', 'url(#zl-clip-plot)');
   const xAxis = svg.append('g').attr('transform', `translate(0,${bottom})`);
+  svg.append('text').attr('x', left).attr('y', 10).text('R-18 share');
   svg.append('text').attr('x', W).attr('y', H - 2).attr('text-anchor', 'end')
     .text(`${WORD[view.measure][0].toUpperCase()}${WORD[view.measure].slice(1)} (log scale)`);
+  // On a face: a line down to each axis, with the value there.
+  const guide = svg.append('g').attr('class', 'zl-guide').attr('clip-path', 'url(#zl-clip-plot)').style('display', 'none');
+  const guideX = guide.append('line');
+  const guideY = guide.append('line');
   const plot = svg.append('g').attr('clip-path', 'url(#zl-clip-plot)');
-  const tip = node('div', 'zl-tip'); tip.hidden = true; el.append(tip);
+  const chips = svg.append('g').style('display', 'none');
+  const chip = () => {
+    const c = chips.append('g').attr('class', 'zl-guide-chip');
+    c.append('rect').attr('rx', 3).attr('height', 18);
+    c.append('text').attr('y', 13);
+    return c;
+  };
+  const chipX = chip();
+  const chipY = chip();
+  const setChip = (c, label, right, top) => {
+    const text = c.select('text').text(label);
+    const width = text.node().getComputedTextLength() + 10;
+    c.select('rect').attr('width', width);
+    text.attr('x', 5);
+    c.attr('transform', `translate(${Math.max(0, Math.min(W - width, right(width)))},${top})`);
+  };
+  const tip = node('div', 'zl-tip zl-tip-card'); tip.hidden = true; el.append(tip);
+  const hide = () => {
+    front.selectAll('*').remove();
+    tip.hidden = true;
+    guide.style('display', 'none');
+    chips.style('display', 'none');
+  };
   const g = plot.selectAll('g').data(pts.sort((a, b) => b.amount - a.amount)).join('g').attr('class', 'zl-pt');
+  // The face under the pointer is copied to the front. The face itself stays in
+  // its place: moving it would make the browser lose its pointerleave.
+  const front = plot.append('g').attr('class', 'zl-pt-front');
   const pic = g.append('image').attr('href', (d) => d.p.icon || '').attr('clip-path', 'url(#zl-clip-scatter)');
   const ring = g.append('circle');
   // Face size: the slider beside the chart's buttons, the same for every face.
@@ -1063,10 +1266,22 @@ dash.draw('scatter', (el) => {
   const place = () => {
     yAxis.call(d3.axisLeft(y).ticks(5, '.0%').tickSize(0)).attr('font-size', null).attr('font-family', null);
     yAxis.select('.domain').remove();
+    // the higher the share, the rosier its number and line
+    const rosy = (d, base) => `color-mix(in srgb, #e8578f ${Math.round(100 * Math.min(1, d / (y0.domain()[1] || 1)))}%, ${base})`;
+    yAxis.selectAll('text').style('fill', (d) => rosy(d, 'var(--color-fg-muted)'));
     xAxis.call(d3.axisBottom(x).ticks(W < 520 ? 3 : 6, '~s').tickSize(0)).attr('font-size', null).attr('font-family', null);
     xAxis.select('.domain').remove();
-    grid.selectAll('line').data(y.ticks(5)).join('line')
-      .attr('x1', left).attr('x2', W).attr('y1', (d) => y(d)).attr('y2', (d) => y(d)).style('stroke', 'var(--cds-chart-grid)');
+    const across = (cls, data) => grid.selectAll(`line.${cls.split(' ').join('.')}`).data(data).join('line').attr('class', cls)
+      .attr('x1', left).attr('x2', W).attr('y1', (d) => y(d)).attr('y2', (d) => y(d))
+      .style('stroke', (d) => rosy(d, 'var(--cds-chart-grid)'));
+    const down = (cls, data) => grid.selectAll(`line.${cls.split(' ').join('.')}`).data(data).join('line').attr('class', cls)
+      .attr('x1', (d) => x(d)).attr('x2', (d) => x(d)).attr('y1', 0).attr('y2', bottom);
+    const xCount = W < 520 ? 3 : 6;
+    const named = x.tickFormat(xCount, '~s');
+    across('zl-grid-minor zl-across', y.ticks(25));
+    across('zl-grid-major zl-across-major', y.ticks(5));
+    down('zl-grid-minor zl-down', x.ticks(30));
+    down('zl-grid-major zl-down-major', x.ticks(xCount).filter((d) => named(d)));
     g.attr('transform', (d) => `translate(${x(d.amount)},${y(d.share)})`);
   };
   place();
@@ -1076,7 +1291,7 @@ dash.draw('scatter', (el) => {
     .translateExtent([[left, 0], [W, bottom]])
     .filter(zoomWheel(el))
       .wheelDelta(wheelStep)
-    .on('zoom', (event) => { x = event.transform.rescaleX(x0); y = event.transform.rescaleY(y0); tip.hidden = true; place(); });
+    .on('zoom', (event) => { x = event.transform.rescaleX(x0); y = event.transform.rescaleY(y0); hide(); place(); });
   svg.call(zoom).on('dblclick.zoom', null);
   middlePan(svg.node(), zoom, () => W / el.clientWidth);
   wheelZoom(svg.node(), el);
@@ -1095,17 +1310,33 @@ dash.draw('scatter', (el) => {
 
   // a finger passing over (scrolling the page) shows nothing; a tap does
   const show = function (event, d) {
-    this.parentNode.append(this);
-    tipLines(tip, [d.p.name, `${fmt(d.amount)} ${WORD[view.measure]}`, `${pct(d.share)} R-18`]);
+    front.selectAll('*').remove();
+    front.node().append(this.cloneNode(true));
+    // a card with the face large, so it can be seen without zooming in
+    const lines = node('div');
+    tipLines(lines, [d.p.name, `${fmt(d.amount)} ${WORD[view.measure]}`, `${pct(d.share)} R-18`]);
+    tip.replaceChildren(icon(d.p.icon, 96), lines);
     tip.hidden = false;
     const k = el.clientWidth / W;
-    tip.style.left = Math.max(0, Math.min(el.clientWidth - tip.offsetWidth, x(d.amount) * k - tip.offsetWidth / 2)) + 'px';
-    tip.style.top = Math.max(0, (y(d.share) - face / 2) * k - tip.offsetHeight - 6) + 'px';
+    const atX = x(d.amount);
+    const atY = y(d.share);
+    // beside the face, so it never covers it: to the right, or the left if no room
+    const beside = (face / 2) * k + 8;
+    const right = atX * k + beside;
+    const onLeft = right + tip.offsetWidth > el.clientWidth;
+    tip.style.left = Math.max(0, onLeft ? atX * k - beside - tip.offsetWidth : right) + 'px';
+    tip.style.top = Math.max(0, Math.min(el.clientHeight - tip.offsetHeight, atY * k - tip.offsetHeight / 2)) + 'px';
+    guideX.attr('x1', atX).attr('x2', atX).attr('y1', atY + face / 2).attr('y2', bottom);
+    guideY.attr('x1', atX - face / 2).attr('x2', left).attr('y1', atY).attr('y2', atY);
+    guide.style('display', null);
+    chips.style('display', null);
+    setChip(chipX, fmt(d.amount), (width) => atX - width / 2, bottom + 4);
+    setChip(chipY, pct(d.share), (width) => left - width - 2, atY - 9);
   };
   g.on('pointerenter', function (event, d) { if (event.pointerType !== 'touch') show.call(this, event, d); })
-    .on('pointerleave', (event) => { if (event.pointerType !== 'touch') tip.hidden = true; })
+    .on('pointerleave', (event) => { if (event.pointerType !== 'touch') hide(); })
     .on('click', function (event, d) { event.stopPropagation(); show.call(this, event, d); });
-  svg.on('click.tip', () => { tip.hidden = true; });
+  svg.on('click.tip', hide);
 
   // The page's search: the faces it finds come to the front with a bright
   // ring, the rest fade.
@@ -1134,7 +1365,7 @@ const pairOrder = (pairs, v) => {
 const netData = () => {
   const key = keyOf(chosen());
   const val = measure();
-  const chars = totalsFor(key).filter((r) => val(r) > 0).sort((a, b) => val(b) - val(a));
+  const chars = boardTotalsFor(key).filter((r) => val(r) > 0).sort((a, b) => val(b) - val(a));
   const own = new Map(chars.map((r) => [r.id, val(r)]));
   const pairs = pairsFor(key).filter((r) => val(r) > 0 && own.has(r.a) && own.has(r.b))
     .map((l) => ({ ...l, v: val(l), near: val(l) / Math.min(own.get(l.a), own.get(l.b)) }));
@@ -1147,48 +1378,33 @@ const focusId = (chars) => (view.focus === false ? null
 // Lights the network for the current selection; set by the network drawing,
 // so the panel's close button can put the network back to all lines.
 let relight = () => {};
+// The lower limit picked on the line legend, as a share of a character's biggest
+// pair. A line with both ends under it is hidden. Raising the limit cuts the colour
+// scale from below: blue goes, then green, and every pair keeps its colour. Gold
+// (LINE_FLOOR on the scale) stays as the bottom, and above it rose to gold stretch
+// over what is left, so close pairs can be told apart. The network sets
+// repaintLines, so a drag shows at once.
+const lineRange = { low: 0 };
+const LINE_FLOOR = 2 / 3;
+let repaintLines = () => {};
 const partnersOf = (pairs, id) => pairs.filter((l) => l.a === id || l.b === id)
   .map((l) => ({ ...l, other: l.a === id ? l.b : l.a })).sort((a, b) => b.v - a.v);
 
-// Groups of a face's partners (sorted most first), as the eye splits the
-// bars. A jump is how many times one partner has more art than the next.
-//
-// The main group ends at the first peak of the jumps: the first jump of at
-// least PEAK_MIN that is bigger than the jump after it. While the jumps keep
-// growing (3186, 2813, 1642, then 761) the group goes on; the drop that
-// stands out against the ones around it ends it.
-const PEAK_MIN = 1.05;
-const mainEnd = (mates) => {
-  for (let i = 0; i < mates.length - 1; i++) {
-    const jump = mates[i].v / mates[i + 1].v;
-    const next = i + 2 < mates.length ? mates[i + 1].v / mates[i + 2].v : 0;
-    if (jump >= PEAK_MIN && jump > next) return i + 1;
+// Who gets a line (partners sorted most first).
+// Lines go to the partners from the biggest down, each while it has at least
+// LINE_SHARE of the art of those already taken and at least LINE_MIN posts
+// together. A face's own total plays no part, so a much drawn face keeps its
+// lines, and a smooth slope stops by itself (equal partners: about 1 / LINE_SHARE).
+// Returns the index after the last one taken.
+const LINE_MIN = 5;
+const LINE_SHARE = 0.08;
+const linesEnd = (mates) => {
+  let taken = 0;
+  for (let i = 0; i < mates.length; i++) {
+    if (mates[i].v < LINE_MIN || mates[i].v < LINE_SHARE * taken) return i;
+    taken += mates[i].v;
   }
   return mates.length;
-};
-// The middle group starts after it and ends at the biggest jump among the
-// partners with at least 1 / TIER_SPAN of its first one's art (a smooth slope,
-// every jump there under TIER_SMOOTH, ends where that range ends). Returns
-// the index after the group that starts at `start`.
-const TIER_SPAN = 2;
-const TIER_SMOOTH = 1.1;
-// A partner in a group still gets no line when the pair weighs too little
-// for the face: under LINE_MIN posts together, or under LINE_SHARE of the
-// face's own art (main group, middle group). The groups pick who gets lines;
-// this only cuts the smallest of them (a partner with 5 of 486 posts).
-const LINE_MIN = 5;
-const LINE_SHARE = [0.015, 0.05];
-const tierEnd = (mates, start) => {
-  if (start >= mates.length) return start;
-  let end = start + 1;
-  while (end < mates.length && mates[end].v * TIER_SPAN >= mates[start].v) end++;
-  let best = 1;
-  let cut = end;
-  for (let i = start; i < Math.min(end, mates.length - 1); i++) {
-    const jump = mates[i].v / mates[i + 1].v;
-    if (jump > best) { best = jump; cut = i + 1; }
-  }
-  return best >= TIER_SMOOTH ? cut : end;
 };
 
 // dash.colors and theme tokens can be CSS expressions (var(), color-mix());
@@ -1247,6 +1463,32 @@ const hexOf = (color) => {
 // own units inside one container; zooming and panning only move and scale
 // that container, so the picture is not built again and a frame costs the
 // same at any zoom. Built again only when faces move or the lighting changes.
+// A face's picture at the size nearest above `want` device pixels, each half the
+// one before and kept with the picture. The graphics card's own smaller copies
+// (mipmaps) mix two sizes, the lower one enlarged, so a shrunk face blurs faster
+// than it shrinks. Only the smallest has them, for faces of a few pixels.
+const FACE_MIN = 16;
+const faceAt = (img, want) => {
+  if (!img.zlSizes) {
+    img.zlSizes = [{ picture: img, size: img.width, texture: null }];
+  }
+  let at = img.zlSizes[0];
+  for (let i = 0; at.size >= 2 * FACE_MIN && at.size / 2 >= want; i++) {
+    if (!img.zlSizes[i + 1]) {
+      const size = Math.floor(at.size / 2);
+      const picture = document.createElement('canvas');
+      picture.width = size;
+      picture.height = size;
+      const ctx = picture.getContext('2d');
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(at.picture, 0, 0, size, size);
+      img.zlSizes[i + 1] = { picture, size, texture: null };
+    }
+    at = img.zlSizes[i + 1];
+  }
+  if (!at.texture) at.texture = PIXI.Texture.from({ resource: at.picture, autoGenerateMipmaps: at.size < 2 * FACE_MIN });
+  return at;
+};
 const pixiNetwork = (renderer, nodes) => {
   const stage = new PIXI.Container();
   const world = new PIXI.Container();
@@ -1265,18 +1507,26 @@ const pixiNetwork = (renderer, nodes) => {
     faces.addChild(s);
     return s;
   });
+  const pictures = [];
   return {
     back, litLines, plates, rings, sprites,
-    // smaller copies of each face (mipmaps) keep it clean when shrunk
-    // the texture is kept with its picture: every drawing reuses it
     setFace: (i, img) => {
-      if (!img.zlTexture) img.zlTexture = PIXI.Texture.from({ resource: img, autoGenerateMipmaps: true });
-      sprites[i].texture = img.zlTexture;
+      pictures[i] = img;
+      sprites[i].zlFace = null;
       sprites[i].visible = true;
     },
     render: (view) => {
       world.position.set(view.x, view.y);
       world.scale.set(view.k);
+      sprites.forEach((sprite, i) => {
+        if (!pictures[i]) return;
+        const at = faceAt(pictures[i], 2 * nodes[i].r * view.k * renderer.resolution);
+        if (sprite.zlFace === at) return;
+        sprite.zlFace = at;
+        sprite.texture = at.texture;
+        sprite.width = nodes[i].r * 2;
+        sprite.height = nodes[i].r * 2;
+      });
       renderer.render(stage);
     },
     // the scene only: the renderer and the faces' textures stay for the next drawing
@@ -1310,11 +1560,11 @@ dash.draw('network', {
     if (made.isHeld && made.isHeld()) { made.pending = true; return; }
     const inputs = ['pair_totals', 'board', 'totals'].map((id) => D(id).data);
     const full = Boolean(el.closest('.zl-full'));
-    const sig = `${view.game}|${keyOf(chosen())}|${view.measure}|${el.clientWidth}|${full ? el.clientHeight : ''}`;
+    const sig = `${view.game}|${keyOf(chosen())}|${view.measure}|${view.period}|${el.clientWidth}|${full ? el.clientHeight : ''}|${document.documentElement.dataset.theme}`;
     if (made.sim && made.sig === sig && inputs.every((d, i) => d === made.inputs[i])) return;
     // the same network at a new size (full screen, a turned phone): the faces
     // stay where they were, about the new middle, and are not laid out again
-    const shape = `${view.game}|${keyOf(chosen())}|${view.measure}`;
+    const shape = `${view.game}|${keyOf(chosen())}|${view.measure}|${view.period}`;
     const before = made.sim && made.shape === shape && inputs.every((d, i) => d === made.inputs[i])
       ? new Map(made.nodes.map((n) => [n.id, [n.x - made.middle[0], n.y - made.middle[1]]])) : null;
     if (made.sim) made.sim.stop();
@@ -1379,35 +1629,91 @@ dash.draw('network', {
     canvas.setAttribute('aria-label', 'Network of characters drawn together');
     el.append(canvas);
     const tip = node('div', 'zl-tip'); tip.hidden = true; el.append(tip);
-    const ink = resolveColor(dash.colors[0], el);
     let view2d = d3.zoomIdentity;
 
     // What is lit: the face, each partner's strength against its biggest
     // partner, and the partners that get a line. Every partner gets a ring,
-    // never fainter than RING_MIN. Lines go to two groups of partners, the
-    // main one and the middle one (see tiers); the rest get only the ring.
+    // never fainter than RING_MIN. Lines go to the partners linesEnd takes; the
+    // rest get only the ring.
+    //
+    // Each end of a line has its own colour, for the face at that end: the top of
+    // the scale when the pair is that face's biggest, going down the scale as the
+    // pair gets smaller against the biggest. A pair can be the biggest for one face
+    // and small for the other, so the line runs from one colour to the other.
     const RING_MIN = 0.35;
-    const TIER_ALPHA = [0.95, 0.7];
-    const MAIN = '#e8578f';
-    const tierInk = (tier) => (tier === 0 ? MAIN : ink);
-    const inkHex = hexOf(ink);
+    const SCALE = d3.range(4).map((i) => hexOf(resolveColor(`var(--zl-line-${i})`, el)));
+    const PLAIN = hexOf(resolveColor('var(--color-fg-muted)', el));
     const panelHex = hexOf(resolveColor('var(--color-panel)', el));
-    const tierHex = (tier) => (tier === 0 ? hexOf(MAIN) : inkHex);
+    const inRange = (share) => share >= lineRange.low;
+    const onScale = (share) => {
+      const { low } = lineRange;
+      if (low <= LINE_FLOOR) return Math.max(share, low);
+      // at a limit of 100% only a character's biggest pair is above gold
+      const above = low >= 1 ? Number(share >= 1) : Math.max(0, (share - low) / (1 - low));
+      return LINE_FLOOR + (1 - LINE_FLOOR) * above;
+    };
+    const scaleColour = (share) => {
+      const at = Math.min(share, 1) * (SCALE.length - 1);
+      const i = Math.min(Math.floor(at), SCALE.length - 2);
+      return [16, 8, 0].reduce((color, bits) => {
+        const from = (SCALE[i] >> bits) & 255;
+        return color + (Math.round(from + (((SCALE[i + 1] >> bits) & 255) - from) * (at - i)) << bits);
+      }, 0);
+    };
+    const biggest = new Map();
+    for (const l of pairs) {
+      for (const id of [l.a, l.b]) biggest.set(id, Math.max(biggest.get(id) || 0, l.v));
+    }
+    // A line is drawn in short pieces, as many as its colours are apart, between
+    // the faces' edges, the part that can be seen. near, far: the colours at the
+    // ends; draw gets each piece's ends and the colour at its middle.
+    const eachPiece = (from, to, near, far, most, draw) => {
+      const length = Math.hypot(to.x - from.x, to.y - from.y);
+      const start = (from.r - 1) / length;
+      const span = (length - from.r - to.r + 2) / length;
+      if (!(span > 0)) return;
+      const pieces = 1 + Math.ceil(most * Math.abs(near - far));
+      for (let i = 0; i < pieces; i++) {
+        const a = start + span * (i / pieces);
+        const b = start + span * ((i + 1) / pieces);
+        draw(from.x + (to.x - from.x) * a, from.y + (to.y - from.y) * a,
+          from.x + (to.x - from.x) * b, from.y + (to.y - from.y) * b, near + (far - near) * ((i + 0.5) / pieces));
+      }
+    };
+    // The background's colours: nearly a thousand lines, so a few shades, each
+    // stroked once per line width. Butt ends: the lines are see-through, and
+    // round ones would show as dots where two pieces overlap.
+    const SHADES = 8;
+    const backPieces = d3.range(SHADES + 1).map(() => []);
     // The Pixi picture: lines, faces and rings at the faces' places now.
     const buildPixi = () => {
       const { back, litLines, plates, rings, sprites } = px;
       back.clear();
       const backAlpha = found ? 0.04 : lit ? 0.05 : 0.35;
       for (const [width, list] of backbone) {
-        for (const e of list) back.moveTo(e.source.x, e.source.y).lineTo(e.target.x, e.target.y);
-        back.stroke({ width, color: inkHex, alpha: backAlpha, cap: 'round' });
+        for (const e of list) {
+          const near = e.l.v / biggest.get(e.l.a);
+          const far = e.l.v / biggest.get(e.l.b);
+          if (!inRange(near) && !inRange(far)) continue;
+          eachPiece(e.source, e.target, onScale(near), onScale(far), SHADES, (x0, y0, x1, y1, share) => {
+            backPieces[Math.round(share * SHADES)].push(x0, y0, x1, y1);
+          });
+        }
+        backPieces.forEach((flat, i) => {
+          if (!flat.length) return;
+          for (let k = 0; k < flat.length; k += 4) back.moveTo(flat[k], flat[k + 1]).lineTo(flat[k + 2], flat[k + 3]);
+          back.stroke({ width, color: scaleColour(i / SHADES), alpha: backAlpha, cap: 'butt' });
+          flat.length = 0;
+        });
       }
       litLines.clear();
       if (lit && !found) {
         const from = byId.get(lit.id);
         for (const m of lit.lines) {
-          litLines.moveTo(from.x, from.y).lineTo(m.other.x, m.other.y)
-            .stroke({ width: lineWidth(m.v), color: tierHex(m.tier), alpha: TIER_ALPHA[m.tier], cap: 'round' });
+          if (!inRange(m.near) && !inRange(m.far)) continue;
+          eachPiece(from, m.other, onScale(m.near), onScale(m.far), 16, (x0, y0, x1, y1, share) => {
+            litLines.moveTo(x0, y0).lineTo(x1, y1).stroke({ width: lineWidth(m.v), color: scaleColour(share), cap: 'round' });
+          });
         }
       }
       plates.clear();
@@ -1425,13 +1731,13 @@ dash.draw('network', {
           // searching: the matches stand out with a bright ring, the rest fade
           const hit = found.has(n.id);
           sprite.alpha = hit ? 1 : 0.15;
-          rings.circle(n.x, n.y, n.r).stroke(hit ? { width: 4, color: 0xffd34d, alpha: 1 } : { width: 1.5, color: inkHex, alpha: 0.15 });
+          rings.circle(n.x, n.y, n.r).stroke(hit ? { width: 4, color: 0xffd34d, alpha: 1 } : { width: 1.5, color: PLAIN, alpha: 0.15 });
           return;
         }
         sprite.alpha = !lit || picked ? 1 : s != null ? 0.5 + 0.5 * Math.sqrt(s) : 0.4;
         rings.circle(n.x, n.y, n.r).stroke({
           width: picked ? 3.5 : s != null ? 2 + 2 * s : 1.5,
-          color: lit && lit.tier.has(n.id) ? tierHex(lit.tier.get(n.id)) : inkHex,
+          color: picked ? scaleColour(1) : lit && lit.far.has(n.id) && inRange(lit.far.get(n.id)) ? scaleColour(onScale(lit.far.get(n.id))) : PLAIN,
           alpha: picked ? 1 : s != null ? RING_MIN + (1 - RING_MIN) * Math.sqrt(s) : 0.3,
         });
       });
@@ -1442,17 +1748,12 @@ dash.draw('network', {
       if (id == null) { lit = null; paint(); return; }
       const mates = partnersOf(pairs, id).filter((l) => l.v > 0);
       const top = d3.max(mates, (l) => l.v) || 1;
-      const first = mainEnd(mates);
-      const second = tierEnd(mates, first);
-      // the groups' partners that weigh too little for the face lose the line
-      const own = val(byId.get(id).row);
-      const linked = mates.slice(0, second).map((l, i) => ({ l, tier: i < first ? 0 : 1 }))
-        .filter(({ l, tier }) => l.v >= LINE_MIN && l.v >= LINE_SHARE[tier] * own);
+      const linked = mates.slice(0, linesEnd(mates));
       lit = {
         id,
         strength: new Map(mates.map((l) => [l.other, l.v / top])),
-        tier: new Map(linked.map(({ l, tier }) => [l.other, tier])),
-        lines: linked.map(({ l, tier }) => ({ other: byId.get(l.other), v: l.v, tier })).reverse(),
+        far: new Map(mates.map((l) => [l.other, l.v / biggest.get(l.other)])),
+        lines: linked.map((l) => ({ other: byId.get(l.other), v: l.v, near: l.v / top, far: l.v / biggest.get(l.other) })).reverse(),
       };
       paint();
     };
@@ -1778,6 +2079,7 @@ dash.draw('network', {
     fit();
     light(focusId(chars));
     relight = () => light(focusId(chars));
+    repaintLines = () => { dirty = true; paint(); };
     nodes.forEach((n, i) => roundFace(who.get(n.id).icon).then((img) => {
       n.img = img;
       if (px && img) px.setFace(i, img);
@@ -1939,13 +2241,82 @@ document.querySelectorAll('.zl-sites input').forEach((box) => {
     redrawAll();
   });
 });
+// "More filters" shows how many of its filters are on, also when it is closed
+// The line legend's end: dragged, or moved with the arrow keys. The bar runs from
+// the biggest pair on the left to the smallest on the right.
+const rangeBar = document.getElementById('line-range');
+const rangeEnd = rangeBar.querySelector('.zl-range-end');
+const showLineRange = () => {
+  rangeEnd.style.left = `${(1 - lineRange.low) * 100}%`;
+  const colours = rangeBar.querySelector('.zl-sw-line');
+  colours.style.width = `${(1 - lineRange.low) * 100}%`;
+  // the full scale stays in place under the bar's end, and is cut, down to gold
+  colours.style.backgroundSize = `${100 / (1 - Math.min(lineRange.low, LINE_FLOOR))}% 100%`;
+  document.getElementById('line-low').textContent = `${Math.round(lineRange.low * 100)}%`;
+  rangeEnd.setAttribute('aria-valuemin', 0);
+  rangeEnd.setAttribute('aria-valuemax', 100);
+  rangeEnd.setAttribute('aria-valuenow', Math.round(lineRange.low * 100));
+  repaintLines();
+};
+const moveLineRange = (share) => {
+  lineRange.low = Math.max(0, Math.min(share, 1));
+  showLineRange();
+};
+rangeEnd.addEventListener('pointerdown', (event) => { event.preventDefault(); rangeEnd.focus(); rangeEnd.setPointerCapture(event.pointerId); });
+rangeEnd.addEventListener('pointermove', (event) => {
+  if (!rangeEnd.hasPointerCapture(event.pointerId)) return;
+  const bar = rangeBar.getBoundingClientRect();
+  moveLineRange(1 - (event.clientX - bar.left) / bar.width);
+});
+rangeEnd.addEventListener('keydown', (event) => {
+  const step = { ArrowLeft: 0.05, ArrowRight: -0.05 }[event.key];
+  if (!step) return;
+  event.preventDefault();
+  moveLineRange(lineRange.low + step);
+});
+rangeBar.addEventListener('dblclick', () => moveLineRange(0));
+showLineRange();
+// The theme: the one picked with the button, else the system's. The network works
+// out its colours when drawn, so a change draws everything again.
+const themeButton = document.getElementById('theme');
+const pickedTheme = () => { try { return localStorage.getItem('tagstats-theme'); } catch (e) { return null; } };
+const systemTheme = () => (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+const showTheme = (theme) => {
+  document.documentElement.dataset.theme = theme;
+  const next = theme === 'dark' ? 'Switch to the light theme' : 'Switch to the dark theme';
+  themeButton.setAttribute('aria-label', next);
+  themeButton.title = next;
+};
+showTheme(pickedTheme() || systemTheme());
+themeButton.addEventListener('click', () => {
+  const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  try { localStorage.setItem('tagstats-theme', theme); } catch (e) { /* only this visit */ }
+  showTheme(theme);
+  redrawAll();
+});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if (pickedTheme()) return;
+  showTheme(systemTheme());
+  redrawAll();
+});
+const moreButton = document.getElementById('more');
+const showMoreCount = () => {
+  const on = view.period !== 'all' ? 1 : 0;
+  moreButton.textContent = on ? `More filters · ${on}` : 'More filters';
+  moreButton.classList.toggle('zl-on', on > 0);
+};
+moreButton.addEventListener('click', () => {
+  const panel = document.getElementById('more-panel');
+  panel.hidden = !panel.hidden;
+  moreButton.setAttribute('aria-expanded', String(!panel.hidden));
+  redrawFull();
+});
 document.querySelectorAll('[data-period]').forEach((btn) => {
   btn.addEventListener('click', () => {
     view.period = btn.dataset.period;
     document.querySelectorAll('[data-period]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
-    dash.draw('podium');
-    dash.draw('bars');
-    dash.draw('scatter');
+    showMoreCount();
+    redrawAll();
   });
 });
 document.querySelectorAll('[data-sort]').forEach((btn) => {
@@ -2008,6 +2379,9 @@ searchBox.addEventListener('keydown', (event) => {
 (() => {
   const TARGET = '.zl-bar-r18, .zl-bar-dark, .zl-seg button[data-measure="r18"], .zl-seg button[data-sort="share"]';
   const FPS = 30;
+  // No hearts on a narrower part: none would show, and the moving layer inside
+  // a part under about 1 px paints it black.
+  const MIN_WIDTH = 16;
   const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const rand = (a, b) => a + Math.random() * (b - a);
   const shown = new Set();
@@ -2049,8 +2423,9 @@ searchBox.addEventListener('keydown', (event) => {
   const io = new IntersectionObserver((entries) => {
     for (const e of entries) {
       const el = e.target;
-      if (e.isIntersecting) { vary(el); place(el, performance.now()); shown.add(el); } else shown.delete(el);
-      el.classList.toggle('zl-fly', e.isIntersecting);
+      const on = e.isIntersecting && e.boundingClientRect.width >= MIN_WIDTH;
+      if (on) { vary(el); place(el, performance.now()); shown.add(el); } else shown.delete(el);
+      el.classList.toggle('zl-fly', on);
     }
     wake();
   });
@@ -2065,6 +2440,6 @@ searchBox.addEventListener('keydown', (event) => {
 })();
 </script>
 </div>
-<footer class="site-foot">Counts of tag searches on Danbooru, Rule34 and pixiv, collected 2026-11-04. Only numbers are shown, no pictures from those sites. Character icons from the games' fandom wikis, © their publishers.</footer>
+<footer class="site-foot">Counts of tag searches on Danbooru, Rule34 and pixiv, collected 2026-11-06. Only numbers are shown, no pictures from those sites. Character icons from the games' fandom wikis, © their publishers.</footer>
 </body>
 </html>
