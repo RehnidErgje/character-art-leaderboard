@@ -32,19 +32,26 @@ TEMPLATE = """<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Character Art Leaderboard</title>
-<meta name="description" content="How much fan art each character of Zenless Zone Zero, Genshin Impact and Honkai: Star Rail has on Danbooru, Rule34 and pixiv, the R-18 share, and who is drawn together.">
+<meta name="description" content="How much fan art each character of Zenless Zone Zero, Genshin Impact, Honkai: Star Rail and Wuthering Waves has on Danbooru, Rule34 and pixiv, the R-18 share, and who is drawn together.">
 <!-- the card a shared link shows (Discord, Telegram, Reddit, X): docs/preview.png -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rehnidergje.github.io/character-art-leaderboard/">
 <meta property="og:title" content="Character Art Leaderboard">
-<meta property="og:description" content="How much fan art each Zenless Zone Zero, Genshin Impact and Honkai: Star Rail character has, the R-18 share, and who gets drawn together.">
+<meta property="og:description" content="How much fan art each Zenless Zone Zero, Genshin Impact, Honkai: Star Rail and Wuthering Waves character has, the R-18 share, and who gets drawn together.">
 <meta property="og:image" content="https://rehnidergje.github.io/character-art-leaderboard/preview.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<!-- the theme before anything is drawn: the one picked with the page's button, else the system's -->
+<script>
+var saved = null;
+try { saved = localStorage.getItem('tagstats-theme'); } catch (e) {}
+document.documentElement.dataset.theme = saved === 'light' || saved === 'dark' ? saved
+  : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+</script>
 <style>
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   --color-bg: #faf9f5; --color-panel: #ffffff; --color-fg: #141413; --color-fg-muted: #6b6a65;
   --color-border-line: rgb(20 20 19 / .13); --color-warn: #a86a00;
   --cds-border: rgb(20 20 19 / .1); --cds-chart-grid: rgb(20 20 19 / .08);
@@ -59,14 +66,13 @@ TEMPLATE = """<!doctype html>
   --font-anthropic-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-anthropic-serif: ui-serif, Georgia, "Times New Roman", serif;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #262624; --color-panel: #30302e; --color-fg: #f5f4ef; --color-fg-muted: #a6a39a;
-    --color-border-line: rgb(255 255 255 / .14); --color-warn: #e0a440;
-    --cds-border: rgb(255 255 255 / .12); --cds-chart-grid: rgb(255 255 255 / .08);
-    --cds-surface-popover: #30302e; --cds-shadow-popover: 0 8px 24px #00000052, 0 2px 6px #0003;
-    --cds-text-secondary: #a6a39a;
-  }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #262624; --color-panel: #30302e; --color-fg: #f5f4ef; --color-fg-muted: #a6a39a;
+  --color-border-line: rgb(255 255 255 / .14); --color-warn: #e0a440;
+  --cds-border: rgb(255 255 255 / .12); --cds-chart-grid: rgb(255 255 255 / .08);
+  --cds-surface-popover: #30302e; --cds-shadow-popover: 0 8px 24px #00000052, 0 2px 6px #0003;
+  --cds-text-secondary: #a6a39a;
 }
 [hidden] { display: none !important; }
 .dash-loading body::after { content: ''; position: fixed; top: 14px; right: 18px; z-index: 10; width: 20px; height: 20px; border: 2.5px solid var(--color-border-line); border-top-color: var(--color-fg); border-radius: 50%; animation: dash-spin .7s linear infinite; }
@@ -99,7 +105,8 @@ as plain CSV for reading and analysis (the site itself reads `docs/data/`,
 which also has the character icons in it). Exported __DATE__; when each
 game's counts were collected is in its `collected_at.txt`.
 
-One folder per game (`zzz`, `genshin`, `hsr`), two files each.
+One folder per game (`zzz`, `genshin`, `hsr`, `wuwa`), two files each.
+`naruto` is here too, but not on the site yet: its numbers are still being checked.
 
 ## characters.csv
 
@@ -113,7 +120,7 @@ One row per character.
   even when it has several of them; `-tag` excludes a tag
 - `<site>_total`, `<site>_r18`: posts the search finds, and the R-18 part
   (Danbooru and Rule34 `rating:explicit`, pixiv's R-18 search including R-18G)
-- `<site>_pair_tag`: the tag (or query) that stands for the character in pair
+- `<site>_pair_tag`: the tag or OR group that stands for the character in pair
   searches
 - `window_until`, `window_<site>_total`, `window_<site>_r18`: the same search
   limited to art uploaded up to 3 months after release (art from before release
@@ -121,19 +128,33 @@ One row per character.
   id (the last id uploaded on that day). `window_incomplete` is 1 when those
   3 months are not over yet. Characters with no release date have their
   all-time numbers here
+- `<site>_lead_pov_total`, `<site>_lead_pov_r18` and the same with `window_` in
+  front (Danbooru and Rule34, the game's male lead only): his posts that also
+  have `pov`, `male_pov`, `faceless_male` or `disembodied_penis`. They mark art
+  where he is only the camera or a faceless partner. The site does not use them yet. pixiv has no such tags
 
 Sites are separate columns; on the site, the chosen sites are added together,
 so a picture posted on two sites counts twice there.
 
 ## pairs.csv
 
-One row per pair and site: posts tagged with both characters' pair tags at once.
+One row per pair and site: posts that have both characters.
 
 - `a`, `a_name`, `b`, `b_name`, `site`, `total`, `r18`
+- A character with several tags on a site is searched as an OR group, so a pair
+  is `(a or b) (c or d)` on Danbooru and `( a ~ b ) ( c ~ d )` on Rule34. pixiv
+  cannot join AND with OR: its pairs start from both main tags, then add works
+  that show both characters through any of their other tags
 - `r18` is only counted for a pair with at least 20 posts on that site; empty
   below that
-- Pairs with 0 posts are kept, so a 0 is a counted zero; a pair missing for a
-  site was not counted there (on pixiv, Genshin pairs are only partly counted)
+- `window_total`, `window_r18`: up to 3 months after the newer character's
+  release. A pair with a character with no release date has its all-time
+  numbers here
+- `lead_pov_total`, `lead_pov_r18`, `window_lead_pov_total`,
+  `window_lead_pov_r18`: pairs of the male lead only, the same posts as in
+  characters.csv
+- Pairs with 0 posts are kept, so a 0 is a counted zero. A pair is missing for a
+  site only when one of its characters has no usable tag there
 
 ## Notes
 
@@ -165,6 +186,7 @@ def export_data(tagstats, config, game):
     fields = ["id", "name", "release_date"]
     fields += [f"{s}_{k}" for s in SITES for k in ("query", "total", "r18", "pair_tag")]
     fields += ["window_until", "window_incomplete"] + [f"window_{s}_{k}" for s in SITES for k in ("total", "r18")]
+    fields += [f"{w}{s}_lead_pov_{k}" for w in ("", "window_") for s in ("danbooru", "rule34") for k in ("total", "r18")]
     with open(out / "characters.csv", "w", newline="", encoding="utf-8-sig") as f:
         w = csv.DictWriter(f, fields)
         w.writeheader()
@@ -178,14 +200,21 @@ def export_data(tagstats, config, game):
                 row[f"{s}_pair_tag"] = pair_tags[s].get(r["id"], "")
                 row[f"window_{s}_total"] = r.get(f"w_{s}_total")
                 row[f"window_{s}_r18"] = r.get(f"w_{s}_r18")
+            for s in ("danbooru", "rule34"):
+                row[f"{s}_lead_pov_total"] = r.get(f"{s}_si_total")
+                row[f"{s}_lead_pov_r18"] = r.get(f"{s}_si_r18")
+                row[f"window_{s}_lead_pov_total"] = r.get(f"w_{s}_si_total")
+                row[f"window_{s}_lead_pov_r18"] = r.get(f"w_{s}_si_r18")
             w.writerow(row)
 
     rows = json.loads((report / "pairs_rows.json").read_text(encoding="utf-8"))["rows"]
     with open(out / "pairs.csv", "w", newline="", encoding="utf-8-sig") as f:
         w = csv.writer(f)
-        w.writerow(["a", "a_name", "b", "b_name", "site", "total", "r18"])
+        w.writerow(["a", "a_name", "b", "b_name", "site", "total", "r18", "window_total", "window_r18",
+                    "lead_pov_total", "lead_pov_r18", "window_lead_pov_total", "window_lead_pov_r18"])
         for p in sorted(rows, key=lambda p: (p["site"], -(p["total"] or 0))):
-            w.writerow([p["a"], names.get(p["a"], p["a"]), p["b"], names.get(p["b"], p["b"]), p["site"], p["total"], p["r18"]])
+            w.writerow([p["a"], names.get(p["a"], p["a"]), p["b"], names.get(p["b"], p["b"]), p["site"], p["total"], p["r18"],
+                        p.get("w_total"), p.get("w_r18"), p.get("si_total"), p.get("si_r18"), p.get("w_si_total"), p.get("w_si_r18")])
 
 
 def main(tagstats):
