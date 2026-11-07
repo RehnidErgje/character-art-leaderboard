@@ -317,8 +317,10 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-abs-add-n { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 10px; background: #fff; color: var(--zl-solo); font-size: 11px; font-weight: 600; }
 .zl-abs-add-n[hidden], .zl-abs-list[hidden] { display: none; }
 .zl-abs-list { display: grid; gap: var(--cds-gap-xs); min-height: 0; overflow: auto; padding: var(--cds-pad-md); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-bg); box-shadow: var(--cds-shadow-popover); }
-.zl-abs-part { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cds-gap-xs); }
-.zl-abs-title { flex: none; width: 5.5em; color: var(--color-fg-muted); }
+/* a section's name in a column of its own: its categories that wrap start under the first of
+   them, not under the name (the name sits in the row's left padding) */
+.zl-abs-part { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cds-gap-xs); padding-left: calc(5.5em + var(--cds-gap-xs)); }
+.zl-abs-title { flex: none; width: 5.5em; margin-left: calc(-5.5em - var(--cds-gap-xs)); color: var(--color-fg-muted); }
 /* the list of categories comes in section by section */
 @keyframes zl-rise { from { opacity: 0; transform: translateY(-6px); } }
 .zl-abs-list:not([hidden]) .zl-abs-part { animation: zl-rise 0.4s ease-out both; animation-delay: calc(var(--i, 0) * 50ms); }
@@ -401,6 +403,10 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-reset { font: inherit; font-size: var(--cds-font-size-caption); padding: 2px var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-panel); color: var(--color-fg-muted); cursor: pointer; }
 .zl-reset:hover { color: var(--color-fg); }
 .zl-reset:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+/* Expand stands out: people did not see it. The site's violet, an icon of arrows apart, filled on hover */
+.zl-reset.zl-fullbtn { display: inline-flex; align-items: center; gap: 5px; color: var(--zl-solo); font-weight: var(--cds-font-weight-medium); border-color: color-mix(in srgb, var(--zl-solo) 70%, transparent); background: color-mix(in srgb, var(--zl-solo) 12%, var(--color-panel)); }
+.zl-fullbtn::before { content: ""; width: 12px; height: 12px; background: currentColor; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7'/%3E%3C/svg%3E") center / contain no-repeat; }
+.zl-reset.zl-fullbtn:hover { background: var(--zl-solo); border-color: var(--zl-solo); color: #fff; }
 .zl-tip { position: absolute; pointer-events: none; z-index: 3; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .zl-tip strong { display: block; }
 .zl-tip span { display: block; color: var(--cds-text-secondary); }
