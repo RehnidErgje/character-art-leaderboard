@@ -119,7 +119,17 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-theme { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 0; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: transparent; color: var(--color-fg-muted); cursor: pointer; }
 .zl-theme:hover { color: var(--color-fg); border-color: var(--color-fg); }
 /* the animations switch, beside the theme's: sparkles, crossed out while they are off */
-.zl-motion { margin-right: 6px; }
+/* the settings: a gear that opens a small panel with the animations and theme buttons */
+.zl-settings { position: relative; display: inline-flex; }
+.zl-gear svg { transition: transform .3s ease; }
+.zl-gear[aria-expanded="true"] { color: var(--color-fg); border-color: var(--color-fg); }
+.zl-gear[aria-expanded="true"] svg { transform: rotate(60deg); }
+.zl-settings-panel { position: absolute; top: calc(100% + 6px); right: 0; z-index: 20; display: flex; gap: var(--cds-gap-xs); padding: var(--cds-pad-xs); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-bg); box-shadow: var(--cds-shadow-popover); }
+.zl-settings-panel[hidden] { display: none; }
+/* in the panel the buttons have room for their names, and what they are set to on the right */
+.zl-settings-panel { flex-direction: column; }
+.zl-settings-panel .zl-theme { width: auto; min-width: 11rem; justify-content: flex-start; gap: 8px; padding: 0 10px; font: inherit; font-size: var(--cds-font-size-caption); color: var(--color-fg); }
+.zl-set-state { margin-left: auto; color: var(--color-fg-muted); }
 .zl-motion[aria-pressed="true"] .zl-motion-off { display: none; }
 :root[data-motion="off"] *, :root[data-motion="off"] *::before, :root[data-motion="off"] *::after { animation: none !important; transition: none !important; }
 .zl-theme:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
@@ -327,6 +337,8 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-pt circle { fill: none; stroke: var(--color-border-line); stroke-width: 1.5; }
 .zl-pt:hover circle { stroke: var(--color-fg); stroke-width: 2; }
 .zl-pt-front { pointer-events: none; }
+.zl-pt-zero { opacity: .35; }
+.zl-pt-zero:hover, .zl-pt-front .zl-pt-zero { opacity: 1; }
 .zl-pt-front circle { stroke: var(--color-fg); stroke-width: 2; }
 .zl-grid-major { stroke: var(--cds-chart-grid); }
 .zl-grid-minor { stroke: var(--cds-chart-grid); opacity: 0.4; }
@@ -369,9 +381,10 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-ctools { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: var(--cds-gap-xs); }
 .zl-size-box { display: inline-flex; align-items: center; gap: var(--cds-gap-xs); padding: 2px var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-panel); color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
 .zl-size { width: 6rem; margin: 0; accent-color: var(--color-fg); }
-/* the scatter's title picks its height: Posts against [R-18 share] */
-.zl-y-pick { font: inherit; color: inherit; padding: 0 1.2em 0 2px; border: 0; border-bottom: 1.5px dashed var(--color-fg-muted); border-radius: 0; background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23999' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 2px center; appearance: none; cursor: pointer; }
-.zl-y-pick:hover { border-bottom-color: var(--color-fg); }
+/* beside the scatter's title, the pick of its height: Height [R-18] */
+.zl-y-field { display: inline-flex; align-items: center; gap: 6px; margin-left: .75em; font-size: var(--cds-font-size-caption); font-weight: normal; color: var(--color-fg-muted); }
+.zl-y-pick { font: inherit; color: var(--color-fg); padding: 2px 1.6em 2px 8px; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23999' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 2px center; appearance: none; cursor: pointer; }
+.zl-y-pick:hover { border-color: var(--color-fg); }
 .zl-y-pick option, .zl-y-pick optgroup { background: var(--color-panel); color: var(--color-fg); font-weight: normal; }
 .zl-reset { font: inherit; font-size: var(--cds-font-size-caption); padding: 2px var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-panel); color: var(--color-fg-muted); cursor: pointer; }
 .zl-reset:hover { color: var(--color-fg); }
@@ -410,7 +423,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
   .zl-topbar-right > .zl-group { order: 4; flex: 1 1 100%; }
   .zl-topbar-right > .zl-group .zl-seg { display: flex; width: 100%; }
   .zl-topbar-right > .zl-group .zl-seg button { flex: 1; padding-block: 6px; }
-  .zl-more, .zl-theme { order: 3; }
+  .zl-settings { order: 3; }
   .zl-morepanel { order: 6; justify-content: flex-start; }
   .zl-morepanel .zl-group { flex: 1 1 100%; }
   .zl-morepanel .zl-seg { display: flex; flex: 1; }
@@ -461,17 +474,14 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
     <button type="button" data-measure="safe" aria-pressed="false">Without R-18</button>
   </div>
   </div>
-  <button type="button" class="zl-more" id="more" aria-expanded="false" aria-controls="more-panel">More filters</button>
-  <button type="button" class="zl-theme zl-motion" id="motion" aria-pressed="true"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M10 3.5 11.6 8.4 16.5 10 11.6 11.6 10 16.5 8.4 11.6 3.5 10 8.4 8.4Z M18 13.5 18.9 16.1 21.5 17 18.9 17.9 18 20.5 17.1 17.9 14.5 17 17.1 16.1Z M18 3 18.6 4.4 20 5 18.6 5.6 18 7 17.4 5.6 16 5 17.4 4.4Z" fill="currentColor"/><path class="zl-motion-off" d="M4 4 20 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button><button type="button" class="zl-theme" id="theme"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><mask id="zl-theme-cut"><rect width="24" height="24" fill="#fff"/><circle class="zl-theme-bite" cx="25" cy="8" r="6.5" fill="#000"/></mask><circle class="zl-theme-disc" cx="12" cy="12" r="5" fill="currentColor" mask="url(#zl-theme-cut)"/><g class="zl-theme-rays" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="20.5" y1="12.0" x2="22.5" y2="12.0"/><line x1="18.0" y1="18.0" x2="19.4" y2="19.4"/><line x1="12.0" y1="20.5" x2="12.0" y2="22.5"/><line x1="6.0" y1="18.0" x2="4.6" y2="19.4"/><line x1="3.5" y1="12.0" x2="1.5" y2="12.0"/><line x1="6.0" y1="6.0" x2="4.6" y2="4.6"/><line x1="12.0" y1="3.5" x2="12.0" y2="1.5"/><line x1="18.0" y1="6.0" x2="19.4" y2="4.6"/></g></svg></button>
-  <div class="zl-bar-tools"></div>
-  </div>
-  <div class="zl-morepanel" id="more-panel" hidden>
   <div class="zl-group"><span class="zl-group-name" aria-hidden="true">Period</span>
   <div class="zl-seg" role="group" aria-label="Period">
     <button type="button" data-period="all" aria-pressed="true">All time</button>
     <button type="button" data-period="window" aria-pressed="false" title="Art up to 3 months after each character's release, art from before release included; a pair: up to 3 months after the newer one's release">First 3 months</button>
   </div>
   </div>
+  <span class="zl-settings"><button type="button" class="zl-theme zl-gear" id="settings" aria-expanded="false" aria-controls="settings-panel" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M10.3 2h3.4l.5 2.6 1.6.7 2.2-1.5 2.4 2.4-1.5 2.2.7 1.6 2.6.5v3.4l-2.6.5-.7 1.6 1.5 2.2-2.4 2.4-2.2-1.5-1.6.7-.5 2.6h-3.4l-.5-2.6-1.6-.7-2.2 1.5-2.4-2.4 1.5-2.2-.7-1.6L2 13.7v-3.4l2.6-.5.7-1.6-1.5-2.2 2.4-2.4 2.2 1.5 1.6-.7ZM12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8Z"/></svg></button><span class="zl-settings-panel" id="settings-panel" hidden><button type="button" class="zl-theme zl-motion" id="motion" aria-pressed="true"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M10 3.5 11.6 8.4 16.5 10 11.6 11.6 10 16.5 8.4 11.6 3.5 10 8.4 8.4Z M18 13.5 18.9 16.1 21.5 17 18.9 17.9 18 20.5 17.1 17.9 14.5 17 17.1 16.1Z M18 3 18.6 4.4 20 5 18.6 5.6 18 7 17.4 5.6 16 5 17.4 4.4Z" fill="currentColor"/><path class="zl-motion-off" d="M4 4 20 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Animations</span><span class="zl-set-state" id="motion-state"></span></button><button type="button" class="zl-theme" id="theme"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><mask id="zl-theme-cut"><rect width="24" height="24" fill="#fff"/><circle class="zl-theme-bite" cx="25" cy="8" r="6.5" fill="#000"/></mask><circle class="zl-theme-disc" cx="12" cy="12" r="5" fill="currentColor" mask="url(#zl-theme-cut)"/><g class="zl-theme-rays" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="20.5" y1="12.0" x2="22.5" y2="12.0"/><line x1="18.0" y1="18.0" x2="19.4" y2="19.4"/><line x1="12.0" y1="20.5" x2="12.0" y2="22.5"/><line x1="6.0" y1="18.0" x2="4.6" y2="19.4"/><line x1="3.5" y1="12.0" x2="1.5" y2="12.0"/><line x1="6.0" y1="6.0" x2="4.6" y2="4.6"/><line x1="12.0" y1="3.5" x2="12.0" y2="1.5"/><line x1="18.0" y1="6.0" x2="19.4" y2="4.6"/></g></svg><span>Theme</span><span class="zl-set-state" id="theme-state"></span></button></span></span>
+  <div class="zl-bar-tools"></div>
   </div>
 </div>
 <p class="zl-warn" data-draw="missing" data-source="board_zzz board_genshin board_hsr board_wuwa">—</p>
@@ -506,7 +516,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
   </div>
   <div class="zl-card">
     <div class="zl-cardhead">
-      <h3>Posts against R-18 share</h3>
+      <h3>Popularity and share</h3>
       <span class="zl-hint-short"><span class="zl-mouse">Hold Ctrl and scroll to zoom</span><span class="zl-touch">Two fingers to zoom</span></span>
       <div class="zl-ctools"></div>
     </div>
@@ -1008,10 +1018,29 @@ const pageAwake = () => !document.hidden && document.hasFocus();
 const scope = () => (view.block === 'all' ? view.measure : view.block);
 const inShares = () => view.scale === 'pct' && (scope() !== 'all' || isSoloSort());
 // A site with posts in the store for the shown game: not every game has been read on every site.
-const hasStored = (site) => D('board').status === 'ok' && D('board').data.some((p) => p[`${site}_stored_total`] > 0);
-const soloReady = () => view.period === 'all' && chosen().every(hasStored);
+// Worked out once per data: it is asked for every number of every character.
+let storedOf = { data: null, sites: new Map() };
+const hasStored = (site) => {
+  const b = D('board');
+  if (b.status !== 'ok') return false;
+  if (storedOf.data !== b.data) storedOf = { data: b.data, sites: new Map() };
+  if (!storedOf.sites.has(site)) storedOf.sites.set(site, b.data.some((p) => p[`${site}_stored_total`] > 0));
+  return storedOf.sites.get(site);
+};
+const soloReady = () => view.period === 'all' && chosen().some(hasStored);
+// TEMPORARY while Danbooru is down (recount from its posts once it is read): a chosen site with
+// totals only gets the chosen store sites' numbers scaled to its total, so it adds to the
+// counts and keeps every share as they have it. null: no site has that number.
+const sumOn = (p, sites, field) => sites.reduce((n, s) => n + (p[`${s}_${field}`] || 0), 0);
+const siteVal = (p, s, field) => {
+  if (hasStored(s)) return p[`${s}_${field}`];
+  const sites = chosen().filter(hasStored);
+  const base = sumOn(p, sites, 'stored_total');
+  if (!base || !sites.some((t) => p[`${t}_${field}`] != null)) return null;
+  return Math.round((sumOn(p, sites, field) / base) * (p[`${s}_total`] || 0));
+};
 // A store number of a character over the chosen sites.
-const stored = (p, field) => chosen().reduce((n, site) => n + (p[`${site}_${field}`] || 0), 0);
+const stored = (p, field) => chosen().reduce((n, site) => n + (siteVal(p, site, field) || 0), 0);
 // The posts sorted by, and of those the character alone, from the store.
 const baseOf = (p) => (scope() === 'r18' ? stored(p, 'stored_r18') : scope() === 'safe' ? stored(p, 'stored_total') - stored(p, 'stored_r18') : stored(p, 'stored_total'));
 const aloneOf = (p) => (scope() === 'r18' ? stored(p, 'r18_solo') : scope() === 'safe' ? stored(p, 'safe_solo') : stored(p, 'r18_solo') + stored(p, 'safe_solo'));
@@ -1108,7 +1137,10 @@ dash.draw('missing', (el) => {
   if (b.status === 'loading') { el.textContent = '—'; return; }
   if (b.status !== 'ok') { el.textContent = `No counts for ${game().title} yet: collection is still running.`; return; }
   const empty = chosen().filter((s) => !b.data.some((r) => r[s + '_total'] != null)).map((s) => LABELS[s]);
-  el.textContent = empty.length ? `No counts yet for ${empty.join(', ')}: these figures leave ${empty.length > 1 ? 'them' : 'it'} out.` : '';
+  const notes = empty.length ? [`No counts yet for ${empty.join(', ')}: these figures leave ${empty.length > 1 ? 'them' : 'it'} out.`] : [];
+  // Danbooru is down, so its posts could not be read: it has its totals only, no tags in the store
+  if (chosen().includes('danbooru') && !hasStored('danbooru')) notes.push('Danbooru is down: totals only; its tag numbers follow Rule34 and pixiv.');
+  el.textContent = notes.join(' ');
 });
 
 // The lower bound of the 95% Wilson interval of k R-18 posts out of n: the
@@ -1283,14 +1315,13 @@ const whoLine = (p, max, label) => {
   bar.append(part);
   return zonedLine(bar, width, [[n, true, false], [base - n, false, scope() === 'safe']], base, label);
 };
-// Solo is counted for all time on the sites with posts in the store: asking for it keeps
-// those of the chosen sites, or switches the page to Rule34 when there are none.
+// Solo is counted for all time from the store: asking for it switches to all time, and when no
+// chosen site has posts in the store (Danbooru alone), to every site that has. A site with
+// totals only, chosen beside them, stays: its numbers are worked out (estimated).
 const useSoloSites = () => {
-  const keep = chosen().filter(hasStored);
-  const sites = keep.length ? keep : ['rule34'];
+  const sites = chosen().some(hasStored) ? chosen() : Object.keys(LABELS).filter(hasStored);
   document.querySelectorAll('.zl-sites input').forEach((box) => { box.checked = sites.includes(box.value); });
   setPeriod('all');
-  showMoreCount();
   redrawAll();
 };
 // The key of the colours in the bars.
@@ -1367,14 +1398,14 @@ const ABSTRACTIONS = Object.assign({}, ...ABS_SECTIONS.map(([, names]) => names)
 // R-18), and the posts they are a share of. null: no number there; a child has numbers only
 // without R-18 (post_stats.CHILDREN).
 const themeOf = (p, s, name) => {
-  const all = p[`${s}_theme_${name}`];
-  const r18 = p[`${s}_theme_${name}_r18`];
+  const all = siteVal(p, s, `theme_${name}`);
+  const r18 = siteVal(p, s, `theme_${name}_r18`);
   if (view.measure === 'r18') return r18 ?? null;
-  if (view.measure === 'safe') return p[`${s}_theme_${name}_safe`] ?? (all != null ? all - (r18 || 0) : null);
+  if (view.measure === 'safe') return siteVal(p, s, `theme_${name}_safe`) ?? (all != null ? all - (r18 || 0) : null);
   return all ?? null;
 };
-const themeBase = (p, s) => (view.measure === 'r18' ? p[`${s}_stored_r18`] || 0
-  : view.measure === 'safe' ? (p[`${s}_stored_total`] || 0) - (p[`${s}_stored_r18`] || 0) : p[`${s}_stored_total`] || 0);
+const themeBase = (p, s) => (view.measure === 'r18' ? siteVal(p, s, 'stored_r18') || 0
+  : view.measure === 'safe' ? (siteVal(p, s, 'stored_total') || 0) - (siteVal(p, s, 'stored_r18') || 0) : siteVal(p, s, 'stored_total') || 0);
 const absSites = (name) => (ready('board') ? chosen().filter((s) => D('board').data.some((p) => themeOf(p, s, name) != null)) : []);
 const absActive = () => view.absPicked.filter((name) => absSites(name).length);
 // Every character with their posts on the chosen sites that count this theme, surest first;
@@ -1400,8 +1431,8 @@ const absFill = (name) => {
   let r18 = 0;
   for (const p of D('board').data) {
     for (const s of absSites(name)) {
-      all += p[`${s}_theme_${name}`] || 0;
-      r18 += p[`${s}_theme_${name}_r18`] || 0;
+      all += siteVal(p, s, `theme_${name}`) || 0;
+      r18 += siteVal(p, s, `theme_${name}_r18`) || 0;
     }
   }
   return all ? r18 / all : 0;
@@ -1411,6 +1442,8 @@ const HEART = d3.range(28).flatMap((k) => {
   const t = (k / 28) * 2 * Math.PI;
   return [Math.pow(Math.sin(t), 3), -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) / 16];
 });
+// how far its top is above its middle, in the same units
+const HEART_TOP = -d3.min(HEART.filter((v, k) => k % 2));
 const absLinks = (name) => {
   const rows = absRows(name);
   const top = rows.length && rows[0].bound > 0 ? rows[0].bound : 1;
@@ -1633,6 +1666,17 @@ const scatterShare = (kind, r, p) => {
 };
 const scatterLabel = (kind) => (kind === 'r18' ? 'R-18 share' : kind === 'alone' ? 'Share alone'
   : kind === 'with' ? 'Share with someone' : `${ABSTRACTIONS[kind.slice(4)]} share`);
+// The round shares the scatter's square-root axis is labelled at, and the finer steps of its
+// grid, from 0 up.
+// the scatter's share goes on a square-root scale when its middle share is under this, of the highest
+const SKEWED = 0.25;
+// a face at a share under FAINT (next to nothing) is drawn ZERO_FACE as big as the others
+const FAINT = 0.005;
+const ZERO_FACE = 0.6;
+const SHARE_TICKS = [0, 0.001, 0.002, 0.005, 0.01, 0.02, 0.03, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
+const SHARE_STEPS = [...d3.range(0, 0.01, 0.001), ...d3.range(0.01, 0.1, 0.01), ...d3.range(0.1, 1.0001, 0.05)];
+// The scatter's zoom, kept for a redraw of the same view: game, sites, content, period, height and size.
+let scatterView = null;
 dash.draw('scatter', (el) => {
   el.replaceChildren();
   onSearch.delete('scatter');
@@ -1646,7 +1690,7 @@ dash.draw('scatter', (el) => {
   const pts = boardTotalsFor(keyOf(chosen())).filter((r) => v(r) > 0)
     .map((r) => ({ ...r, p: who.get(r.id), amount: v(r), share: scatterShare(kind, r, who.get(r.id)) }))
     .filter((d) => d.share != null);
-  // the picker of the height is the chart's title: Posts against [R-18 share]
+  // the pick of the height, beside the chart's title: Height [R-18]; the axis says it is a share
   const picker = node('select', 'zl-y-pick');
   picker.setAttribute('aria-label', 'What the height shows');
   const option = (parent, value, label) => {
@@ -1655,28 +1699,47 @@ dash.draw('scatter', (el) => {
     o.selected = value === kind;
     parent.append(o);
   };
-  option(picker, 'r18', 'R-18 share');
-  option(picker, 'alone', 'share alone');
-  option(picker, 'with', 'share with someone');
+  option(picker, 'r18', 'R-18');
+  option(picker, 'alone', 'Alone');
+  option(picker, 'with', 'With someone');
   for (const [title, names] of ABS_SECTIONS) {
     const group = node('optgroup');
     group.label = title;
-    for (const [name, label] of Object.entries(names)) if (kinds.includes(`cat:${name}`)) option(group, `cat:${name}`, `${label} share`);
+    for (const [name, label] of Object.entries(names)) if (kinds.includes(`cat:${name}`)) option(group, `cat:${name}`, label);
     if (group.children.length) picker.append(group);
   }
   picker.addEventListener('change', () => { view.scatterY = picker.value; dash.draw('scatter'); });
-  el.closest('.zl-card').querySelector('h3').replaceChildren('Posts against ', picker);
+  const field = node('label', 'zl-y-field', 'Height');
+  field.append(picker);
+  el.closest('.zl-card').querySelector('h3').replaceChildren('Popularity and share', field);
   if (!pts.length) return;
   // the R-18 share in rose, the rest in the categories' violet
   const tint = kind === 'r18' ? '#e8578f' : 'var(--zl-solo)';
   const W = el.clientWidth || 600;
   const H = el.closest('.zl-full') ? Math.max(320, el.clientHeight) : 380;
+  const viewKey = `${view.game}|${keyOf(chosen())}|${view.measure}|${view.period}|${kind}|${W}|${H}`;
   const I = W < 520 ? 22 : 30;
   const bottom = H - 34;
   const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
-  const y0 = d3.scaleLinear([0, d3.max(pts, (d) => d.share)], [H - 40, I / 2 + 6]).nice();
+  // The share is on a square-root scale when most faces are near 0 (the middle share under
+  // SKEWED of the highest): small shares spread out from 0, so 1% does not sit on the faces
+  // at 0. Shares spread over the height (R-18) stay on a plain scale. Its ticks are round
+  // shares (SHARE_TICKS), no two closer than gap px.
+  const most = d3.max(pts, (d) => d.share) || 0;
+  const skewed = (d3.median(pts, (d) => d.share) || 0) < most * SKEWED;
+  const y0 = (skewed ? d3.scaleSqrt() : d3.scaleLinear()).domain([0, most]).range([H - 40, I / 2 + 6]).nice();
+  const shareTicks = (scale, list, gap) => {
+    const [lo, hi] = scale.domain();
+    const out = [];
+    for (const v of list) {
+      if (v < lo || v > hi) continue;
+      if (!out.length || Math.abs(scale(v) - scale(out[out.length - 1])) >= gap) out.push(v);
+    }
+    return out;
+  };
+  const shareAxis = (scale) => d3.axisLeft(scale).tickValues(shareTicks(scale, SHARE_TICKS, 22)).tickFormat(d3.format('.1~%')).tickSize(0);
   const yAxis = svg.append('g');
-  yAxis.call(d3.axisLeft(y0).ticks(5, '.0%').tickSize(0)).attr('font-size', null).attr('font-family', null);
+  yAxis.call(shareAxis(y0)).attr('font-size', null).attr('font-family', null);
   const left = Math.ceil(d3.max(yAxis.selectAll('text').nodes(), (n) => n.getComputedTextLength()) || 30) + 10;
   yAxis.attr('transform', `translate(${left - 6},0)`);
   const x0 = d3.scaleLog(d3.extent(pts, (d) => d.amount), [left + I / 2, W - I / 2 - 4]).nice();
@@ -1687,7 +1750,7 @@ dash.draw('scatter', (el) => {
     .append('circle').attr('cx', 0.5).attr('cy', 0.5).attr('r', 0.5);
   const grid = svg.insert('g', ':first-child').attr('clip-path', 'url(#zl-clip-plot)');
   const xAxis = svg.append('g').attr('transform', `translate(0,${bottom})`);
-  svg.append('text').attr('x', left).attr('y', 10).text(scatterLabel(kind));
+  svg.append('text').attr('x', left).attr('y', 10).text(skewed ? `${scatterLabel(kind)} (square-root scale)` : scatterLabel(kind));
   svg.append('text').attr('x', W).attr('y', H - 2).attr('text-anchor', 'end')
     .text(`${WORD[view.measure][0].toUpperCase()}${WORD[view.measure].slice(1)} (log scale)`);
   // On a face: a line down to each axis, with the value there.
@@ -1718,7 +1781,12 @@ dash.draw('scatter', (el) => {
     guide.style('display', 'none');
     chips.style('display', 'none');
   };
-  const g = plot.selectAll('g').data(pts.sort((a, b) => b.amount - a.amount)).join('g').attr('class', 'zl-pt');
+  // the biggest first, so the small ones lie over them; the faces at next to nothing (under
+  // FAINT) before all of them, smaller and faded (ZERO_FACE), so they never cover the others
+  const faint = (d) => d.share < FAINT;
+  const order = (a, b) => faint(b) - faint(a) || b.amount - a.amount;
+  const g = plot.selectAll('g').data(pts.sort(order)).join('g')
+    .attr('class', (d) => (faint(d) ? 'zl-pt zl-pt-zero' : 'zl-pt'));
   // The face under the pointer is copied to the front. The face itself stays in
   // its place: moving it would make the browser lose its pointerleave.
   const front = plot.append('g').attr('class', 'zl-pt-front');
@@ -1726,16 +1794,17 @@ dash.draw('scatter', (el) => {
   const ring = g.append('circle');
   // Face size: the slider beside the chart's buttons, the same for every face.
   let face = view.face || I;
+  const sizeOf = (d) => (faint(d) ? face * ZERO_FACE : face);
   const size = () => {
-    pic.attr('x', -face / 2).attr('y', -face / 2).attr('width', face).attr('height', face);
-    ring.attr('r', face / 2);
+    pic.attr('x', (d) => -sizeOf(d) / 2).attr('y', (d) => -sizeOf(d) / 2).attr('width', sizeOf).attr('height', sizeOf);
+    ring.attr('r', (d) => sizeOf(d) / 2);
   };
   size();
 
   let x = x0;
   let y = y0;
   const place = () => {
-    yAxis.call(d3.axisLeft(y).ticks(5, '.0%').tickSize(0)).attr('font-size', null).attr('font-family', null);
+    yAxis.call(shareAxis(y)).attr('font-size', null).attr('font-family', null);
     yAxis.select('.domain').remove();
     // the higher the share, the rosier (or more violet) its number and line
     const rosy = (d, base) => `color-mix(in srgb, ${tint} ${Math.round(100 * Math.min(1, d / (y0.domain()[1] || 1)))}%, ${base})`;
@@ -1749,8 +1818,8 @@ dash.draw('scatter', (el) => {
       .attr('x1', (d) => x(d)).attr('x2', (d) => x(d)).attr('y1', 0).attr('y2', bottom);
     const xCount = W < 520 ? 3 : 6;
     const named = x.tickFormat(xCount, '~s');
-    across('zl-grid-minor zl-across', y.ticks(25));
-    across('zl-grid-major zl-across-major', y.ticks(5));
+    across('zl-grid-minor zl-across', shareTicks(y, SHARE_STEPS, 6));
+    across('zl-grid-major zl-across-major', shareTicks(y, SHARE_TICKS, 22));
     down('zl-grid-minor zl-down', x.ticks(30));
     down('zl-grid-major zl-down-major', x.ticks(xCount).filter((d) => named(d)));
     g.attr('transform', (d) => `translate(${x(d.amount)},${y(d.share)})`);
@@ -1762,8 +1831,16 @@ dash.draw('scatter', (el) => {
     .translateExtent([[left, 0], [W, bottom]])
     .filter(zoomWheel(el))
       .wheelDelta(wheelStep)
-    .on('zoom', (event) => { x = event.transform.rescaleX(x0); y = event.transform.rescaleY(y0); hide(); place(); });
+    .on('zoom', (event) => {
+      x = event.transform.rescaleX(x0);
+      y = event.transform.rescaleY(y0);
+      scatterView = { key: viewKey, t: event.transform };
+      hide();
+      place();
+    });
   svg.call(zoom).on('dblclick.zoom', null);
+  // zoomed before on the same game, height and width (a switch of the theme): put back
+  if (scatterView && scatterView.key === viewKey) svg.call(zoom.transform, scatterView.t);
   middlePan(svg.node(), zoom, () => W / el.clientWidth);
   wheelZoom(svg.node(), el);
   touchZoom(svg.node(), zoom, () => W / el.clientWidth);
@@ -1963,8 +2040,10 @@ const faceAt = (img, want) => {
   return at;
 };
 // The cut that makes blurred particles one body: opaque where they reach half opacity, clear
-// below, with a thin soft edge, keeping their colour. (PixiJS's colour matrix does not hold the
-// opacity at 1, and its colour turned white.)
+// below, the edge smoothed over a narrow band of opacity, so the surface is sharp.
+// Just inside the edge the colour turns to a light rim, the surface catching the light; where
+// the body meets the ball the rim is cut off with it (the box's mask). (PixiJS's colour matrix
+// does not hold the opacity at 1, and its colour turned white.)
 let liquidCut = null;
 const LIQUID_CUT = () => liquidCut || (liquidCut = PIXI.GlProgram.from({
   vertex: PIXI.defaultFilterVert,
@@ -1974,12 +2053,18 @@ uniform sampler2D uTexture;
 void main()
 {
   vec4 c = texture(uTexture, vTextureCoord);
-  float a = smoothstep(0.42, 0.58, c.a);
+  float w = 0.04;
+  float a = smoothstep(0.5 - w, 0.5 + w, c.a);
   vec3 rgb = c.a > 0.0 ? c.rgb / c.a : vec3(0.0);
+  float rim = 1.0 - smoothstep(0.5 + w, 0.62, c.a);
+  rgb = mix(rgb, vec3(1.0, 0.61, 0.75), rim * 0.8);
   finalColor = vec4(rgb * a, a);
 }
 `,
 }));
+// the blur of the liquid's particles, of the planet's radius: under their size, so a drop
+// that flies off stays a drop
+const LIQUID_BLUR = 0.04;
 const pixiNetwork = (renderer, nodes, absNodes, textHex) => {
   const stage = new PIXI.Container();
   const world = new PIXI.Container();
@@ -1991,17 +2076,22 @@ const pixiNetwork = (renderer, nodes, absNodes, textHex) => {
   const rings = new PIXI.Graphics();
   // the categories' planets, drawn apart so their liquid can move on its own: the discs, the
   // liquid of each (its particles blurred, then cut at half their opacity, so they run together
-  // as one body), and the hearts and rings over it
+  // as one body, and clipped to the ball), and the hearts and rings over it
   const planets = new PIXI.Graphics();
   world.addChild(back, litLines, plates, faces, rings, planets);
   const goos = absNodes.map(() => {
     const box = new PIXI.Container();
     const drops = new PIXI.Graphics();
-    const blur = new PIXI.BlurFilter({ strength: 4, quality: 3 });
+    const blur = new PIXI.BlurFilter({ strength: 2, quality: 3 });
     box.filters = [blur, new PIXI.Filter({ glProgram: LIQUID_CUT(), resources: {} })];
     box.addChild(drops);
-    world.addChild(box);
-    return { box, drops, blur };
+    // the mask on a container of its own: on the filtered one it hides the whole body
+    const clip = new PIXI.Container();
+    const ball = new PIXI.Graphics();
+    clip.addChild(box);
+    clip.mask = ball;
+    world.addChild(clip, ball);
+    return { box, drops, blur, ball };
   });
   const planetsFront = new PIXI.Graphics();
   world.addChild(planetsFront);
@@ -2031,7 +2121,7 @@ const pixiNetwork = (renderer, nodes, absNodes, textHex) => {
       world.position.set(view.x, view.y);
       world.scale.set(view.k);
       // the liquid's blur is in screen pixels: it grows with the zoom, so the body keeps its shape
-      goos.forEach((goo) => { goo.blur.strength = 4 * view.k; });
+      goos.forEach((goo, i) => { goo.blur.strength = absNodes[i].r * LIQUID_BLUR * view.k; });
       sprites.forEach((sprite, i) => {
         if (!pictures[i]) return;
         const at = faceAt(pictures[i], 2 * nodes[i].r * view.k * renderer.resolution);
@@ -2077,13 +2167,19 @@ dash.draw('network', {
     const absOn = absActive();
     // the categories on only: with none, both modes draw the same network
     const absKey = absOn.join();
-    const sig = `${view.game}|${keyOf(chosen())}|${view.measure}|${view.period}|${el.clientWidth}|${full ? el.clientHeight : ''}|${document.documentElement.dataset.theme}|${absKey}`;
+    // the layout's key leaves the theme out: a switch of the theme draws the same layout in
+    // other colours, so it must not keep a layout of its own (sig: when to draw again)
+    const layoutKey = `${view.game}|${keyOf(chosen())}|${view.measure}|${view.period}|${el.clientWidth}|${full ? el.clientHeight : ''}|${absKey}`;
+    const sig = `${layoutKey}|${document.documentElement.dataset.theme}`;
     if (made.sim && made.sig === sig && inputs.every((d, i) => d === made.inputs[i])) return;
     // the same network at a new size (full screen, a turned phone): the faces
     // stay where they were, about the new middle, and are not laid out again
     const shape = `${view.game}|${keyOf(chosen())}|${view.measure}|${view.period}`;
     const before = made.sim && made.shape === shape && inputs.every((d, i) => d === made.inputs[i])
       ? new Map(made.nodes.map((n) => [n.id, [n.x - made.middle[0], n.y - made.middle[1]]])) : null;
+    // the view as zoomed or moved by hand, kept when the same network is drawn again at the
+    // same size (a switch of the theme)
+    const lastView = before && made.viewNow ? made.viewNow() : null;
     if (made.sim) made.sim.stop();
     made.sim = null;
     // The canvas and its WebGL renderer live as long as the network: making a
@@ -2305,19 +2401,28 @@ dash.draw('network', {
       });
       drawPlanets(performance.now());
     };
-    // The R-18 liquid in a planet is a few particles that push apart where crowded and pull
-    // together where sparse (the double density relaxation of Clavet, Beaudoin and Poulin,
-    // "Particle-based Viscoelastic Fluid Simulation", 2005), under gravity, inside the ball.
-    // Drawn as one body: the particles blurred and cut at half their opacity (metaballs).
-    // A planet that is moved pushes the liquid the other way, so it runs up a wall and back;
-    // at rest a slow rocking keeps it moving a little. FLUID: per step, in px of the planet's
-    // radius 46 and frames of the flow: gravity, damping, the most speed, stiffness, near
-    // stiffness, the reach of a particle (of the radius), their spacing (of the reach), how
-    // many in a full planet, the rocking, the most push from the planet's moving.
-    // The push of the planet's moving is held under tilt of the gravity: the liquid leans at most
-    // atan(tilt), about 39 degrees, so a small move does not throw it against a wall.
-    const FLUID = { gravity: 0.12, damp: 0.94, fastest: 2.5, stiff: 0.6, near: 1.0, reach: 0.25, spacing: 0.6,
-      full: 140, rock: 0.006, push: 0.4, tilt: 0.8 };
+    // The R-18 liquid in a planet is particles that push apart where crowded and pull together
+    // where sparse (the double density relaxation of Clavet, Beaudoin and Poulin, "Particle-based
+    // Viscoelastic Fluid Simulation", 2005), with their viscosity, under gravity, inside the ball.
+    // At rest it settles flat, rising a little up the wall where it meets it (adhesion); a
+    // planet that is moved pushes it the other way, so it runs up a wall, makes waves and can
+    // throw drops. Drawn as one body: the particles blurred and cut at half their opacity
+    // (metaballs, LIQUID_CUT). FLUID: per step, in px of the planet's radius 46 and frames of the
+    // flow: gravity, damping, the most speed, stiffness, near stiffness, viscosity, the most a
+    // particle is moved by its neighbours in a step (of the reach), the reach of a particle (of
+    // the radius), their spacing (of the reach), how far from the wall they stay (of the reach),
+    // the pull of the wall, the planet's speeding up that weighs as much as gravity (px per
+    // frame per frame, at the radius 46), the most that push can be (of gravity), steps per frame.
+    // The push is the planet's speeding up turned the other way, in proportion: a slow move tilts
+    // the liquid a little, a jerk throws it; moving on evenly it has none, and stopping pushes it
+    // the other way, so it runs into the far wall.
+    // Tried apart from the page on planets a third, three fifths and 85% full: these settle with
+    // the surface flat to under 7% of the radius, and after a shove the waves run 3 to 5 seconds;
+    // a stronger gravity per step, or no limit on the move, keeps a deep planet boiling.
+    const FLUID = { gravity: 0.04, damp: 0.995, fastest: 2.5, stiff: 0.6, near: 1.0, visc: 0.08, most: 0.05,
+      reach: 0.14, spacing: 0.6, edge: 0.15, adhere: 0.015, feel: 3, tilt: 2.5, steps: 3 };
+    // a particle is drawn this big, of the reach
+    const DROP = 0.6;
     const fluidOf = (n) => {
       if (n.fluid) return n.fluid;
       const h = n.r * FLUID.reach;
@@ -2340,9 +2445,51 @@ dash.draw('network', {
       n.fluid = fluid;
       return fluid;
     };
+    // The particles by cell of a grid as wide as their reach: a particle meets only those in the
+    // nine cells around its own, each with the direction to it and how close it is (q, 1 when on it).
+    const gridOf = (drops, h) => {
+      const grid = new Map();
+      for (const p of drops) {
+        const key = Math.floor(p.x / h) * 4096 + Math.floor(p.y / h);
+        const cell = grid.get(key);
+        if (cell) cell.push(p);
+        else grid.set(key, [p]);
+      }
+      return grid;
+    };
+    const eachNear = (grid, h, a, visit) => {
+      const cx = Math.floor(a.x / h);
+      const cy = Math.floor(a.y / h);
+      for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j++) {
+          const cell = grid.get((cx + i) * 4096 + cy + j);
+          if (!cell) continue;
+          for (const b of cell) {
+            if (a === b) continue;
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const d = Math.hypot(dx, dy);
+            if (d < h && d > 1e-6) visit(b, dx / d, dy / d, 1 - d / h);
+          }
+        }
+      }
+    };
     const fluidStep = (n, f, ax, ay) => {
       const { drops, h } = f;
       const scale = n.r / 46;
+      // two particles closing in give up part of that speed, so the liquid stops trembling
+      let grid = gridOf(drops, h);
+      for (const a of drops) {
+        eachNear(grid, h, a, (b, ux, uy, q) => {
+          const u = (a.vx - b.vx) * ux + (a.vy - b.vy) * uy;
+          if (u <= 0) return;
+          const give = 0.5 * q * FLUID.visc * u;
+          a.vx -= give * ux;
+          a.vy -= give * uy;
+          b.vx += give * ux;
+          b.vy += give * uy;
+        });
+      }
       for (const p of drops) {
         p.vx = (p.vx + ax) * FLUID.damp;
         p.vy = (p.vy + FLUID.gravity * scale + ay) * FLUID.damp;
@@ -2353,28 +2500,23 @@ dash.draw('network', {
         p.x += p.vx;
         p.y += p.vy;
       }
+      grid = gridOf(drops, h);
       for (const a of drops) {
         let crowd = 0;
         let close = 0;
         const near = [];
-        for (const b of drops) {
-          if (a === b) continue;
-          const dx = b.x - a.x;
-          const dy = b.y - a.y;
-          const d = Math.hypot(dx, dy);
-          if (d >= h || d < 1e-6) continue;
-          const q = 1 - d / h;
+        eachNear(grid, h, a, (b, ux, uy, q) => {
           crowd += q * q;
           close += q * q * q;
-          near.push(b, dx / d, dy / d, q);
-        }
+          near.push(b, ux, uy, q);
+        });
         const press = FLUID.stiff * (crowd - f.rest);
         const pressNear = FLUID.near * close;
         let mx = 0;
         let my = 0;
         for (let k = 0; k < near.length; k += 4) {
           const q = near[k + 3];
-          const move = h * 0.5 * (press * q + pressNear * q * q);
+          const move = Math.max(-h * FLUID.most, Math.min(h * FLUID.most, h * 0.5 * (press * q + pressNear * q * q)));
           near[k].x += near[k + 1] * move;
           near[k].y += near[k + 2] * move;
           mx -= near[k + 1] * move;
@@ -2383,12 +2525,35 @@ dash.draw('network', {
         a.x += mx;
         a.y += my;
       }
-      const wall = n.r - h * 0.45;
+      // a particle within reach of the wall is drawn to it a little, the nearer the more
+      const wall = n.r - h * FLUID.edge;
       for (const p of drops) {
-        const d = Math.hypot(p.x, p.y);
+        let d = Math.hypot(p.x, p.y);
+        if (d > wall - h && d > 1e-6) {
+          const pull = FLUID.adhere * scale * Math.min(1, 1 - (wall - d) / h);
+          p.x += (p.x / d) * pull;
+          p.y += (p.y / d) * pull;
+          d = Math.hypot(p.x, p.y);
+        }
         if (d > wall) { p.x *= wall / d; p.y *= wall / d; }
         p.vx = p.x - p.px;
         p.vy = p.y - p.py;
+      }
+    };
+    // A heart bursting at the surface: the particles within POP.reach (of a particle's reach) of
+    // it are thrown up, and a little out from it, by up to POP.kick px per step at the radius 46,
+    // the nearer the more; the wave runs out from there.
+    const POP = { kick: 2, reach: 3 };
+    const pop = (f, x, y, scale) => {
+      const reach = f.h * POP.reach;
+      for (const p of f.drops) {
+        const dx = p.x - x;
+        const dy = p.y - y;
+        const d = Math.hypot(dx, dy);
+        if (d >= reach) continue;
+        const kick = POP.kick * scale * (1 - d / reach);
+        if (d > 1e-6) p.vx += (dx / d) * kick * 0.5;
+        p.vy -= kick;
       }
     };
     // The planets, on their own layers, so their liquid can move without the rest being drawn
@@ -2404,6 +2569,7 @@ dash.draw('network', {
         back.circle(n.x, n.y, n.r).fill({ color: ABS_HEX, alpha: on ? 0.45 : 0.25 });
         const goo = px.goos[i];
         goo.drops.clear();
+        goo.ball.clear().circle(n.x, n.y, n.r).fill({ color: 0xffffff });
         if (n.fill >= 1) {
           // all R-18 (R-18 only): a full ball, no liquid to move, the hearts rising all through it
           back.circle(n.x, n.y, n.r).fill({ color: R18_HEX, alpha: 0.92 });
@@ -2417,33 +2583,47 @@ dash.draw('network', {
         } else if (n.fill > 0) {
           const f = fluidOf(n);
           if (step) {
-            // the planet's own speeding up, which the liquid lags behind, and the rocking; its
+            // the planet's own speeding up, which the liquid lags behind; its
             // speed is smoothed, so the pointer's jerks do not kick the liquid
             const vx = f.vx * 0.7 + (n.x - f.x) * 0.3;
             const vy = f.vy * 0.7 + (n.y - f.y) * 0.3;
-            const most = FLUID.gravity * FLUID.tilt * (n.r / 46);
-            const ax = Math.max(-most, Math.min(most, -(vx - f.vx) * FLUID.push)) + FLUID.rock * (Math.sin(now * 0.0011) + 0.6 * Math.sin(now * 0.0027));
-            const ay = Math.max(-most, Math.min(most, -(vy - f.vy) * FLUID.push));
+            const lean = (change) => FLUID.gravity * (n.r / 46) * Math.max(-FLUID.tilt, Math.min(FLUID.tilt, -change / (FLUID.feel * (n.r / 46))));
+            const ax = lean(vx - f.vx);
+            const ay = lean(vy - f.vy);
             f.x = n.x;
             f.y = n.y;
             f.vx = vx;
             f.vy = vy;
-            fluidStep(n, f, ax / 2, ay / 2);
-            fluidStep(n, f, ax / 2, ay / 2);
+            for (let k = 0; k < FLUID.steps; k++) fluidStep(n, f, ax, ay);
           }
-          const size = f.h * 0.55;
+          const size = f.h * DROP;
           for (const p of f.drops) goo.drops.circle(n.x + p.x, n.y + p.y, size);
           goo.drops.fill({ color: R18_HEX });
-          // the hearts rise like the bubbles in sparkling wine, only where the liquid is
+          // the hearts rise like the bubbles in sparkling wine, only where the liquid is; one that
+          // comes out of it bursts like a bubble and stirs the liquid there (pop), so the liquid
+          // moves a little on its own. A burst heart is not drawn again until it starts from the
+          // bottom (out of the ball's middle at the top first), so it does not blink as the
+          // stirred liquid covers it again; it goes on stirring the surface it comes out of.
           for (const h of n.hearts) {
             const y = ((((h.y + 1 - now * h.v) % 2) + 2) % 2) - 1;
             const x = h.x + 0.06 * Math.sin(now * 0.0015 + h.p);
-            if (x * x + y * y > 0.75) continue;
+            if (x * x + y * y > 0.75) { h.wet = false; h.burst = false; continue; }
             const lx = x * n.r;
             const ly = y * n.r;
-            const reach = f.h * 0.5;
-            if (!f.drops.some((p) => Math.abs(p.x - lx) < reach && Math.abs(p.y - ly) < reach)) continue;
             const s = h.s * n.r;
+            // it bursts as its top touches the surface: no particle, as drawn, covers its top
+            const top = ly - HEART_TOP * s;
+            const size = f.h * DROP;
+            if (!f.drops.some((p) => (p.x - lx) ** 2 + (p.y - top) ** 2 < size * size)) {
+              if (h.wet && step) {
+                pop(f, lx, top, n.r / 46);
+                h.burst = true;
+              }
+              h.wet = false;
+              continue;
+            }
+            h.wet = true;
+            if (h.burst) continue;
             front.poly(HEART.map((v, k) => (k % 2 ? n.y + ly + v * s : n.x + lx + v * s))).fill({ color: 0x5c0b29, alpha: 0.75 });
           }
         }
@@ -2661,13 +2841,14 @@ dash.draw('network', {
     // Another set of categories: a new layout is made.
     const moved = Boolean(before) && made.absKey !== absKey;
     let refit = moved;
-    const saved = moved ? null : layouts.get(sig);
+    const saved = moved ? null : layouts.get(layoutKey);
     const known = !moved && ((saved && nodes.every((n) => saved.has(n.id))) || (before && nodes.every((n) => before.has(n.id))));
-    // a layout put back is at rest: the frames must not move it again
+    // a layout put back is at rest: the frames must not move it again. The network just shown
+    // (before) comes first: faces or planets moved since the layout was kept stay where they are.
     if (known) {
       everyone.forEach((n) => {
-        if (saved && saved.has(n.id)) [n.x, n.y] = saved.get(n.id);
-        else if (before && before.has(n.id)) { const [dx, dy] = before.get(n.id); n.x = W / 2 + dx; n.y = H / 2 + dy; }
+        if (before && before.has(n.id)) { const [dx, dy] = before.get(n.id); n.x = W / 2 + dx; n.y = H / 2 + dy; }
+        else if (saved && saved.has(n.id)) [n.x, n.y] = saved.get(n.id);
       });
       sim.alpha(0);
     }
@@ -2731,7 +2912,7 @@ dash.draw('network', {
     // An abstraction is a planet: it stays where it is and pulls, its characters do not move it.
     absNodes.forEach((n) => { n.fx = n.x; n.fy = n.y; });
     let left = known ? 0 : 300;
-    const keep = () => layouts.set(sig, new Map(everyone.map((n) => [n.id, [n.x, n.y]])));
+    const keep = () => layouts.set(layoutKey, new Map(everyone.map((n) => [n.id, [n.x, n.y]])));
     const settle = () => {
       if (made.sim !== sim) return; // a newer drawing took its place
       const until = performance.now() + 8;
@@ -2805,6 +2986,11 @@ dash.draw('network', {
     wheelZoom(canvas, el, listen.signal);
     d3.select(canvas).call(zoom).on('dblclick.zoom', null);
     const resetView = () => { autoFit = true; fit(); };
+    made.viewNow = () => ({ t: view2d, byHand: !autoFit, W, H });
+    if (lastView && lastView.byHand && lastView.W === W && lastView.H === H) {
+      autoFit = false;
+      d3.select(canvas).call(zoom.transform, lastView.t);
+    }
     // The page's search: the faces it finds stand out, the rest fade; Enter
     // picks the most drawn of them, as a click on its face would.
     onSearch.set('network', (kind) => {
@@ -3236,6 +3422,21 @@ showLineRange();
 // The theme: the one picked with the button, else the system's. The network works
 // out its colours when drawn, so a change draws everything again.
 const themeButton = document.getElementById('theme');
+// The gear opens the panel of the theme and animations buttons; a click outside it or
+// Escape closes it.
+const gearButton = document.getElementById('settings');
+const gearPanel = document.getElementById('settings-panel');
+const showGear = (open) => {
+  gearPanel.hidden = !open;
+  gearButton.setAttribute('aria-expanded', String(open));
+};
+gearButton.addEventListener('click', () => showGear(gearPanel.hidden));
+document.addEventListener('pointerdown', (event) => {
+  if (!gearPanel.hidden && !event.target.closest('.zl-settings')) showGear(false);
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !gearPanel.hidden) { showGear(false); gearButton.focus(); }
+});
 const pickedTheme = () => { try { return localStorage.getItem('tagstats-theme'); } catch (e) { return null; } };
 const systemTheme = () => (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 const showTheme = (theme) => {
@@ -3243,6 +3444,7 @@ const showTheme = (theme) => {
   const next = theme === 'dark' ? 'Switch to the light theme' : 'Switch to the dark theme';
   themeButton.setAttribute('aria-label', next);
   themeButton.title = next;
+  document.getElementById('theme-state').textContent = theme === 'dark' ? 'Dark' : 'Light';
 };
 showTheme(pickedTheme() || systemTheme());
 themeButton.addEventListener('click', () => {
@@ -3260,6 +3462,7 @@ const showMotion = (on) => {
   const next = on ? 'Stop the animations' : 'Play the animations';
   motionButton.setAttribute('aria-label', next);
   motionButton.title = next;
+  document.getElementById('motion-state').textContent = on ? 'On' : 'Off';
 };
 showMotion((() => { try { return localStorage.getItem('tagstats-motion') !== 'off'; } catch (e) { return true; } })());
 motionButton.addEventListener('click', () => {
@@ -3273,23 +3476,10 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
   showTheme(systemTheme());
   redrawAll();
 });
-const moreButton = document.getElementById('more');
-const showMoreCount = () => {
-  const on = view.period !== 'all' ? 1 : 0;
-  moreButton.textContent = on ? `More filters · ${on}` : 'More filters';
-  moreButton.classList.toggle('zl-on', on > 0);
-};
-moreButton.addEventListener('click', () => {
-  const panel = document.getElementById('more-panel');
-  panel.hidden = !panel.hidden;
-  moreButton.setAttribute('aria-expanded', String(!panel.hidden));
-  redrawFull();
-});
 document.querySelectorAll('[data-period]').forEach((btn) => {
   btn.addEventListener('click', () => {
     setPeriod(btn.dataset.period);
     if (isSoloSort() && !soloReady()) { view.who = 'all'; showSort(); }
-    showMoreCount();
     redrawAll();
   });
 });
@@ -3453,6 +3643,6 @@ searchBox.addEventListener('keydown', (event) => {
 })();
 </script>
 </div>
-<footer class="site-foot">Counts of tag searches on Danbooru, Rule34 and pixiv, collected 2026-11-07. Only numbers are shown, no pictures from those sites. Character icons from the games' fandom wikis, © their publishers.</footer>
+<footer class="site-foot">Counts of tag searches on Danbooru, Rule34 and pixiv, collected 2026-11-08. Only numbers are shown, no pictures from those sites. Character icons from the games' fandom wikis, © their publishers.</footer>
 </body>
 </html>

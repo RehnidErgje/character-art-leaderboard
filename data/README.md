@@ -2,7 +2,7 @@
 
 The numbers behind https://rehnidergje.github.io/character-art-leaderboard/,
 as plain CSV for reading and analysis (the site itself reads `docs/data/`,
-which also has the character icons in it). Exported 2026-11-07; when each
+which also has the character icons in it). Exported 2026-11-08; when each
 game's counts were collected is in its `collected_at.txt`.
 
 One folder per game (`zzz`, `genshin`, `hsr`, `wuwa`), two files each.
