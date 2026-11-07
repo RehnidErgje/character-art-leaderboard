@@ -206,6 +206,8 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-zone:hover { overflow: visible; }
 .zl-zone:hover > .zl-hov { display: inline; }
 .zl-zone:hover > .zl-def { display: none; }
+.zl-sum { pointer-events: none; }
+.zl-zones:hover > .zl-sum { display: none; }
 .zl-stack { background: none; }
 .zl-seg button[data-block="r18"][aria-pressed="true"] { background: #c7366a; color: #fff; }
 .zl-seg button[data-who="alone"][aria-pressed="true"], .zl-seg button[data-who="with"][aria-pressed="true"] { background: var(--zl-solo); color: #fff; }
@@ -1169,7 +1171,7 @@ dash.draw('podium', (el) => {
     const note = inShares() ? `of ${words}; ${fmt(count)}` : words;
     card.append(node('div', 'zl-rank', `#${i + 1}`), icon(p.icon, 84), node('div', 'zl-name', p.name),
       node('div', 'zl-big', big), node('div', 'zl-note', note),
-      lit ? whoLine(p, whoBar(p), '') : stackLine(r, p, v(r), v(r), ''));
+      lit ? whoLine(p, whoBar(p), '') : stackLine(r, v(r), v(r), ''));
     el.append(card);
   });
   fitLabels(el);
@@ -1194,132 +1196,92 @@ const lightBlock = (host, share, liquid = true) => {
   host.append(wave, piece);
   host.zlWave = { wave, edge, solo: share, phase: Math.random() * 6.28, width: 0 };
 };
-// One bar: the R-18 block first, then the block of the rest.
-const stackLine = (r, p, length, max, label) => {
-  const line = node('div', inShares() ? 'zl-barline zl-barline-wide' : 'zl-barline');
-  const track = node('div', 'zl-track');
-  const bar = node('div', 'zl-bar zl-stack');
-  bar.style.width = ((inShares() ? 1 : length / max) * 100).toFixed(2) + '%';
-  const all18 = r.r18 ?? 0;
-  const r18 = view.measure === 'safe' ? 0 : all18;
-  const safe = view.measure === 'r18' ? 0 : r.total - all18;
-  if (safe) bar.classList.add('zl-show-all');
-  const counted = isSoloSort() && soloReady() && stored(p, 'stored_total') > 0;
-  const safeBase = counted ? stored(p, 'stored_total') - stored(p, 'stored_r18') : 0;
-  const lit = (alone, base, block) => (!counted || !base || (scope() !== 'all' && scope() !== block) ? null
-    : view.who === 'alone' ? alone / base : 1 - alone / base);
-  // The zones: a lit piece has its share of the block written in it, an unlit R-18 block
-  // its share of the posts; under the pointer each shows its share of the whole bar.
+// The zones over a bar, one per part, side by side: [count, sorted by, grey]. The parts the
+// list is sorted by come first, and the share of the whole bar they make is written over them;
+// under the pointer only the share of the part under it shows. The same in every view.
+const barZones = (parts, whole) => {
   const zones = node('div', 'zl-zones');
+  if (!whole) return zones;
+  const sum = d3.sum(parts, ([n, sorted]) => (sorted ? n : 0));
+  if (sum) {
+    const over = node('div', 'zl-zone zl-sum');
+    over.style.left = '0';
+    over.style.width = ((sum / whole) * 100).toFixed(2) + '%';
+    over.append(node('span', 'zl-def', pct0(sum / whole)));
+    zones.append(over);
+  }
   let at = 0;
-  const zone = (n, written, rest) => {
-    if (!n || !length) return;
-    const z = node('div', rest ? 'zl-zone zl-zone-rest' : 'zl-zone');
-    z.style.left = ((at / length) * 100).toFixed(2) + '%';
-    z.style.width = ((n / length) * 100).toFixed(2) + '%';
-    if (written != null) z.append(node('span', 'zl-def', pct0(written)));
-    z.append(node('span', 'zl-hov', pct0(n / length)));
+  for (const [n, , grey] of parts) {
+    if (!n) continue;
+    const z = node('div', grey ? 'zl-zone zl-zone-rest' : 'zl-zone');
+    z.style.left = ((at / whole) * 100).toFixed(2) + '%';
+    z.style.width = ((n / whole) * 100).toFixed(2) + '%';
+    z.append(node('span', 'zl-hov', pct0(n / whole)));
     zones.append(z);
     at += n;
-  };
-  const blockZones = (n, share, whole, rest) => {
-    if (share) {
-      zone(n * share, share, false);
-      zone(n * (1 - share), null, rest);
-    } else {
-      zone(n, whole, rest);
-    }
-  };
-  const r18Share = r18 ? lit(stored(p, 'r18_solo'), stored(p, 'stored_r18'), 'r18') : null;
-  const safeShare = safe ? lit(stored(p, 'safe_solo'), safeBase, 'safe') : null;
-  // sorted by not R-18, that block comes first, its share written, and R-18 after it
-  if (scope() === 'safe') {
-    if (safe && length) blockZones(safe, null, safe / r.total, true);
-    if (r18 && length) {
-      const part = node('div', 'zl-bar-r18 zl-bar-after');
-      part.style.left = ((safe / length) * 100).toFixed(2) + '%';
-      part.style.width = ((r18 / length) * 100).toFixed(2) + '%';
-      bar.append(part);
-      blockZones(r18, null, all18 / r.total, false);
-    }
-    bar.append(zones);
-    track.append(bar);
-    line.append(track, node('span', 'zl-count', label));
-    return line;
   }
-  if (r18 && length) {
-    const part = node('div', 'zl-bar-r18');
-    // beside the other block, a straight end: the two are parts of their own, not one inside
-    // the other (a part inside another ends rounded); a wave is only for a part lit inside R-18
-    if (safe) part.classList.add('zl-bar-before');
-    part.style.width = ((r18 / length) * 100).toFixed(2) + '%';
-    if (r18Share) lightBlock(part, r18Share);
-    bar.append(part);
-    blockZones(r18, r18Share, all18 / r.total, false);
-  }
-  if (safe && length) {
-    if (safeShare) {
-      const part = node('div', 'zl-bar-r18 zl-off zl-safe');
-      part.style.left = r18 ? `${((r18 / length) * 100).toFixed(2)}%` : '0';
-      part.style.width = r18 ? `${((safe / length) * 100).toFixed(2)}%` : '100%';
-      lightBlock(part, safeShare, false);
-      bar.append(part);
-    }
-    blockZones(safe, safeShare, null, true);
-  }
-  bar.append(zones);
+  return zones;
+};
+const zonedLine = (bar, width, parts, whole, label) => {
+  const line = node('div', inShares() ? 'zl-barline zl-barline-wide' : 'zl-barline');
+  const track = node('div', 'zl-track');
+  bar.style.width = (width * 100).toFixed(2) + '%';
+  bar.append(barZones(parts, whole));
   track.append(bar);
   line.append(track, node('span', 'zl-count', label));
   return line;
 };
+// One bar: the R-18 block and the block of the rest, the one the list is sorted by first.
+const stackLine = (r, length, max, label) => {
+  const bar = node('div', 'zl-bar zl-stack');
+  const all18 = r.r18 ?? 0;
+  const r18 = view.measure === 'safe' ? 0 : all18;
+  const safe = view.measure === 'r18' ? 0 : r.total - all18;
+  const safeFirst = scope() === 'safe';
+  if (safe) bar.classList.add('zl-show-all');
+  if (r18 && length) {
+    // beside the other block, a straight end: the two are parts of their own, not one inside
+    // the other (a part inside another ends rounded)
+    const part = node('div', safeFirst ? 'zl-bar-r18 zl-bar-after' : 'zl-bar-r18');
+    if (safe && !safeFirst) part.classList.add('zl-bar-before');
+    if (safeFirst) part.style.left = ((safe / length) * 100).toFixed(2) + '%';
+    part.style.width = ((r18 / length) * 100).toFixed(2) + '%';
+    bar.append(part);
+  }
+  const parts = [[r18, scope() === 'r18', false], [safe, safeFirst, true]];
+  return zonedLine(bar, inShares() ? 1 : length / max, safeFirst ? parts.reverse() : parts, r18 + safe, label);
+};
 // With alone or with someone picked, the bar is the character's posts of the block. With all
 // posts, those alone (or with someone) come first, in the solo colour, their R-18 part inside
-// them (rose, its share written), and the rest of the posts after them in grey, so their share
-// of all shows. With R-18 or not R-18, those alone (or with someone) are lit inside the block,
-// their share written. The list is sorted by the alone (or with someone) count (whoOf). The
-// length: against the list's biggest bar (whoBar), or the full width as a share.
+// them (rose), and the rest of the posts after them in grey, so their share of all shows. With
+// R-18 or not R-18, those alone (or with someone) are lit inside the block. The list is sorted
+// by the alone (or with someone) count (whoOf). The length: against the list's biggest bar
+// (whoBar), or the full width as a share.
 const whoBar = baseOf;
 const whoLine = (p, max, label) => {
-  const line = node('div', inShares() ? 'zl-barline zl-barline-wide' : 'zl-barline');
-  const track = node('div', 'zl-track');
   const n = whoOf(p);
   const base = baseOf(p);
-  const length = inShares() ? 1 : (max ? whoBar(p) / max : 0);
+  const width = inShares() ? 1 : (max ? whoBar(p) / max : 0);
   if (scope() === 'all') {
     const bar = node('div', 'zl-bar zl-stack zl-show-all');
     const who = node('div', 'zl-who-part');
     who.style.width = ((base ? n / base : 0) * 100).toFixed(2) + '%';
-    const r18 = view.who === 'alone' ? stored(p, 'r18_solo') : stored(p, 'stored_r18') - stored(p, 'r18_solo');
-    if (r18 && n) {
+    const r18 = n ? (view.who === 'alone' ? stored(p, 'r18_solo') : stored(p, 'stored_r18') - stored(p, 'r18_solo')) : 0;
+    if (r18) {
       const part = node('div', 'zl-bar-r18');
       part.style.width = ((r18 / n) * 100).toFixed(2) + '%';
-      part.append(node('span', null, pct0(r18 / n)));
       who.append(part);
     }
     if (n) bar.append(who);
-    bar.style.width = (length * 100).toFixed(2) + '%';
-    track.append(bar);
-  } else {
-    const bar = node('div', 'zl-bar zl-stack');
-    if (scope() === 'safe') bar.classList.add('zl-show-all');
-    const part = node('div', scope() === 'r18' ? 'zl-bar-r18' : 'zl-bar-r18 zl-off zl-safe');
-    part.style.width = '100%';
-    if (base && n) lightBlock(part, n / base, scope() === 'r18');
-    bar.append(part);
-    if (base && n) {
-      const zones = node('div', 'zl-zones');
-      const zone = node('div', 'zl-zone');
-      zone.style.left = '0';
-      zone.style.width = ((n / base) * 100).toFixed(2) + '%';
-      zone.append(node('span', 'zl-def', pct0(n / base)));
-      zones.append(zone);
-      bar.append(zones);
-    }
-    bar.style.width = (length * 100).toFixed(2) + '%';
-    track.append(bar);
+    return zonedLine(bar, width, [[r18, true, false], [n - r18, true, false], [base - n, false, true]], base, label);
   }
-  line.append(track, node('span', 'zl-count', label));
-  return line;
+  const bar = node('div', 'zl-bar zl-stack');
+  if (scope() === 'safe') bar.classList.add('zl-show-all');
+  const part = node('div', scope() === 'r18' ? 'zl-bar-r18' : 'zl-bar-r18 zl-off zl-safe');
+  part.style.width = '100%';
+  if (base && n) lightBlock(part, n / base, scope() === 'r18');
+  bar.append(part);
+  return zonedLine(bar, width, [[n, true, false], [base - n, false, scope() === 'safe']], base, label);
 };
 // Solo is counted for all time on the sites with posts in the store: asking for it keeps
 // those of the chosen sites, or switches the page to Rule34 when there are none.
@@ -1381,7 +1343,7 @@ dash.draw('bars', (el) => {
     const name = node('span', 'zl-name', p.name);
     if (view.period === 'window' && (p.w_incomplete || p.w_unreleased)) name.append(node('span', 'zl-so-far', p.w_unreleased ? 'all time' : 'so far'));
     li.append(node('span', 'zl-n', r.place), icon(p.icon, 32), name,
-      lit ? whoLine(p, whoMax, labelOf(r, p)) : stackLine(r, p, v(r), max, labelOf(r, p)));
+      lit ? whoLine(p, whoMax, labelOf(r, p)) : stackLine(r, v(r), max, labelOf(r, p)));
     return li;
   }, first);
   const mark = el.querySelector('.zl-hit');
