@@ -68,12 +68,15 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl.zl-busy::after { content: ''; position: fixed; top: 14px; right: 18px; z-index: 10; width: 20px; height: 20px; border: 2.5px solid var(--color-border-line); border-top-color: var(--color-fg); border-radius: 50%; animation: zl-spin .7s linear infinite; }
 @keyframes zl-spin { to { transform: rotate(1turn); } }
 @media (prefers-reduced-motion: reduce) { .zl.zl-busy::after { animation-duration: 2s; } }
-.zl-head { display: grid; gap: var(--cds-gap-xs); }
-.zl-head h1 { margin: 0; font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); text-wrap: balance; }
+/* the game's title is the game picker's job: the heading stays for screen readers only */
+.zl-head { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.zl-head h1 { margin: 0; }
 .zl p { margin: 0; }
 .zl-muted, .zl-note { color: var(--color-fg-muted); }
 .zl-note { font-size: var(--cds-font-size-caption); max-width: 75ch; }
-.zl-warn { color: var(--color-warn); font-weight: var(--cds-font-weight-medium); }
+.zl-warn { color: var(--color-warn); font-weight: var(--cds-font-weight-medium); font-size: var(--cds-font-size-caption); }
+/* the note sits on the Leaderboard heading's row, at its right */
+.zl-sechead .zl-warn { margin-left: auto; text-align: right; }
 .zl-warn:empty { display: none; }
 .zl-group { display: flex; align-items: center; gap: var(--cds-gap-sm); margin: 0; padding: 0; border: 0; }
 .zl-group > legend, .zl-group > .zl-group-name { float: left; padding: 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
@@ -500,11 +503,11 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
   <div class="zl-bar-tools"></div>
   </div>
 </div>
-<p class="zl-warn" data-draw="missing" data-source="board_zzz board_genshin board_hsr board_wuwa">—</p>
 
 <section class="zl-sec" id="leaderboard">
   <div class="zl-sechead">
     <h2>Leaderboard</h2>
+    <p class="zl-warn" data-draw="missing" data-source="board_zzz board_genshin board_hsr board_wuwa">—</p>
   </div>
   <div class="zl-podium" data-draw="podium" data-source="totals_zzz totals_window_zzz board_zzz totals_genshin totals_window_genshin board_genshin totals_hsr totals_window_hsr board_hsr totals_wuwa totals_window_wuwa board_wuwa"></div>
   <div class="zl-card">
