@@ -86,7 +86,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-chip[data-site="rule34"]:has(input:checked) { background: #aae5a4; border-color: #336633; color: #003300; }
 .zl-chip[data-site="pixiv"]:has(input:checked) { background: #0096fa; border-color: #0096fa; color: #ffffff; }
 .zl-chip:has(input:focus-visible) { outline: 2px solid var(--color-fg); outline-offset: 2px; }
-.zl-seg button[data-measure="r18"][aria-pressed="true"], .zl-seg button[data-sort="share"][aria-pressed="true"] { background: linear-gradient(90deg, #a8204f, #e0457b); color: #ffffff; }
+.zl-seg button[data-measure="r18"][aria-pressed="true"][aria-pressed="true"] { background: linear-gradient(90deg, #a8204f, #e0457b); color: #ffffff; }
 .zl-seg button[data-measure="safe"][aria-pressed="true"] { background: #1d9e75; color: #ffffff; }
 .zl-sec { display: grid; gap: var(--cds-gap-md); }
 .zl-sechead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--cds-gap-sm); }
@@ -118,6 +118,10 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
    the disc grows and a bite slides over it to make a moon. */
 .zl-theme { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 0; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: transparent; color: var(--color-fg-muted); cursor: pointer; }
 .zl-theme:hover { color: var(--color-fg); border-color: var(--color-fg); }
+/* the animations switch, beside the theme's: sparkles, crossed out while they are off */
+.zl-motion { margin-right: 6px; }
+.zl-motion[aria-pressed="true"] .zl-motion-off { display: none; }
+:root[data-motion="off"] *, :root[data-motion="off"] *::before, :root[data-motion="off"] *::after { animation: none !important; transition: none !important; }
 .zl-theme:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
 .zl-theme svg * { transform-origin: 12px 12px; transition: transform .45s cubic-bezier(.4, 0, .2, 1), opacity .3s ease; }
 :root[data-theme="dark"] .zl-theme-disc { transform: scale(1.65); }
@@ -171,9 +175,48 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-bar { position: relative; height: 22px; border-radius: 5px; background: var(--zl-all); }
 .zl-bar-r18 { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--zl-r18); display: flex; align-items: center; justify-content: flex-end; color: #fff; font-size: var(--cds-font-size-caption); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; }
 .zl-bar-r18 > span { padding-right: 6px; }
+.zl-bar-r18.zl-bar-abs { background: var(--zl-solo); }
+.zl-bar-r18.zl-bar-abs::before, .zl-bar-r18.zl-bar-abs::after { display: none; }
 .zl-barline { display: grid; grid-template-columns: minmax(0, 1fr) 4.75rem; align-items: center; gap: var(--cds-gap-sm); min-width: 0; }
 .zl-track { min-width: 0; }
 .zl-bar-dark { background: var(--zl-r18); }
+/* What a block lights: violet in R-18, teal in the rest, both dark enough for white text. */
+.zl { --zl-solo: #8a63e8; }
+.zl-sw-solo { background: var(--zl-solo); }
+.zl-bar-wave { display: none; position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2; pointer-events: none; }
+.zl-fly > .zl-bar-wave { display: block; fill: var(--zl-solo); }
+.zl-safe.zl-fly > .zl-bar-wave { fill: var(--zl-pale); }
+.zl-sechead-tools .zl-seg { flex-wrap: wrap; }
+/* A bar: its length is what Content counts, and it holds two whole blocks, R-18 (rose)
+   and the rest (grey). Sorting by alone or with someone lights those posts in the blocks
+   sorted by, up to a wave. A clear layer of zones lies on top: each has the share written by default, if any, and under
+   the pointer shows its share of the whole bar. */
+.zl { --zl-pale: #0f8f80; }
+.zl-sw-pale { background: var(--zl-pale); }
+.zl-bar-gold { position: absolute; top: 0; bottom: 0; left: 0; z-index: -2; background: var(--zl-solo); }
+/* a part lit with no wave ends rounded, as the bar does: a part of it, not a block of its own */
+.zl-bar-gold.zl-round { border-radius: 0 5px 5px 0; }
+.zl-bar-r18.zl-bar-before { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.zl-safe .zl-bar-gold { background: var(--zl-pale); }
+.zl-zones { position: absolute; inset: 0; z-index: 2; }
+.zl-zone { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; justify-content: flex-end; color: #fff; font-size: var(--cds-font-size-caption); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; }
+.zl-zone-rest { color: var(--color-fg); }
+.zl-zone > span { padding-right: 6px; }
+.zl-zone > .zl-hov { display: none; }
+.zl-zone:hover { overflow: visible; }
+.zl-zone:hover > .zl-hov { display: inline; }
+.zl-zone:hover > .zl-def { display: none; }
+.zl-stack { background: none; }
+.zl-seg button[data-block="r18"][aria-pressed="true"] { background: #c7366a; color: #fff; }
+.zl-seg button[data-who="alone"][aria-pressed="true"], .zl-seg button[data-who="with"][aria-pressed="true"] { background: var(--zl-solo); color: #fff; }
+.zl-stack .zl-bar-r18:not(.zl-safe) { z-index: 1; }
+.zl-stack.zl-show-all { background: var(--zl-all); }
+.zl-who-part { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--zl-solo); }
+.zl-bar-r18.zl-bar-after { inset: 0 auto 0 auto; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.zl-bar-r18.zl-off { background: none; }
+.zl-bar-r18.zl-off::before, .zl-bar-r18.zl-off::after { display: none; }
+.zl-barline-wide { grid-template-columns: minmax(0, 1fr) 6.75rem; }
+.zl-seg button:disabled { opacity: 0.4; cursor: default; }
 /* Hearts rising over the R-18 parts on screen (class zl-fly, set by the
    script). Two layers of a hearts pattern, drawn once and only moved: the
    script sets each layer's place (--zl-m1, --zl-m2) 30 times a second. A
@@ -182,8 +225,8 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
    small the change. Each layer moves by exactly one tile of its pattern and
    starts again, so the loop has no seam; the second sways and moves slower,
    so the two do not move as one. */
-.zl-bar-r18, .zl-bar-dark, .zl-seg button[data-measure="r18"], .zl-seg button[data-sort="share"] { isolation: isolate; }
-.zl-seg button[data-measure="r18"], .zl-seg button[data-sort="share"], .zl-bar-dark { position: relative; overflow: hidden; }
+.zl-bar-r18, .zl-bar-dark, .zl-seg button[data-measure="r18"] { isolation: isolate; }
+.zl-seg button[data-measure="r18"], .zl-bar-dark { position: relative; overflow: hidden; }
 .zl-seg button[aria-pressed="false"].zl-fly::before, .zl-seg button[aria-pressed="false"].zl-fly::after { display: none; }
 .zl-fly::before, .zl-fly::after { content: ''; position: absolute; left: -12px; right: -12px; top: 0; z-index: -1; pointer-events: none; will-change: transform; }
 .zl-fly::before { height: calc(100% + 48px); background: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22640%22 height=%2248%22%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.84%22 transform=%22translate%28418.1 13.4%29 scale%280.50%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.65%22 transform=%22translate%28115.3 11.3%29 scale%280.61%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.82%22 transform=%22translate%2874.2 19.4%29 scale%280.67%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.74%22 transform=%22translate%28147.5 8.8%29 scale%280.69%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.65%22 transform=%22translate%28428.2 34.9%29 scale%280.50%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.79%22 transform=%22translate%284.2 38.6%29 scale%280.52%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.81%22 transform=%22translate%28218.3 22.5%29 scale%280.55%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.74%22 transform=%22translate%28191.1 4.4%29 scale%280.60%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.65%22 transform=%22translate%28312.9 30.8%29 scale%280.58%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.74%22 transform=%22translate%28508.4 5.0%29 scale%280.61%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.62%22 transform=%22translate%28497.7 31.2%29 scale%280.66%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.74%22 transform=%22translate%2896.2 3.2%29 scale%280.49%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.85%22 transform=%22translate%28575.3 25.2%29 scale%280.50%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.64%22 transform=%22translate%28171.0 15.5%29 scale%280.55%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.71%22 transform=%22translate%28534.2 11.9%29 scale%280.53%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.64%22 transform=%22translate%28544.1 34.2%29 scale%280.62%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.60%22 transform=%22translate%28467.0 26.2%29 scale%280.49%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.79%22 transform=%22translate%28521.8 21.2%29 scale%280.59%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.82%22 transform=%22translate%28265.7 15.2%29 scale%280.64%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.83%22 transform=%22translate%28396.7 19.5%29 scale%280.54%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.64%22 transform=%22translate%28586.6 10.2%29 scale%280.58%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.63%22 transform=%22translate%28627.8 8.9%29 scale%280.59%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.83%22 transform=%22translate%28225.8 3.5%29 scale%280.54%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.79%22 transform=%22translate%28249.8 15.5%29 scale%280.63%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.62%22 transform=%22translate%2828.8 9.6%29 scale%280.65%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.62%22 transform=%22translate%28236.3 27.5%29 scale%280.52%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.65%22 transform=%22translate%28351.1 17.6%29 scale%280.64%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.64%22 transform=%22translate%28295.7 31.5%29 scale%280.47%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.73%22 transform=%22translate%2858.8 13.4%29 scale%280.69%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.76%22 transform=%22translate%28287.0 0.8%29 scale%280.62%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.78%22 transform=%22translate%2852.6 26.4%29 scale%280.50%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.66%22 transform=%22translate%28407.8 0.7%29 scale%280.48%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%237d1440%22 fill-opacity=%220.63%22 transform=%22translate%28469.3 6.3%29 scale%280.62%29%22/%3E%3Cpath d=%22M8 14 2.5 8.5A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 3.9z%22 fill=%22%235c0b29%22 fill-opacity=%220.75%22 transform=%22translate%28383.5 32.2%29 scale%280.47%29%22/%3E%3C/svg%3E"); background-position: var(--zl-x1, 0) var(--zl-y1, 0); transform: var(--zl-m1); }
@@ -200,6 +243,8 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-place .zl-name { font-weight: var(--cds-font-weight-medium); }
 .zl-place .zl-big { font-family: var(--font-anthropic-serif); font-size: var(--cds-font-size-title); font-variant-numeric: tabular-nums; line-height: 1.1; }
 .zl-place .zl-bar { width: 100%; }
+.zl-place .zl-barline { width: 100%; grid-template-columns: minmax(0, 1fr); }
+.zl-place .zl-count { display: none; }
 
 .zl-list { position: relative; display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; max-height: 660px; overflow: auto; }
 /* touch: while the page scrolls the lists hold still (see LIST_WAIT) */
@@ -232,6 +277,44 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-range-end:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
 /* what the network's colours mean stays in full screen */
 .zl-full > .zl-key.zl-key-line { display: flex; flex: none; }
+/* The categories: a card over the network's top left corner (so the character card keeps the
+   top) opens their list under it, a row per section, clear of the right side where the
+   character card stands. The card turns violet while the list is open or a category is on. */
+.zl-abs { position: absolute; top: var(--cds-pad-sm); left: var(--cds-pad-sm); z-index: 3; display: flex; flex-direction: column; align-items: flex-start; gap: var(--cds-gap-xs); max-width: calc(100% - min(22rem, 45%) - 3 * var(--cds-pad-sm)); max-height: calc(100% - 2 * var(--cds-pad-sm)); font-size: var(--cds-font-size-caption); }
+.zl-abs-card { flex: none; display: flex; align-items: center; gap: var(--cds-gap-sm); padding: 8px 16px 8px 12px; border: 1px solid var(--color-border-line); border-radius: 14px; background: var(--color-panel); color: var(--color-fg-muted); font: inherit; text-align: left; cursor: pointer; transition: background-color 0.45s ease, color 0.35s ease, box-shadow 0.45s ease, border-color 0.45s ease; }
+.zl-abs-card span { display: grid; line-height: 1.2; }
+.zl-abs-card b { font-size: var(--cds-font-size-body); font-weight: var(--cds-font-weight-medium); }
+.zl-abs-card small { font-size: var(--cds-font-size-caption); opacity: 0.75; }
+.zl-abs-card svg { flex: none; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; transition: transform 0.6s cubic-bezier(0.2, 0.9, 0.2, 1); }
+.zl-abs-card:hover { color: var(--color-fg); }
+.zl-abs-card[aria-expanded="true"], .zl-abs-card[data-on="true"] { background: var(--zl-solo); border-color: var(--zl-solo); color: #fff; box-shadow: 0 2px 16px color-mix(in srgb, var(--zl-solo) 55%, transparent); }
+.zl-abs-card[aria-expanded="true"] svg, .zl-abs-card[data-on="true"] svg { transform: scale(1.12) rotate(180deg); }
+.zl-abs-card:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+.zl-abs-add-n { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 10px; background: #fff; color: var(--zl-solo); font-size: 11px; font-weight: 600; }
+.zl-abs-add-n[hidden], .zl-abs-list[hidden] { display: none; }
+.zl-abs-list { display: grid; gap: var(--cds-gap-xs); min-height: 0; overflow: auto; padding: var(--cds-pad-md); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-bg); box-shadow: var(--cds-shadow-popover); }
+.zl-abs-part { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cds-gap-xs); }
+.zl-abs-title { flex: none; width: 5.5em; color: var(--color-fg-muted); }
+/* the list of categories comes in section by section */
+@keyframes zl-rise { from { opacity: 0; transform: translateY(-6px); } }
+.zl-abs-list:not([hidden]) .zl-abs-part { animation: zl-rise 0.4s ease-out both; animation-delay: calc(var(--i, 0) * 50ms); }
+@media (prefers-reduced-motion: reduce) {
+  .zl-abs-card, .zl-abs-card svg { transition: none; }
+  .zl-abs-list:not([hidden]) .zl-abs-part { animation: none; }
+}
+/* narrower, the character card goes under the network (see .zl-panel below): the list may take
+   the width, and the card drops its caption */
+@media (max-width: 900px) {
+  .zl-abs { max-width: calc(100% - 2 * var(--cds-pad-sm)); max-height: 70vh; }
+}
+@media (max-width: 640px) {
+  .zl-abs-card { padding: 6px 10px 6px 8px; }
+  .zl-abs-card small { display: none; }
+  .zl-abs-card svg { width: 18px; height: 18px; }
+}
+.zl-abs-list button { font: inherit; padding: 2px var(--cds-pad-md); border: 1px solid var(--color-border-line); border-radius: 999px; background: transparent; color: var(--color-fg-muted); cursor: pointer; }
+.zl-abs-list button[aria-pressed="true"] { background: var(--zl-solo); border-color: var(--zl-solo); color: #fff; }
+.zl-abs-list button:disabled { opacity: 0.4; cursor: default; }
 .zl-full .zl-cardhead { display: none; }
 .zl-full .zl-chart { flex: 1; min-height: 0; }
 .zl-full .zl-netwrap { flex: 1; min-height: 0; }
@@ -263,6 +346,11 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-panel-head img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; }
 .zl-panel-title .zl-name { font-family: var(--font-anthropic-serif); font-size: var(--cds-font-size-heading); }
 .zl-panel-sub { margin: var(--cds-gap-xs) 0 0; font-size: var(--cds-font-size-caption); font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); text-transform: uppercase; letter-spacing: .04em; }
+/* the list's title and its sort, by count (#) or share (%) */
+.zl-panel-subrow { display: flex; align-items: center; justify-content: space-between; gap: var(--cds-gap-sm); margin-top: var(--cds-gap-xs); }
+.zl-panel-key { gap: var(--cds-gap-sm); }
+.zl-panel-key .zl-sw { flex: none; }
+.zl-mate-sort button { min-width: 28px; padding: 1px 8px; font-weight: 600; }
 .zl-mates { position: relative; display: grid; gap: var(--cds-gap-sm); margin: 0; padding: 0 var(--cds-pad-xs) 0 0; list-style: none; max-height: 560px; overflow: auto; }
 .zl-mate { display: grid; grid-template-columns: 32px 1fr; gap: var(--cds-gap-sm); align-items: center; cursor: pointer; border-radius: var(--cds-radius); }
 .zl-mate:hover { background: color-mix(in srgb, var(--color-fg) 6%, transparent); }
@@ -279,6 +367,10 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-ctools { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: var(--cds-gap-xs); }
 .zl-size-box { display: inline-flex; align-items: center; gap: var(--cds-gap-xs); padding: 2px var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-panel); color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
 .zl-size { width: 6rem; margin: 0; accent-color: var(--color-fg); }
+/* the scatter's title picks its height: Posts against [R-18 share] */
+.zl-y-pick { font: inherit; color: inherit; padding: 0 1.2em 0 2px; border: 0; border-bottom: 1.5px dashed var(--color-fg-muted); border-radius: 0; background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23999' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 2px center; appearance: none; cursor: pointer; }
+.zl-y-pick:hover { border-bottom-color: var(--color-fg); }
+.zl-y-pick option, .zl-y-pick optgroup { background: var(--color-panel); color: var(--color-fg); font-weight: normal; }
 .zl-reset { font: inherit; font-size: var(--cds-font-size-caption); padding: 2px var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-panel); color: var(--color-fg-muted); cursor: pointer; }
 .zl-reset:hover { color: var(--color-fg); }
 .zl-reset:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
@@ -368,7 +460,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
   </div>
   </div>
   <button type="button" class="zl-more" id="more" aria-expanded="false" aria-controls="more-panel">More filters</button>
-  <button type="button" class="zl-theme" id="theme"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><mask id="zl-theme-cut"><rect width="24" height="24" fill="#fff"/><circle class="zl-theme-bite" cx="25" cy="8" r="6.5" fill="#000"/></mask><circle class="zl-theme-disc" cx="12" cy="12" r="5" fill="currentColor" mask="url(#zl-theme-cut)"/><g class="zl-theme-rays" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="20.5" y1="12.0" x2="22.5" y2="12.0"/><line x1="18.0" y1="18.0" x2="19.4" y2="19.4"/><line x1="12.0" y1="20.5" x2="12.0" y2="22.5"/><line x1="6.0" y1="18.0" x2="4.6" y2="19.4"/><line x1="3.5" y1="12.0" x2="1.5" y2="12.0"/><line x1="6.0" y1="6.0" x2="4.6" y2="4.6"/><line x1="12.0" y1="3.5" x2="12.0" y2="1.5"/><line x1="18.0" y1="6.0" x2="19.4" y2="4.6"/></g></svg></button>
+  <button type="button" class="zl-theme zl-motion" id="motion" aria-pressed="true"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M10 3.5 11.6 8.4 16.5 10 11.6 11.6 10 16.5 8.4 11.6 3.5 10 8.4 8.4Z M18 13.5 18.9 16.1 21.5 17 18.9 17.9 18 20.5 17.1 17.9 14.5 17 17.1 16.1Z M18 3 18.6 4.4 20 5 18.6 5.6 18 7 17.4 5.6 16 5 17.4 4.4Z" fill="currentColor"/><path class="zl-motion-off" d="M4 4 20 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button><button type="button" class="zl-theme" id="theme"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><mask id="zl-theme-cut"><rect width="24" height="24" fill="#fff"/><circle class="zl-theme-bite" cx="25" cy="8" r="6.5" fill="#000"/></mask><circle class="zl-theme-disc" cx="12" cy="12" r="5" fill="currentColor" mask="url(#zl-theme-cut)"/><g class="zl-theme-rays" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="20.5" y1="12.0" x2="22.5" y2="12.0"/><line x1="18.0" y1="18.0" x2="19.4" y2="19.4"/><line x1="12.0" y1="20.5" x2="12.0" y2="22.5"/><line x1="6.0" y1="18.0" x2="4.6" y2="19.4"/><line x1="3.5" y1="12.0" x2="1.5" y2="12.0"/><line x1="6.0" y1="6.0" x2="4.6" y2="4.6"/><line x1="12.0" y1="3.5" x2="12.0" y2="1.5"/><line x1="18.0" y1="6.0" x2="19.4" y2="4.6"/></g></svg></button>
   <div class="zl-bar-tools"></div>
   </div>
   <div class="zl-morepanel" id="more-panel" hidden>
@@ -385,21 +477,29 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 <section class="zl-sec" id="leaderboard">
   <div class="zl-sechead">
     <h2>Leaderboard</h2>
-    <div class="zl-sechead-tools">
-    <div class="zl-seg" role="group" aria-label="Sort by">
-      <button type="button" data-sort="total" aria-pressed="true">Most posts</button>
-      <button type="button" data-sort="share" aria-pressed="false">Highest R-18 share</button>
-    </div>
-    </div>
   </div>
   <div class="zl-podium" data-draw="podium" data-source="totals_zzz totals_window_zzz board_zzz totals_genshin totals_window_genshin board_genshin totals_hsr totals_window_hsr board_hsr totals_wuwa totals_window_wuwa board_wuwa"></div>
   <div class="zl-card">
     <div class="zl-tools">
       <h3>Every character</h3>
+    <div class="zl-sechead-tools">
+    <div class="zl-seg" role="group" aria-label="Sort by which posts">
+      <button type="button" data-block="all" aria-pressed="true">All posts<span class="zl-arrow"></span></button>
+      <button type="button" data-block="r18" aria-pressed="false">R-18<span class="zl-arrow"></span></button>
+      <button type="button" data-block="safe" aria-pressed="false">Not R-18<span class="zl-arrow"></span></button>
     </div>
-    <ul class="zl-key" data-legend="all"><li><span class="zl-sw zl-sw-r18"></span>R-18 part (share inside)</li><li><span class="zl-sw zl-sw-all"></span>All posts (count at the end)</li></ul>
-    <ul class="zl-key" data-legend="r18" hidden><li><span class="zl-sw zl-sw-r18"></span>R-18 posts (count at the end)</li></ul>
-    <ul class="zl-key" data-legend="safe" hidden><li><span class="zl-sw zl-sw-all"></span>Posts without R-18 (count at the end)</li></ul>
+    <div class="zl-seg" role="group" aria-label="Sort by who is in them">
+      <button type="button" data-who="all" aria-pressed="true">Everyone<span class="zl-arrow"></span></button>
+      <button type="button" data-who="alone" aria-pressed="false" title="Rule34 and pixiv">Alone<span class="zl-arrow"></span></button>
+      <button type="button" data-who="with" aria-pressed="false" title="Rule34 and pixiv">With someone<span class="zl-arrow"></span></button>
+    </div>
+    <div class="zl-seg" role="group" aria-label="Sort value">
+      <button type="button" data-scale="abs" aria-pressed="true">Count</button>
+      <button type="button" data-scale="pct" aria-pressed="false" title="R-18, Not R-18: share of a character's posts. Alone, With someone: share of the posts chosen beside them">%</button>
+    </div>
+    </div>
+    </div>
+    <ul class="zl-key" id="layers"></ul>
     <ol class="zl-list" data-draw="bars" data-source="totals_zzz totals_window_zzz board_zzz totals_genshin totals_window_genshin board_genshin totals_hsr totals_window_hsr board_hsr totals_wuwa totals_window_wuwa board_wuwa"></ol>
   </div>
   <div class="zl-card">
@@ -422,6 +522,14 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
     </div>
     <div class="zl-netwrap">
       <div class="zl-chart zl-net" data-draw="network" data-source="pair_totals_zzz totals_zzz totals_window_zzz board_zzz pair_totals_genshin totals_genshin totals_window_genshin board_genshin pair_totals_hsr totals_hsr totals_window_hsr board_hsr pair_totals_wuwa totals_wuwa totals_window_wuwa board_wuwa"></div>
+      <div class="zl-abs" id="abs-dock">
+        <button type="button" class="zl-abs-card" id="abs-add" aria-expanded="false" aria-controls="abs-list" title="Characters around categories: each one you pick pulls the characters by their share of art with it">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(-25 12 12)"/><circle cx="20.5" cy="8" r="1.6"/><circle cx="3.5" cy="16" r="1.6"/></svg>
+          <span><b>Categorization</b><small class="zl-abs-add-text">who is drawn in what</small></span>
+          <span class="zl-abs-add-n" hidden></span>
+        </button>
+        <div class="zl-abs-list" id="abs-list" role="group" aria-label="Categories on the network" hidden></div>
+      </div>
       <aside class="zl-panel" data-draw="focus-panel" data-source="pair_totals_zzz totals_zzz totals_window_zzz board_zzz pair_totals_genshin totals_genshin totals_window_genshin board_genshin pair_totals_hsr totals_hsr totals_window_hsr board_hsr pair_totals_wuwa totals_wuwa totals_window_wuwa board_wuwa"></aside>
     </div>
     <ul class="zl-key zl-key-line"><li>Compared to their top partner:</li><li>100%<span class="zl-range" id="line-range" title="Each end of a line shows how this pair compares with that character's top partner. Double-click to reset."><span class="zl-sw zl-sw-line"></span><button type="button" class="zl-range-end" role="slider" aria-label="Weakest pairs kept"></button></span><span id="line-low">0%</span></li><li>Drag to hide weaker links</li></ul>
@@ -450,7 +558,8 @@ const savedGame = () => { try { return localStorage.getItem('tagstats-game'); } 
 // link opens that game; else the one this browser showed last; else the first.
 const linkGame = () => new URLSearchParams(location.search).get('game');
 const knownGame = (id) => GAMES.some((g) => g.id === id);
-const view = { sort: 'total', period: 'all', query: '', focus: null, measure: 'all',
+const view = { block: 'all', who: 'all', period: 'all', query: '', focus: null, measure: 'all', absPicked: [], mateSort: { group: 'pct', char: 'count' }, dir: 'desc', scale: 'abs',
+               
                game: knownGame(linkGame()) ? linkGame() : knownGame(savedGame()) ? savedGame() : GAMES[0].id };
 // the address follows the game shown, so a copied link opens it
 const gameInLink = () => {
@@ -883,6 +992,29 @@ const node = (tag, cls, content) => { const e = document.createElement(tag); if 
 // its own column after it. With r18 given, the dark part is R-18 with its
 // share written inside; without, the whole bar takes the colour of what the
 // page counts (dark for R-18 only, light for all art or art without R-18).
+// The sort is built: which posts (the block), and of those, everyone, alone or with someone.
+// All posts of everyone has nothing to be a share of. All posts means what Content counts.
+const isSoloSort = () => view.who !== 'all';
+// How far a wave swings each way, in px.
+const WAVE = 2;
+// The page's moving parts (hearts, waves, the planets' liquid) stand still when switched off
+// with the button by the theme's (data-motion), or when the system asks for less motion.
+const motionOff = () => document.documentElement.dataset.motion === 'off'
+  || Boolean(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+// They also stand still while the tab is hidden or the window is not the one in front.
+const pageAwake = () => !document.hidden && document.hasFocus();
+const scope = () => (view.block === 'all' ? view.measure : view.block);
+const inShares = () => view.scale === 'pct' && (scope() !== 'all' || isSoloSort());
+// A site with posts in the store for the shown game: not every game has been read on every site.
+const hasStored = (site) => D('board').status === 'ok' && D('board').data.some((p) => p[`${site}_stored_total`] > 0);
+const soloReady = () => view.period === 'all' && chosen().every(hasStored);
+// A store number of a character over the chosen sites.
+const stored = (p, field) => chosen().reduce((n, site) => n + (p[`${site}_${field}`] || 0), 0);
+// The posts sorted by, and of those the character alone, from the store.
+const baseOf = (p) => (scope() === 'r18' ? stored(p, 'stored_r18') : scope() === 'safe' ? stored(p, 'stored_total') - stored(p, 'stored_r18') : stored(p, 'stored_total'));
+const aloneOf = (p) => (scope() === 'r18' ? stored(p, 'r18_solo') : scope() === 'safe' ? stored(p, 'safe_solo') : stored(p, 'r18_solo') + stored(p, 'safe_solo'));
+const wholeOf = (r) => (scope() === 'r18' ? r.r18 : scope() === 'safe' ? r.total - r.r18 : r.total);
+const whoOf = (p) => (view.who === 'alone' ? aloneOf(p) : baseOf(p) - aloneOf(p));
 const barLine = (total, r18, max, label) => {
   const line = node('div', 'zl-barline');
   const track = node('div', 'zl-track');
@@ -905,9 +1037,11 @@ const barLine = (total, r18, max, label) => {
 // page out once and not again after each removal. scope: an element, or the
 // rows just added to a list.
 const fitLabels = (scope) => {
-  const parts = (Array.isArray(scope) ? scope : [scope]).flatMap((s) => [...s.querySelectorAll('.zl-bar-r18')]);
-  parts.filter((p) => p.firstElementChild && p.firstElementChild.offsetWidth + 4 > p.clientWidth)
-    .forEach((p) => p.firstElementChild.remove());
+  const parts = (Array.isArray(scope) ? scope : [scope]).flatMap((s) => [...s.querySelectorAll('.zl-bar-r18, .zl-zone')]);
+  // a label beside gold has only rose's width (gap: gold's share of the part)
+  parts.map((p) => [p, p.querySelector(':scope > span:not(.zl-hov)')])
+    .filter(([p, label]) => label && label.offsetWidth + 4 > p.clientWidth * (1 - (label.zlGap || 0)))
+    .forEach(([, label]) => label.remove());
 };
 // A long list is built CHUNK rows at a time: the first ones at once, more as
 // it is scrolled near its end. A switch then never builds thousands of rows,
@@ -986,10 +1120,18 @@ const wilson = (k, n) => {
 
 // The sort switch above the podium orders the podium and the list alike. The
 // share sort goes by the Wilson bound, so a handful of posts, all R-18, does
-// not top hundreds; the bars still show the plain share.
+// not top hundreds; the bars still show the plain share. Least first takes the same
+// bound of what is left, so a handful of posts does not top that order either. Sorting
+// by alone or with someone leaves out characters with no solo count.
 const sorted = (rows, v) => {
-  const by = view.sort === 'share' ? (r) => wilson(r.r18, r.total) : v;
-  return rows.sort((a, b) => by(b) - by(a));
+  const who = people();
+  const up = view.dir === 'asc';
+  const sure = (k, n) => (up ? 1 - wilson(n - k, n) : wilson(k, n));
+  const by = isSoloSort()
+    ? (inShares() ? (r) => sure(whoOf(who.get(r.id)), baseOf(who.get(r.id))) : (r) => whoOf(who.get(r.id)))
+    : (inShares() ? (r) => sure(wholeOf(r), r.total) : wholeOf);
+  const list = isSoloSort() ? rows.filter((r) => baseOf(who.get(r.id)) > 0) : rows;
+  return list.sort((a, b) => (up ? by(a) - by(b) : by(b) - by(a)));
 };
 
 // A bar of a character's R-18 share, the share written inside.
@@ -1002,30 +1144,227 @@ const shareBar = (share) => {
   return bar;
 };
 
+// What the list is sorted by, for a row: its count, and as written at the end of its bar.
+const sortCount = (r, p) => (isSoloSort() ? whoOf(p) : wholeOf(r));
+const labelOf = (r, p) => {
+  const count = sortCount(r, p);
+  if (!inShares()) return short(count);
+  return `${pct(count / (isSoloSort() ? baseOf(p) : r.total))} · ${short(count)}`;
+};
+// The podium shows the first three of the list: the number it is sorted by, and the
+// list's bar of each at the card's full width.
 dash.draw('podium', (el) => {
   el.replaceChildren();
   if (!ready(boardTotals(), 'board')) return;
   const who = people();
   const v = measure();
+  const lit = isSoloSort() && soloReady();
   sorted(boardTotalsFor(keyOf(chosen())).filter((r) => v(r) > 0), v).slice(0, 3).forEach((r, i) => {
     const p = who.get(r.id);
     const card = node('div', 'zl-place');
+    const count = sortCount(r, p);
+    const base = isSoloSort() ? baseOf(p) : r.total;
+    const words = WORD[scope()] + (isSoloSort() ? (view.who === 'alone' ? ', alone' : ', with someone') : '');
+    const big = inShares() ? pct0(base ? count / base : 0) : fmt(count);
+    const note = inShares() ? `of ${words}; ${fmt(count)}` : words;
     card.append(node('div', 'zl-rank', `#${i + 1}`), icon(p.icon, 84), node('div', 'zl-name', p.name),
-      node('div', 'zl-big', fmt(v(r))), node('div', 'zl-note', WORD[view.measure]));
-    // the R-18 share, unless the page leaves R-18 out
-    if (view.measure !== 'safe') card.append(shareBar(r.share));
+      node('div', 'zl-big', big), node('div', 'zl-note', note),
+      lit ? whoLine(p, whoBar(p), '') : stackLine(r, p, v(r), v(r), ''));
     el.append(card);
   });
   fitLabels(el);
 });
 
+// What a block lights, as a share of that block. Inside the R-18 block (liquid) its edge is a
+// wave, drawn under the hearts by their loop; elsewhere, with no hearts, a plain end.
+const lightBlock = (host, share, liquid = true) => {
+  if (!liquid) {
+    const piece = node('div', 'zl-bar-gold zl-round');
+    piece.style.width = `${(share * 100).toFixed(2)}%`;
+    host.append(piece);
+    return;
+  }
+  const wave = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  wave.setAttribute('class', 'zl-bar-wave');
+  wave.setAttribute('aria-hidden', 'true');
+  const edge = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  wave.append(edge);
+  const piece = node('div', 'zl-bar-gold');
+  piece.style.width = `calc(${(share * 100).toFixed(2)}% - ${WAVE}px)`;
+  host.append(wave, piece);
+  host.zlWave = { wave, edge, solo: share, phase: Math.random() * 6.28, width: 0 };
+};
+// One bar: the R-18 block first, then the block of the rest.
+const stackLine = (r, p, length, max, label) => {
+  const line = node('div', inShares() ? 'zl-barline zl-barline-wide' : 'zl-barline');
+  const track = node('div', 'zl-track');
+  const bar = node('div', 'zl-bar zl-stack');
+  bar.style.width = ((inShares() ? 1 : length / max) * 100).toFixed(2) + '%';
+  const all18 = r.r18 ?? 0;
+  const r18 = view.measure === 'safe' ? 0 : all18;
+  const safe = view.measure === 'r18' ? 0 : r.total - all18;
+  if (safe) bar.classList.add('zl-show-all');
+  const counted = isSoloSort() && soloReady() && stored(p, 'stored_total') > 0;
+  const safeBase = counted ? stored(p, 'stored_total') - stored(p, 'stored_r18') : 0;
+  const lit = (alone, base, block) => (!counted || !base || (scope() !== 'all' && scope() !== block) ? null
+    : view.who === 'alone' ? alone / base : 1 - alone / base);
+  // The zones: a lit piece has its share of the block written in it, an unlit R-18 block
+  // its share of the posts; under the pointer each shows its share of the whole bar.
+  const zones = node('div', 'zl-zones');
+  let at = 0;
+  const zone = (n, written, rest) => {
+    if (!n || !length) return;
+    const z = node('div', rest ? 'zl-zone zl-zone-rest' : 'zl-zone');
+    z.style.left = ((at / length) * 100).toFixed(2) + '%';
+    z.style.width = ((n / length) * 100).toFixed(2) + '%';
+    if (written != null) z.append(node('span', 'zl-def', pct0(written)));
+    z.append(node('span', 'zl-hov', pct0(n / length)));
+    zones.append(z);
+    at += n;
+  };
+  const blockZones = (n, share, whole, rest) => {
+    if (share) {
+      zone(n * share, share, false);
+      zone(n * (1 - share), null, rest);
+    } else {
+      zone(n, whole, rest);
+    }
+  };
+  const r18Share = r18 ? lit(stored(p, 'r18_solo'), stored(p, 'stored_r18'), 'r18') : null;
+  const safeShare = safe ? lit(stored(p, 'safe_solo'), safeBase, 'safe') : null;
+  // sorted by not R-18, that block comes first, its share written, and R-18 after it
+  if (scope() === 'safe') {
+    if (safe && length) blockZones(safe, null, safe / r.total, true);
+    if (r18 && length) {
+      const part = node('div', 'zl-bar-r18 zl-bar-after');
+      part.style.left = ((safe / length) * 100).toFixed(2) + '%';
+      part.style.width = ((r18 / length) * 100).toFixed(2) + '%';
+      bar.append(part);
+      blockZones(r18, null, all18 / r.total, false);
+    }
+    bar.append(zones);
+    track.append(bar);
+    line.append(track, node('span', 'zl-count', label));
+    return line;
+  }
+  if (r18 && length) {
+    const part = node('div', 'zl-bar-r18');
+    // beside the other block, a straight end: the two are parts of their own, not one inside
+    // the other (a part inside another ends rounded); a wave is only for a part lit inside R-18
+    if (safe) part.classList.add('zl-bar-before');
+    part.style.width = ((r18 / length) * 100).toFixed(2) + '%';
+    if (r18Share) lightBlock(part, r18Share);
+    bar.append(part);
+    blockZones(r18, r18Share, all18 / r.total, false);
+  }
+  if (safe && length) {
+    if (safeShare) {
+      const part = node('div', 'zl-bar-r18 zl-off zl-safe');
+      part.style.left = r18 ? `${((r18 / length) * 100).toFixed(2)}%` : '0';
+      part.style.width = r18 ? `${((safe / length) * 100).toFixed(2)}%` : '100%';
+      lightBlock(part, safeShare, false);
+      bar.append(part);
+    }
+    blockZones(safe, safeShare, null, true);
+  }
+  bar.append(zones);
+  track.append(bar);
+  line.append(track, node('span', 'zl-count', label));
+  return line;
+};
+// With alone or with someone picked, the bar is the character's posts of the block. With all
+// posts, those alone (or with someone) come first, in the solo colour, their R-18 part inside
+// them (rose, its share written), and the rest of the posts after them in grey, so their share
+// of all shows. With R-18 or not R-18, those alone (or with someone) are lit inside the block,
+// their share written. The list is sorted by the alone (or with someone) count (whoOf). The
+// length: against the list's biggest bar (whoBar), or the full width as a share.
+const whoBar = baseOf;
+const whoLine = (p, max, label) => {
+  const line = node('div', inShares() ? 'zl-barline zl-barline-wide' : 'zl-barline');
+  const track = node('div', 'zl-track');
+  const n = whoOf(p);
+  const base = baseOf(p);
+  const length = inShares() ? 1 : (max ? whoBar(p) / max : 0);
+  if (scope() === 'all') {
+    const bar = node('div', 'zl-bar zl-stack zl-show-all');
+    const who = node('div', 'zl-who-part');
+    who.style.width = ((base ? n / base : 0) * 100).toFixed(2) + '%';
+    const r18 = view.who === 'alone' ? stored(p, 'r18_solo') : stored(p, 'stored_r18') - stored(p, 'r18_solo');
+    if (r18 && n) {
+      const part = node('div', 'zl-bar-r18');
+      part.style.width = ((r18 / n) * 100).toFixed(2) + '%';
+      part.append(node('span', null, pct0(r18 / n)));
+      who.append(part);
+    }
+    if (n) bar.append(who);
+    bar.style.width = (length * 100).toFixed(2) + '%';
+    track.append(bar);
+  } else {
+    const bar = node('div', 'zl-bar zl-stack');
+    if (scope() === 'safe') bar.classList.add('zl-show-all');
+    const part = node('div', scope() === 'r18' ? 'zl-bar-r18' : 'zl-bar-r18 zl-off zl-safe');
+    part.style.width = '100%';
+    if (base && n) lightBlock(part, n / base, scope() === 'r18');
+    bar.append(part);
+    if (base && n) {
+      const zones = node('div', 'zl-zones');
+      const zone = node('div', 'zl-zone');
+      zone.style.left = '0';
+      zone.style.width = ((n / base) * 100).toFixed(2) + '%';
+      zone.append(node('span', 'zl-def', pct0(n / base)));
+      zones.append(zone);
+      bar.append(zones);
+    }
+    bar.style.width = (length * 100).toFixed(2) + '%';
+    track.append(bar);
+  }
+  line.append(track, node('span', 'zl-count', label));
+  return line;
+};
+// Solo is counted for all time on the sites with posts in the store: asking for it keeps
+// those of the chosen sites, or switches the page to Rule34 when there are none.
+const useSoloSites = () => {
+  const keep = chosen().filter(hasStored);
+  const sites = keep.length ? keep : ['rule34'];
+  document.querySelectorAll('.zl-sites input').forEach((box) => { box.checked = sites.includes(box.value); });
+  setPeriod('all');
+  showMoreCount();
+  redrawAll();
+};
+// The key of the colours in the bars.
+const drawLayers = () => {
+  const lit = isSoloSort() && soloReady();
+  const names = view.who === 'alone' ? ['alone', 'with someone'] : ['with someone', 'alone'];
+  const key = [];
+  if (lit && scope() === 'all') {
+    key.push(['zl-sw-r18', `R-18, ${names[0]}`], ['zl-sw-solo', `Not R-18, ${names[0]}`],
+      ['zl-sw-all', names[1][0].toUpperCase() + names[1].slice(1)]);
+  }
+  else if (lit && scope() === 'r18') key.push(['zl-sw-solo', `R-18, ${names[0]}`], ['zl-sw-r18', `R-18, ${names[1]}`]);
+  else if (lit) key.push(['zl-sw-pale', `Not R-18, ${names[0]}`], ['zl-sw-all', `Not R-18, ${names[1]}`]);
+  else {
+    if (view.measure !== 'safe') key.push(['zl-sw-r18', 'R-18']);
+    if (view.measure !== 'r18') key.push(['zl-sw-all', 'Not R-18']);
+    // sorted by not R-18, its block comes first in the bars and here
+    if (scope() === 'safe') key.reverse();
+  }
+  document.getElementById('layers').replaceChildren(...key.map(([swatch, name]) => {
+    const e = node('li');
+    e.append(node('span', `zl-sw ${swatch}`), node('span', null, name));
+    return e;
+  }));
+};
+
 dash.draw('bars', (el) => {
   el.replaceChildren();
+  drawLayers();
   if (!ready(boardTotals(), 'board')) return;
   const who = people();
   const v = measure();
   let rows = boardTotalsFor(keyOf(chosen())).filter((r) => v(r) > 0);
   const max = d3.max(rows, v) || 1;
+  const lit = isSoloSort() && soloReady();
+  const whoMax = lit ? d3.max(rows, (r) => whoBar(who.get(r.id))) || 1 : 1;
   // the search marks the characters it finds (the rest fade) and scrolls the
   // list to the first of them
   const q = queryWords();
@@ -1033,6 +1372,7 @@ dash.draw('bars', (el) => {
   rows = sorted(rows, v).map((r, i) => ({ ...r, place: i + 1 }));
   const hit = (r) => q.length > 0 && finds(who.get(r.id), q);
   const first = rows.findIndex(hit);
+  // the number at the end is what the list is sorted by (labelOf)
   el.scrollTop = 0;
   lazyRows(el, rows, (r) => {
     const p = who.get(r.id);
@@ -1041,11 +1381,134 @@ dash.draw('bars', (el) => {
     const name = node('span', 'zl-name', p.name);
     if (view.period === 'window' && (p.w_incomplete || p.w_unreleased)) name.append(node('span', 'zl-so-far', p.w_unreleased ? 'all time' : 'so far'));
     li.append(node('span', 'zl-n', r.place), icon(p.icon, 32), name,
-      view.measure === 'all' ? barLine(r.total, r.r18, max) : barLine(v(r), null, max));
+      lit ? whoLine(p, whoMax, labelOf(r, p)) : stackLine(r, p, v(r), max, labelOf(r, p)));
     return li;
   }, first);
   const mark = el.querySelector('.zl-hit');
   if (mark) el.scrollTop = mark.offsetTop - 6;
+});
+
+// Abstractions: categories on the network, each a node with no face. Switched on, one
+// pulls the characters that surely have its theme more often than the game's average
+// (the Wilson bound of their share above it), the most ABS_MAX of them, the surest hardest.
+// The categories in the list above the network, by section.
+const ABS_SECTIONS = [
+  ['People', { solo: 'Solo', duo: 'Duo', threesome: 'Trio', group: 'Group 4+' }],
+  ['Body', { feet: 'Feet', armpits: 'Armpits', ass: 'Ass', chest: 'Chest', thighs: 'Thighs', hips: 'Hips' }],
+  ['Pairing', { closeness: 'Closeness', yuri: 'Yuri', yaoi: 'Yaoi', incest: 'Incest', ntr: 'NTR' }],
+  ['Power', { femdom: 'Femdom', maledom: 'Maledom' }],
+  ['Type', { milf: 'MILF', muscular_female: 'Muscular female', futanari: 'Futanari', femboy: 'Femboy' }],
+  ['Habits', { alcohol: 'Alcohol', coffee_tea: 'Coffee, tea', smoking: 'Smoking' }],
+];
+const ABSTRACTIONS = Object.assign({}, ...ABS_SECTIONS.map(([, names]) => names));
+// A character's posts with a theme on a site, of what Content counts (all, R-18 or without
+// R-18), and the posts they are a share of. null: no number there; a child has numbers only
+// without R-18 (post_stats.CHILDREN).
+const themeOf = (p, s, name) => {
+  const all = p[`${s}_theme_${name}`];
+  const r18 = p[`${s}_theme_${name}_r18`];
+  if (view.measure === 'r18') return r18 ?? null;
+  if (view.measure === 'safe') return p[`${s}_theme_${name}_safe`] ?? (all != null ? all - (r18 || 0) : null);
+  return all ?? null;
+};
+const themeBase = (p, s) => (view.measure === 'r18' ? p[`${s}_stored_r18`] || 0
+  : view.measure === 'safe' ? (p[`${s}_stored_total`] || 0) - (p[`${s}_stored_r18`] || 0) : p[`${s}_stored_total`] || 0);
+const absSites = (name) => (ready('board') ? chosen().filter((s) => D('board').data.some((p) => themeOf(p, s, name) != null)) : []);
+const absActive = () => view.absPicked.filter((name) => absSites(name).length);
+// Every character with their posts on the chosen sites that count this theme, surest first;
+// only the sites with a number for them.
+const absRows = (name) => {
+  const sites = absSites(name);
+  return D('board').data.map((p) => {
+    const counted = sites.filter((s) => themeOf(p, s, name) != null);
+    return {
+      id: p.id,
+      k: counted.reduce((n, s) => n + themeOf(p, s, name), 0),
+      n: counted.reduce((n, s) => n + themeBase(p, s), 0),
+    };
+  }).filter((r) => r.n > 0).map((r) => ({ ...r, bound: wilson(r.k, r.n) })).sort((a, b) => b.bound - a.bound);
+};
+// The R-18 part of a category's posts on the chosen sites, as its planet fills: of all art its
+// share, of R-18 only full, without R-18 empty. Summed over the characters, so a post with two
+// counts twice on both sides.
+const absFill = (name) => {
+  if (view.measure === 'r18') return 1;
+  if (view.measure === 'safe') return 0;
+  let all = 0;
+  let r18 = 0;
+  for (const p of D('board').data) {
+    for (const s of absSites(name)) {
+      all += p[`${s}_theme_${name}`] || 0;
+      r18 += p[`${s}_theme_${name}_r18`] || 0;
+    }
+  }
+  return all ? r18 / all : 0;
+};
+// A heart, the shape of the R-18 hearts, as [x, y, ...] about its middle, about 2 across.
+const HEART = d3.range(28).flatMap((k) => {
+  const t = (k / 28) * 2 * Math.PI;
+  return [Math.pow(Math.sin(t), 3), -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) / 16];
+});
+const absLinks = (name) => {
+  const rows = absRows(name);
+  const top = rows.length && rows[0].bound > 0 ? rows[0].bound : 1;
+  return rows.map((r) => ({ id: r.id, pull: r.bound / top, share: r.k / r.n, v: r.k }));
+};
+// The categorization card over the network's corner and the list of categories it opens
+// (absOpen); the card is lit while the list is open or a category is on, with how many.
+let absOpen = false;
+const showAbs = () => {
+  const list = document.getElementById('abs-list');
+  const add = document.getElementById('abs-add');
+  list.hidden = !absOpen;
+  add.setAttribute('aria-expanded', String(absOpen));
+  const picked = view.absPicked.length;
+  add.dataset.on = String(picked > 0);
+  const badge = add.querySelector('.zl-abs-add-n');
+  badge.hidden = !picked;
+  badge.textContent = picked;
+  list.querySelectorAll('button').forEach((b) => {
+    b.disabled = !absSites(b.dataset.abs).length;
+    b.setAttribute('aria-pressed', String(view.absPicked.includes(b.dataset.abs)));
+  });
+};
+const absSection = new Map(ABS_SECTIONS.flatMap(([title, names]) => Object.keys(names).map((name) => [name, title])));
+ABS_SECTIONS.forEach(([title], i) => {
+  const part = node('div', 'zl-abs-part');
+  part.dataset.part = title;
+  part.style.setProperty('--i', i);
+  part.append(node('span', 'zl-abs-title', title));
+  document.getElementById('abs-list').append(part);
+});
+Object.entries(ABSTRACTIONS).forEach(([name, label]) => {
+  const b = node('button', null, label);
+  b.type = 'button';
+  b.dataset.abs = name;
+  // A click switches it on and shows it in the panel, as a click on its node does;
+  // on a category already on, it switches it off.
+  b.addEventListener('click', () => {
+    const id = `abs:${name}`;
+    if (view.absPicked.includes(name)) {
+      view.absPicked = view.absPicked.filter((n) => n !== name);
+      if (view.focus === id) view.focus = null;
+    } else {
+      view.absPicked = [...view.absPicked, name];
+      view.focus = id;
+    }
+    showAbs();
+    dash.draw('network');
+    relight();
+    dash.draw('focus-panel');
+  });
+  document.querySelector(`#abs-list [data-part="${absSection.get(name)}"]`).append(b);
+});
+document.getElementById('abs-add').addEventListener('click', () => { absOpen = !absOpen; showAbs(); });
+// the list closes on a press anywhere else, or Escape
+document.addEventListener('pointerdown', (event) => {
+  if (absOpen && !event.target.closest('#abs-dock')) { absOpen = false; showAbs(); }
+});
+document.addEventListener('keydown', (event) => {
+  if (absOpen && event.key === 'Escape') { absOpen = false; showAbs(); }
 });
 
 // The middle button pans; the pointer is captured and the button state
@@ -1189,6 +1652,25 @@ const middlePan = (target, zoom, scale) => {
   window.addEventListener('blur', end);
 };
 
+// The scatter's height, picked above it (view.scatterY): the R-18 share, from the sites'
+// counts; or a share from the store of what Content counts: alone, with someone, or a
+// category (a child has a category's number only without R-18). null: no number.
+const scatterShare = (kind, r, p) => {
+  if (kind === 'r18') return r.share;
+  if (kind === 'alone' || kind === 'with') {
+    const base = chosen().reduce((n, s) => n + themeBase(p, s), 0);
+    if (!base) return null;
+    const alone = view.measure === 'r18' ? stored(p, 'r18_solo')
+      : view.measure === 'safe' ? stored(p, 'safe_solo') : stored(p, 'r18_solo') + stored(p, 'safe_solo');
+    return kind === 'alone' ? alone / base : 1 - alone / base;
+  }
+  const name = kind.slice(4);
+  const sites = absSites(name).filter((s) => themeOf(p, s, name) != null);
+  const base = sites.reduce((n, s) => n + themeBase(p, s), 0);
+  return base ? sites.reduce((n, s) => n + themeOf(p, s, name), 0) / base : null;
+};
+const scatterLabel = (kind) => (kind === 'r18' ? 'R-18 share' : kind === 'alone' ? 'Share alone'
+  : kind === 'with' ? 'Share with someone' : `${ABSTRACTIONS[kind.slice(4)]} share`);
 dash.draw('scatter', (el) => {
   el.replaceChildren();
   onSearch.delete('scatter');
@@ -1196,8 +1678,35 @@ dash.draw('scatter', (el) => {
   if (!ready(boardTotals(), 'board')) return;
   const who = people();
   const v = measure();
-  const pts = boardTotalsFor(keyOf(chosen())).filter((r) => v(r) > 0).map((r) => ({ ...r, p: who.get(r.id), amount: v(r) }));
+  // what the height is: a category no longer counted goes back to R-18
+  const kinds = ['r18', 'alone', 'with', ...Object.keys(ABSTRACTIONS).filter((name) => absSites(name).length).map((name) => `cat:${name}`)];
+  const kind = kinds.includes(view.scatterY) ? view.scatterY : 'r18';
+  const pts = boardTotalsFor(keyOf(chosen())).filter((r) => v(r) > 0)
+    .map((r) => ({ ...r, p: who.get(r.id), amount: v(r), share: scatterShare(kind, r, who.get(r.id)) }))
+    .filter((d) => d.share != null);
+  // the picker of the height is the chart's title: Posts against [R-18 share]
+  const picker = node('select', 'zl-y-pick');
+  picker.setAttribute('aria-label', 'What the height shows');
+  const option = (parent, value, label) => {
+    const o = node('option', null, label);
+    o.value = value;
+    o.selected = value === kind;
+    parent.append(o);
+  };
+  option(picker, 'r18', 'R-18 share');
+  option(picker, 'alone', 'share alone');
+  option(picker, 'with', 'share with someone');
+  for (const [title, names] of ABS_SECTIONS) {
+    const group = node('optgroup');
+    group.label = title;
+    for (const [name, label] of Object.entries(names)) if (kinds.includes(`cat:${name}`)) option(group, `cat:${name}`, `${label} share`);
+    if (group.children.length) picker.append(group);
+  }
+  picker.addEventListener('change', () => { view.scatterY = picker.value; dash.draw('scatter'); });
+  el.closest('.zl-card').querySelector('h3').replaceChildren('Posts against ', picker);
   if (!pts.length) return;
+  // the R-18 share in rose, the rest in the categories' violet
+  const tint = kind === 'r18' ? '#e8578f' : 'var(--zl-solo)';
   const W = el.clientWidth || 600;
   const H = el.closest('.zl-full') ? Math.max(320, el.clientHeight) : 380;
   const I = W < 520 ? 22 : 30;
@@ -1216,7 +1725,7 @@ dash.draw('scatter', (el) => {
     .append('circle').attr('cx', 0.5).attr('cy', 0.5).attr('r', 0.5);
   const grid = svg.insert('g', ':first-child').attr('clip-path', 'url(#zl-clip-plot)');
   const xAxis = svg.append('g').attr('transform', `translate(0,${bottom})`);
-  svg.append('text').attr('x', left).attr('y', 10).text('R-18 share');
+  svg.append('text').attr('x', left).attr('y', 10).text(scatterLabel(kind));
   svg.append('text').attr('x', W).attr('y', H - 2).attr('text-anchor', 'end')
     .text(`${WORD[view.measure][0].toUpperCase()}${WORD[view.measure].slice(1)} (log scale)`);
   // On a face: a line down to each axis, with the value there.
@@ -1266,8 +1775,8 @@ dash.draw('scatter', (el) => {
   const place = () => {
     yAxis.call(d3.axisLeft(y).ticks(5, '.0%').tickSize(0)).attr('font-size', null).attr('font-family', null);
     yAxis.select('.domain').remove();
-    // the higher the share, the rosier its number and line
-    const rosy = (d, base) => `color-mix(in srgb, #e8578f ${Math.round(100 * Math.min(1, d / (y0.domain()[1] || 1)))}%, ${base})`;
+    // the higher the share, the rosier (or more violet) its number and line
+    const rosy = (d, base) => `color-mix(in srgb, ${tint} ${Math.round(100 * Math.min(1, d / (y0.domain()[1] || 1)))}%, ${base})`;
     yAxis.selectAll('text').style('fill', (d) => rosy(d, 'var(--color-fg-muted)'));
     xAxis.call(d3.axisBottom(x).ticks(W < 520 ? 3 : 6, '~s').tickSize(0)).attr('font-size', null).attr('font-family', null);
     xAxis.select('.domain').remove();
@@ -1314,7 +1823,7 @@ dash.draw('scatter', (el) => {
     front.node().append(this.cloneNode(true));
     // a card with the face large, so it can be seen without zooming in
     const lines = node('div');
-    tipLines(lines, [d.p.name, `${fmt(d.amount)} ${WORD[view.measure]}`, `${pct(d.share)} R-18`]);
+    tipLines(lines, [d.p.name, `${fmt(d.amount)} ${WORD[view.measure]}`, `${pct(d.share)} ${kind === 'r18' ? 'R-18' : scatterLabel(kind).replace(/ share$/, '').replace(/^Share /, '').toLowerCase()}`]);
     tip.replaceChildren(icon(d.p.icon, 96), lines);
     tip.hidden = false;
     const k = el.clientWidth / W;
@@ -1372,9 +1881,11 @@ const netData = () => {
   return { key, val, chars, own, pairs };
 };
 // The selected character: the one clicked, or the most drawn.
-// view.focus false: the selection was closed, the network shows every line
+// view.focus false: the selection was closed, the network shows every line.
+// An abstraction switched on can be selected too, as abs:<name>.
+const absFocus = () => (typeof view.focus === 'string' && view.focus.startsWith('abs:') && absActive().includes(view.focus.slice(4)) ? view.focus.slice(4) : null);
 const focusId = (chars) => (view.focus === false ? null
-  : chars.some((r) => r.id === view.focus) ? view.focus : chars[0] && chars[0].id);
+  : absFocus() || chars.some((r) => r.id === view.focus) ? view.focus : chars[0] && chars[0].id);
 // Lights the network for the current selection; set by the network drawing,
 // so the panel's close button can put the network back to all lines.
 let relight = () => {};
@@ -1489,7 +2000,25 @@ const faceAt = (img, want) => {
   if (!at.texture) at.texture = PIXI.Texture.from({ resource: at.picture, autoGenerateMipmaps: at.size < 2 * FACE_MIN });
   return at;
 };
-const pixiNetwork = (renderer, nodes) => {
+// The cut that makes blurred particles one body: opaque where they reach half opacity, clear
+// below, with a thin soft edge, keeping their colour. (PixiJS's colour matrix does not hold the
+// opacity at 1, and its colour turned white.)
+let liquidCut = null;
+const LIQUID_CUT = () => liquidCut || (liquidCut = PIXI.GlProgram.from({
+  vertex: PIXI.defaultFilterVert,
+  fragment: `
+in vec2 vTextureCoord;
+uniform sampler2D uTexture;
+void main()
+{
+  vec4 c = texture(uTexture, vTextureCoord);
+  float a = smoothstep(0.42, 0.58, c.a);
+  vec3 rgb = c.a > 0.0 ? c.rgb / c.a : vec3(0.0);
+  finalColor = vec4(rgb * a, a);
+}
+`,
+}));
+const pixiNetwork = (renderer, nodes, absNodes, textHex) => {
   const stage = new PIXI.Container();
   const world = new PIXI.Container();
   const back = new PIXI.Graphics();
@@ -1498,8 +2027,29 @@ const pixiNetwork = (renderer, nodes) => {
   const plates = new PIXI.Graphics();
   const faces = new PIXI.Container();
   const rings = new PIXI.Graphics();
-  world.addChild(back, litLines, plates, faces, rings);
+  // the categories' planets, drawn apart so their liquid can move on its own: the discs, the
+  // liquid of each (its particles blurred, then cut at half their opacity, so they run together
+  // as one body), and the hearts and rings over it
+  const planets = new PIXI.Graphics();
+  world.addChild(back, litLines, plates, faces, rings, planets);
+  const goos = absNodes.map(() => {
+    const box = new PIXI.Container();
+    const drops = new PIXI.Graphics();
+    const blur = new PIXI.BlurFilter({ strength: 4, quality: 3 });
+    box.filters = [blur, new PIXI.Filter({ glProgram: LIQUID_CUT(), resources: {} })];
+    box.addChild(drops);
+    world.addChild(box);
+    return { box, drops, blur };
+  });
+  const planetsFront = new PIXI.Graphics();
+  world.addChild(planetsFront);
   stage.addChild(world);
+  const labels = absNodes.map((n) => {
+    const label = new PIXI.Text({ text: n.name, resolution: 2, style: { fontFamily: 'system-ui, sans-serif', fontSize: 11, fontWeight: '600', fill: textHex } });
+    label.anchor.set(0.5);
+    world.addChild(label);
+    return label;
+  });
   const sprites = nodes.map(() => {
     const s = new PIXI.Sprite();
     s.anchor.set(0.5);
@@ -1509,7 +2059,7 @@ const pixiNetwork = (renderer, nodes) => {
   });
   const pictures = [];
   return {
-    back, litLines, plates, rings, sprites,
+    back, litLines, plates, rings, planets, planetsFront, goos, sprites, labels,
     setFace: (i, img) => {
       pictures[i] = img;
       sprites[i].zlFace = null;
@@ -1518,6 +2068,8 @@ const pixiNetwork = (renderer, nodes) => {
     render: (view) => {
       world.position.set(view.x, view.y);
       world.scale.set(view.k);
+      // the liquid's blur is in screen pixels: it grows with the zoom, so the body keeps its shape
+      goos.forEach((goo) => { goo.blur.strength = 4 * view.k; });
       sprites.forEach((sprite, i) => {
         if (!pictures[i]) return;
         const at = faceAt(pictures[i], 2 * nodes[i].r * view.k * renderer.resolution);
@@ -1560,7 +2112,10 @@ dash.draw('network', {
     if (made.isHeld && made.isHeld()) { made.pending = true; return; }
     const inputs = ['pair_totals', 'board', 'totals'].map((id) => D(id).data);
     const full = Boolean(el.closest('.zl-full'));
-    const sig = `${view.game}|${keyOf(chosen())}|${view.measure}|${view.period}|${el.clientWidth}|${full ? el.clientHeight : ''}|${document.documentElement.dataset.theme}`;
+    const absOn = absActive();
+    // the categories on only: with none, both modes draw the same network
+    const absKey = absOn.join();
+    const sig = `${view.game}|${keyOf(chosen())}|${view.measure}|${view.period}|${el.clientWidth}|${full ? el.clientHeight : ''}|${document.documentElement.dataset.theme}|${absKey}`;
     if (made.sim && made.sig === sig && inputs.every((d, i) => d === made.inputs[i])) return;
     // the same network at a new size (full screen, a turned phone): the faces
     // stay where they were, about the new middle, and are not laid out again
@@ -1582,8 +2137,16 @@ dash.draw('network', {
     el.replaceChildren();
     startTools(el);
     if (!ready('pair_totals', 'board', 'totals')) return;
+    showAbs();
     const who = people();
-    const { val, chars, pairs } = netData();
+    const data = netData();
+    const { val } = data;
+    // In the category mode the characters no category is counted for (children: stored
+    // posts, no theme numbers) are left out, with their pairs.
+    const child = (p) => absOn.some((name) => absSites(name).some((s) => p[`${s}_stored_total`] != null && themeOf(p, s, name) == null));
+    const children = new Set(D('board').data.filter(child).map((p) => p.id));
+    const chars = data.chars.filter((r) => !children.has(r.id));
+    const pairs = data.pairs.filter((l) => !children.has(l.a) && !children.has(l.b));
     if (!chars.length) return;
 
     // Lines: the network's backbone by the disparity filter (Serrano, Boguna
@@ -1604,16 +2167,44 @@ dash.draw('network', {
     const narrow = W < 520;
     // A face's area is in proportion to its art; a line's width to the art
     // the two share against the biggest pair in the network.
-    const face = d3.scaleSqrt([0, d3.max(chars, val)], [0, narrow ? 24 : 38]);
+    // With categories on, it is in proportion to the posts with them, summed over the categories.
+    const absCount = new Map();
+    for (const name of absOn) for (const r of absRows(name)) absCount.set(r.id, (absCount.get(r.id) || 0) + r.k);
+    const size = absOn.length ? (r) => absCount.get(r.id) || 0 : val;
+    const face = d3.scaleSqrt([0, d3.max(chars, size) || 1], [0, narrow ? 24 : 38]);
     const pairMax = d3.max(pairs, (l) => l.v) || 1;
     const lineWidth = (v) => 1 + (narrow ? 6 : 10) * Math.sqrt(v / pairMax);
     const nodes = chars.map((r, i) => ({
-      id: r.id, r: Math.max(6, face(val(r))), row: r, img: null,
+      id: r.id, r: Math.max(6, face(size(r))), row: r, img: null,
       x: W / 2 + Math.cos(i * 2.4) * (30 + i * 5), y: H / 2 + Math.sin(i * 2.4) * (25 + i * 4),
     }));
     const byId = new Map(nodes.map((n) => [n.id, n]));
+    // The abstractions switched on, each held to its own place on a ring around the network.
+    // fill: the R-18 part of its posts, as the planet fills from below (absFill); hearts: the
+    // hearts in it, in the unit circle: where they start, size, speed up (per ms) and sway phase.
+    const absNodes = absOn.map((name, i) => {
+      const at = (i / absOn.length) * 2 * Math.PI - Math.PI / 2;
+      const ax = W / 2 + Math.cos(at) * Math.max(W, H) * 0.5;
+      const ay = H / 2 + Math.sin(at) * Math.max(W, H) * 0.5;
+      const hearts = d3.range(18).map(() => ({ x: Math.random() * 1.7 - 0.85, y: Math.random() * 2 - 1,
+        s: 0.05 + Math.random() * 0.04, v: 0.00018 + Math.random() * 0.00014, p: Math.random() * 6.28 }));
+      return { id: `abs:${name}`, abs: true, name: ABSTRACTIONS[name], r: narrow ? 34 : 46, ax, ay, x: ax, y: ay,
+        fill: absFill(name), hearts, links: absLinks(name).filter((l) => byId.has(l.id)) };
+    });
+    absNodes.forEach((n) => byId.set(n.id, n));
+    const everyone = nodes.concat(absNodes);
+    const absEdges = absNodes.flatMap((n) => n.links.map((l) => ({ source: n.id, target: l.id, pull: l.pull, v: l.v, share: l.share })));
+    // Every character is pulled; a category's lines go through the pairs' backbone filter
+    // (ALPHA) and the line legend's range, both by the share (pull), not the count.
+    for (const n of absNodes) {
+      const own = absEdges.filter((e) => e.source === n.id && e.v > 0);
+      const all = d3.sum(own, (e) => e.pull);
+      for (const e of own) {
+        e.near = e.pull;
+        e.lined = own.length <= 1 || Math.pow(1 - e.pull / all, own.length - 1) < ALPHA;
+      }
+    }
     const edges = shown.map((l) => ({ source: l.a, target: l.b, l }));
-    const maxNear = d3.max(shown, (l) => l.near) || 1;
     const backbone = d3.group(edges, (e) => Math.round(Math.max(0.75, (narrow ? 10 : 16) * e.l.v / pairMax) * 2) / 2);
 
     // PixiJS sizes the canvas at device pixels (at most 2x) and draws on it.
@@ -1643,6 +2234,10 @@ dash.draw('network', {
     const RING_MIN = 0.35;
     const SCALE = d3.range(4).map((i) => hexOf(resolveColor(`var(--zl-line-${i})`, el)));
     const PLAIN = hexOf(resolveColor('var(--color-fg-muted)', el));
+    const ABS_HEX = hexOf(resolveColor('var(--zl-solo)', el));
+    // --zl-r18 is a gradient: the planets take the R-18 button's rose
+    const R18_HEX = 0xc7366a;
+    const TEXT_HEX = hexOf(resolveColor('var(--color-fg)', el));
     const panelHex = hexOf(resolveColor('var(--color-panel)', el));
     const inRange = (share) => share >= lineRange.low;
     const onScale = (share) => {
@@ -1706,6 +2301,11 @@ dash.draw('network', {
           flat.length = 0;
         });
       }
+      for (const e of absEdges) {
+        if (!e.lined || !inRange(e.near)) continue;
+        back.moveTo(e.source.x, e.source.y).lineTo(e.target.x, e.target.y)
+          .stroke({ width: 1 + 2 * e.pull, color: ABS_HEX, alpha: found ? 0.04 : lit ? 0.1 : 0.4 });
+      }
       litLines.clear();
       if (lit && !found) {
         const from = byId.get(lit.id);
@@ -1717,7 +2317,7 @@ dash.draw('network', {
         }
       }
       plates.clear();
-      for (const n of nodes) plates.circle(n.x, n.y, n.r);
+      for (const n of everyone) plates.circle(n.x, n.y, n.r);
       plates.fill({ color: panelHex });
       rings.clear();
       nodes.forEach((n, i) => {
@@ -1741,11 +2341,172 @@ dash.draw('network', {
           alpha: picked ? 1 : s != null ? RING_MIN + (1 - RING_MIN) * Math.sqrt(s) : 0.3,
         });
       });
+      drawPlanets(performance.now());
+    };
+    // The R-18 liquid in a planet is a few particles that push apart where crowded and pull
+    // together where sparse (the double density relaxation of Clavet, Beaudoin and Poulin,
+    // "Particle-based Viscoelastic Fluid Simulation", 2005), under gravity, inside the ball.
+    // Drawn as one body: the particles blurred and cut at half their opacity (metaballs).
+    // A planet that is moved pushes the liquid the other way, so it runs up a wall and back;
+    // at rest a slow rocking keeps it moving a little. FLUID: per step, in px of the planet's
+    // radius 46 and frames of the flow: gravity, damping, the most speed, stiffness, near
+    // stiffness, the reach of a particle (of the radius), their spacing (of the reach), how
+    // many in a full planet, the rocking, the most push from the planet's moving.
+    // The push of the planet's moving is held under tilt of the gravity: the liquid leans at most
+    // atan(tilt), about 39 degrees, so a small move does not throw it against a wall.
+    const FLUID = { gravity: 0.12, damp: 0.94, fastest: 2.5, stiff: 0.6, near: 1.0, reach: 0.25, spacing: 0.6,
+      full: 140, rock: 0.006, push: 0.4, tilt: 0.8 };
+    const fluidOf = (n) => {
+      if (n.fluid) return n.fluid;
+      const h = n.r * FLUID.reach;
+      const gap = h * FLUID.spacing;
+      const level = n.r * (1 - 2 * Math.min(1, n.fill));
+      const drops = [];
+      // laid out at rest, in rows from the bottom up to the level
+      for (let y = n.r - gap * 0.5, row = 0; y > level; y -= gap * 0.866, row++) {
+        for (let x = -n.r + (row % 2 ? gap / 2 : 0); x < n.r; x += gap) {
+          if (x * x + y * y < (n.r - gap * 0.5) ** 2) drops.push({ x, y, px: x, py: y, vx: 0, vy: 0 });
+        }
+      }
+      const fluid = { drops, h, rest: 0, x: n.x, y: n.y, vx: 0, vy: 0 };
+      // the density each one has at rest, so the liquid neither swells nor sinks at the start
+      const crowd = drops.map((a) => drops.reduce((s, b) => {
+        const d = Math.hypot(b.x - a.x, b.y - a.y);
+        return a === b || d >= h ? s : s + (1 - d / h) ** 2;
+      }, 0)).sort((a, b) => a - b);
+      fluid.rest = crowd[Math.floor(crowd.length * 0.7)] || 1;
+      n.fluid = fluid;
+      return fluid;
+    };
+    const fluidStep = (n, f, ax, ay) => {
+      const { drops, h } = f;
+      const scale = n.r / 46;
+      for (const p of drops) {
+        p.vx = (p.vx + ax) * FLUID.damp;
+        p.vy = (p.vy + FLUID.gravity * scale + ay) * FLUID.damp;
+        const speed = Math.hypot(p.vx, p.vy);
+        if (speed > FLUID.fastest * scale) { p.vx *= (FLUID.fastest * scale) / speed; p.vy *= (FLUID.fastest * scale) / speed; }
+        p.px = p.x;
+        p.py = p.y;
+        p.x += p.vx;
+        p.y += p.vy;
+      }
+      for (const a of drops) {
+        let crowd = 0;
+        let close = 0;
+        const near = [];
+        for (const b of drops) {
+          if (a === b) continue;
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const d = Math.hypot(dx, dy);
+          if (d >= h || d < 1e-6) continue;
+          const q = 1 - d / h;
+          crowd += q * q;
+          close += q * q * q;
+          near.push(b, dx / d, dy / d, q);
+        }
+        const press = FLUID.stiff * (crowd - f.rest);
+        const pressNear = FLUID.near * close;
+        let mx = 0;
+        let my = 0;
+        for (let k = 0; k < near.length; k += 4) {
+          const q = near[k + 3];
+          const move = h * 0.5 * (press * q + pressNear * q * q);
+          near[k].x += near[k + 1] * move;
+          near[k].y += near[k + 2] * move;
+          mx -= near[k + 1] * move;
+          my -= near[k + 2] * move;
+        }
+        a.x += mx;
+        a.y += my;
+      }
+      const wall = n.r - h * 0.45;
+      for (const p of drops) {
+        const d = Math.hypot(p.x, p.y);
+        if (d > wall) { p.x *= wall / d; p.y *= wall / d; }
+        p.vx = p.x - p.px;
+        p.vy = p.y - p.py;
+      }
+    };
+    // The planets, on their own layers, so their liquid can move without the rest being drawn
+    // again (flow below): the disc, the liquid, then the hearts and the ring over it. now: the
+    // time, for the rocking and the hearts; step: a frame of the flow, which moves the liquid on.
+    const drawPlanets = (now, step) => {
+      const back = px.planets;
+      const front = px.planetsFront;
+      back.clear();
+      front.clear();
+      absNodes.forEach((n, i) => {
+        const on = lit && lit.id === n.id;
+        back.circle(n.x, n.y, n.r).fill({ color: ABS_HEX, alpha: on ? 0.45 : 0.25 });
+        const goo = px.goos[i];
+        goo.drops.clear();
+        if (n.fill >= 1) {
+          // all R-18 (R-18 only): a full ball, no liquid to move, the hearts rising all through it
+          back.circle(n.x, n.y, n.r).fill({ color: R18_HEX, alpha: 0.92 });
+          for (const h of n.hearts) {
+            const y = ((((h.y + 1 - now * h.v) % 2) + 2) % 2) - 1;
+            const x = h.x + 0.06 * Math.sin(now * 0.0015 + h.p);
+            if (x * x + y * y > 0.75) continue;
+            const s = h.s * n.r;
+            front.poly(HEART.map((v, k) => (k % 2 ? n.y + y * n.r + v * s : n.x + x * n.r + v * s))).fill({ color: 0x5c0b29, alpha: 0.75 });
+          }
+        } else if (n.fill > 0) {
+          const f = fluidOf(n);
+          if (step) {
+            // the planet's own speeding up, which the liquid lags behind, and the rocking; its
+            // speed is smoothed, so the pointer's jerks do not kick the liquid
+            const vx = f.vx * 0.7 + (n.x - f.x) * 0.3;
+            const vy = f.vy * 0.7 + (n.y - f.y) * 0.3;
+            const most = FLUID.gravity * FLUID.tilt * (n.r / 46);
+            const ax = Math.max(-most, Math.min(most, -(vx - f.vx) * FLUID.push)) + FLUID.rock * (Math.sin(now * 0.0011) + 0.6 * Math.sin(now * 0.0027));
+            const ay = Math.max(-most, Math.min(most, -(vy - f.vy) * FLUID.push));
+            f.x = n.x;
+            f.y = n.y;
+            f.vx = vx;
+            f.vy = vy;
+            fluidStep(n, f, ax / 2, ay / 2);
+            fluidStep(n, f, ax / 2, ay / 2);
+          }
+          const size = f.h * 0.55;
+          for (const p of f.drops) goo.drops.circle(n.x + p.x, n.y + p.y, size);
+          goo.drops.fill({ color: R18_HEX });
+          // the hearts rise like the bubbles in sparkling wine, only where the liquid is
+          for (const h of n.hearts) {
+            const y = ((((h.y + 1 - now * h.v) % 2) + 2) % 2) - 1;
+            const x = h.x + 0.06 * Math.sin(now * 0.0015 + h.p);
+            if (x * x + y * y > 0.75) continue;
+            const lx = x * n.r;
+            const ly = y * n.r;
+            const reach = f.h * 0.5;
+            if (!f.drops.some((p) => Math.abs(p.x - lx) < reach && Math.abs(p.y - ly) < reach)) continue;
+            const s = h.s * n.r;
+            front.poly(HEART.map((v, k) => (k % 2 ? n.y + ly + v * s : n.x + lx + v * s))).fill({ color: 0x5c0b29, alpha: 0.75 });
+          }
+        }
+        front.circle(n.x, n.y, n.r).stroke({ width: on ? 4 : 2.5, color: n.fill >= 1 ? R18_HEX : ABS_HEX, alpha: 1 });
+        px.labels[i].position.set(n.x, n.y);
+      });
     };
     let lit = null;
     const light = (id) => {
       dirty = true;
       if (id == null) { lit = null; paint(); return; }
+      const group = absNodes.find((n) => n.id === id);
+      if (group) {
+        // as a character's partners: every one gets a ring, lines go to those linesEnd takes
+        // by the share: linesEnd reads v, so it gets the share in thousandths
+        const mates = group.links.filter((l) => l.v > 0).map((l) => ({ ...l, v: l.pull * 1000 })).sort((a, b) => b.v - a.v);
+        lit = {
+          id,
+          strength: new Map(mates.map((l) => [l.id, l.pull])),
+          far: new Map(mates.map((l) => [l.id, l.pull])),
+          lines: mates.slice(0, linesEnd(mates)).map((l) => ({ other: byId.get(l.id), v: pairMax * 0.05, near: l.pull, far: l.pull })),
+        };
+        paint();
+        return;
+      }
       const mates = partnersOf(pairs, id).filter((l) => l.v > 0);
       const top = d3.max(mates, (l) => l.v) || 1;
       const linked = mates.slice(0, linesEnd(mates));
@@ -1777,15 +2538,47 @@ dash.draw('network', {
       if (left === 0 && live()) {
         sim.tick();
         dirty = true;
+        if (refit) fit();
         if (live()) paint(); // the next step
-        else keep(); // came to rest
+        else { refit = false; keep(); } // came to rest
       }
       if (px) {
         if (dirty) { buildPixi(); dirty = false; }
         px.render(view2d);
       }
       if (held) place(held);
+      startFlow();
     }
+    // The planets' liquid moves 30 times a second while one with some is on screen (the canvas
+    // in the page's view, the planet in the canvas's), the page's animations are on (motionOff)
+    // and the window is in front (pageAwake): only their layer is drawn again, the rest of the
+    // scene is put on screen as it is. A frame drawn for any other reason starts it again.
+    const FLOW_MS = 33;
+    let flowing = false;
+    let lastFlow = 0;
+    let canvasSeen = false;
+    const seen = new IntersectionObserver(([entry]) => { canvasSeen = entry.isIntersecting; startFlow(); });
+    seen.observe(canvas);
+    listen.signal.addEventListener('abort', () => seen.disconnect());
+    const planetSeen = (n) => {
+      const [x, y] = view2d.apply([n.x, n.y]);
+      const r = n.r * view2d.k;
+      return x > -r && x < W + r && y > -r && y < H + r;
+    };
+    const canFlow = () => !motionOff() && pageAwake() && canvasSeen && absNodes.some((n) => n.fill > 0 && planetSeen(n));
+    const flow = (now) => {
+      if (made.sim !== sim || !px || !canFlow()) { flowing = false; return; }
+      if (now - lastFlow >= FLOW_MS) {
+        lastFlow = now;
+        drawPlanets(now, true);
+        px.render(view2d);
+      }
+      requestAnimationFrame(flow);
+    };
+    const startFlow = () => { if (!flowing && px && canFlow()) { flowing = true; requestAnimationFrame(flow); } };
+    on(document, 'visibilitychange', startFlow);
+    on(window, 'focus', startFlow);
+    on(document, 'zl-motion', startFlow);
 
     const pointer = (event) => {
       const [x, y] = d3.pointer(event, canvas);
@@ -1819,40 +2612,164 @@ dash.draw('network', {
 
     // The pushing apart and the line lengths shrink with the box's room per
     // face: in a phone-sized box the full push sent most faces against the
-    // edges, where they stood in a square. Faces with few lines (little
-    // pulls them in) are held nearer the middle.
+    // edges, where they stood in a square.
     const room = Math.min(1, (W * H) / (nodes.length * 3200));
-    const lines = new Map();
-    for (const e of edges) for (const id of [e.source, e.target]) lines.set(id, (lines.get(id) || 0) + 1);
-    const hold = (d) => ((lines.get(d.id) || 0) < 2 ? 0.2 : 0.06);
-    // A line pulls in proportion to the art the two share: the network's
-    // biggest pair pulls with LINK_MAX, a pair with half its art with half.
-    const LINK_MAX = 0.8;
-    const shownMax = d3.max(edges, (e) => e.l.v) || 1;
-    const sim = d3.forceSimulation(nodes)
-      .force('link', d3.forceLink(edges).id((d) => d.id).distance((e) => (60 + 110 * (1 - e.l.near / maxNear)) * Math.sqrt(room)).strength((e) => LINK_MAX * e.l.v / shownMax))
-      .force('charge', d3.forceManyBody().strength(-200 * room))
-      .force('collide', d3.forceCollide((d) => d.r + 4))
+    // Both modes have the same forces, and the layout is what they make together; with no
+    // category picked, Relations and Categorization look alike. The pairs place the
+    // characters by their share (nearPairs), the faces sized by their art. A category is the
+    // strongest and works only along the line to it (catForce): it holds a character with
+    // posts with it, as hard as their share of posts (pull: the Wilson bound against the
+    // category's biggest), at a distance from near (the biggest share) to far (the
+    // smallest), and pushes one with none out to out, letting them be beyond it. Around a
+    // category the pairs place the characters. A character with a category is not held to
+    // the middle at all (it would drag the cloud to one side); one with none only faintly.
+    // The push apart works only near (chargeReach): characters crowded on one side of a
+    // category push each other around it, far ones do not push at all. gap: the room kept
+    // free between two faces. friction: the share of its speed a face loses each step
+    // (d3's velocityDecay, 0.4 by default); the crowded clouds shook with less.
+    const CAT = { pull: 0.6, near: 70, far: 300, out: 600, pair: 0.3, pairFree: 1.2, pairLength: 50, pairReach: 250, charge: -200, chargeReach: 100, absCharge: 0, hold: 0.01, gap: 14, friction: 0.7 };
+    const catForce = (alpha) => {
+      const s = Math.sqrt(room);
+      for (const e of absEdges) {
+        const c = e.source;
+        const n = e.target;
+        const dx = n.x + n.vx - c.x;
+        const dy = n.y + n.vy - c.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        const goal = (e.v > 0 ? CAT.near + (CAT.far - CAT.near) * (1 - e.pull) : CAT.out) * s;
+        if (e.v === 0 && dist >= goal) continue;
+        // a character is held as hard as their share: with two categories on, the one with
+        // a few posts of the other is held by it barely and goes to their own
+        const k = ((goal - dist) / dist) * alpha * CAT.pull * (e.v > 0 ? e.pull : 1);
+        n.vx += dx * k; n.vy += dy * k;
+      }
+    };
+    // A drawn pair pulls by a share, not a count: the part of the more drawn one's art the
+    // two share (the Wilson bound, as the categories), against the network's biggest. A main
+    // character shares a small part of their art with each partner and pulls none of them
+    // much; close partners find each other, pushing aside who is between. With no category
+    // on, a pair pulls at any distance, as hard as pairFree, so a face dragged away comes
+    // back. With categories, it pulls only while the two are near: the pull fades with the
+    // distance and is gone at pairReach, so a partner pushed out of a cloud does not drag it.
+    const pairBound = new Map(edges.map((e) => [e, wilson(e.l.v, Math.max(data.own.get(e.l.a), data.own.get(e.l.b)))]));
+    const boundMax = d3.max(pairBound.values()) || 1;
+    const nearPairs = (alpha) => {
+      const length = CAT.pairLength * Math.sqrt(room);
+      const reach = CAT.pairReach * Math.sqrt(room);
+      const free = absNodes.length === 0;
+      for (const e of edges) {
+        const a = e.source;
+        const b = e.target;
+        const dx = b.x + b.vx - a.x - a.vx;
+        const dy = b.y + b.vy - a.y - a.vy;
+        const dist = Math.hypot(dx, dy) || 1;
+        if (!free && dist >= reach) continue;
+        const share = pairBound.get(e) / boundMax;
+        const pull = free ? CAT.pairFree : CAT.pair * (1 - dist / reach);
+        const k = ((dist - length) / dist) * alpha * pull * share / 2;
+        a.vx += dx * k; a.vy += dy * k;
+        b.vx -= dx * k; b.vy -= dy * k;
+      }
+    };
+    // the pull to the box's middle (or a planet's place): a planet firmly, a character with a
+    // category not at all, the rest faintly
+    const hold = (d) => (d.abs ? 0.12 : absCount.get(d.id) ? 0 : CAT.hold);
+    const sim = d3.forceSimulation(everyone)
+      .velocityDecay(CAT.friction)
+      // cools about twice as slowly as d3's own (0.0228): with the friction, a face let go far
+      // from its partners stopped halfway back
+      .alphaDecay(0.012)
+      // only to tie the pairs to their faces: nearPairs pulls them
+      .force('link', d3.forceLink(edges).id((d) => d.id).strength(0))
+      .force('near', nearPairs)
+      // only to tie the categories' lines to their faces: catForce places the characters
+      .force('abs', d3.forceLink(absEdges).id((d) => d.id).strength(0))
+      .force('cat', catForce)
+      .force('charge', d3.forceManyBody().strength((d) => (d.abs ? CAT.absCharge : CAT.charge) * room)
+        .distanceMax(CAT.chargeReach * Math.sqrt(room)))
+      .force('collide', d3.forceCollide((d) => d.r + CAT.gap / 2))
       // the box's short side holds harder (a tall phone screen in full screen)
-      .force('x', d3.forceX(W / 2).strength((d) => hold(d) * Math.max(1, H / W)))
-      .force('y', d3.forceY(H / 2).strength((d) => hold(d) * 1.3 * Math.max(1, W / H)))
+      .force('x', d3.forceX((d) => (d.abs ? d.ax : W / 2)).strength((d) => hold(d) * Math.max(1, H / W)))
+      .force('y', d3.forceY((d) => (d.abs ? d.ay : H / 2)).strength((d) => hold(d) * 1.3 * Math.max(1, W / H)))
       .alphaMin(0.02)
       .stop();
     // The layout is worked out about 8 ms a frame and drawn as it settles, so
     // the page keeps answering. One already worked out for this game, sites
     // and content (with any faces dragged since) is put back at once.
-    const saved = layouts.get(sig);
-    const known = (saved && nodes.every((n) => saved.has(n.id))) || (before && nodes.every((n) => before.has(n.id)));
+    // Another set of categories: a new layout is made.
+    const moved = Boolean(before) && made.absKey !== absKey;
+    let refit = moved;
+    const saved = moved ? null : layouts.get(sig);
+    const known = !moved && ((saved && nodes.every((n) => saved.has(n.id))) || (before && nodes.every((n) => before.has(n.id))));
     // a layout put back is at rest: the frames must not move it again
     if (known) {
-      nodes.forEach((n) => {
+      everyone.forEach((n) => {
         if (saved && saved.has(n.id)) [n.x, n.y] = saved.get(n.id);
-        else { const [dx, dy] = before.get(n.id); n.x = W / 2 + dx; n.y = H / 2 + dy; }
+        else if (before && before.has(n.id)) { const [dx, dy] = before.get(n.id); n.x = W / 2 + dx; n.y = H / 2 + dy; }
       });
       sim.alpha(0);
     }
+    // A new layout starts each character around their strongest
+    // category, at the distance its pull asks for: coming from the middle, they gathered
+    // on one side of it only. Around a category they go in a ring by their pairs, not by
+    // how much they are drawn: each next is the one sharing the most (pairBound) with
+    // those placed, the last placed weighing most, so close partners start side by side.
+    // The ring starts with the one sharing the most with the rest of the cloud. The rest,
+    // with no category on (every one, with none picked), go in the same chain on a spiral
+    // out from the middle, each step about a face apart, so close partners start side by side.
+    if (!known) {
+      const strongest = new Map();
+      for (const e of absEdges) {
+        const best = strongest.get(e.target.id);
+        if (e.pull > 0 && (!best || e.pull > best.pull)) strongest.set(e.target.id, e);
+      }
+      const tie = new Map();
+      for (const [e, b] of pairBound) {
+        for (const [x, y] of [[e.l.a, e.l.b], [e.l.b, e.l.a]]) {
+          if (!tie.has(x)) tie.set(x, new Map());
+          tie.get(x).set(y, b);
+        }
+      }
+      const tieOf = (x, y) => (tie.has(x) && tie.get(x).get(y)) || 0;
+      const chainOf = (own) => {
+        const rest = new Set(own);
+        const ring = [];
+        while (rest.size) {
+          let next = null;
+          let best = -1;
+          for (const n of rest) {
+            let b = 0;
+            if (!ring.length) b = d3.sum(own, (m) => tieOf(n.id, m.id));
+            for (let j = ring.length - 1, w = 1; j >= 0 && w > 0.01; j--, w /= 2) b += w * tieOf(ring[j].id, n.id);
+            if (b > best) { best = b; next = n; }
+          }
+          ring.push(next);
+          rest.delete(next);
+        }
+        return ring;
+      };
+      // an Archimedean spiral with its turns step apart, walked in steps of step
+      const step = (2 * d3.mean(nodes, (n) => n.r) + CAT.gap) || 40;
+      chainOf(nodes.filter((n) => !strongest.has(n.id))).forEach((n, i) => {
+        const at = Math.sqrt(4 * Math.PI * i);
+        n.x = W / 2 + Math.cos(at) * at * step / (2 * Math.PI);
+        n.y = H / 2 + Math.sin(at) * at * step / (2 * Math.PI);
+      });
+      for (const c of absNodes) {
+        const ring = chainOf(nodes.filter((n) => strongest.has(n.id) && strongest.get(n.id).source === c));
+        ring.forEach((n, i) => {
+          const e = strongest.get(n.id);
+          const at = (i / ring.length) * 2 * Math.PI;
+          const d = (CAT.near + (CAT.far - CAT.near) * (1 - e.pull)) * Math.sqrt(room);
+          n.x = c.x + Math.cos(at) * d;
+          n.y = c.y + Math.sin(at) * d;
+        });
+      }
+    }
+    // An abstraction is a planet: it stays where it is and pulls, its characters do not move it.
+    absNodes.forEach((n) => { n.fx = n.x; n.fy = n.y; });
     let left = known ? 0 : 300;
-    const keep = () => layouts.set(sig, new Map(nodes.map((n) => [n.id, [n.x, n.y]])));
+    const keep = () => layouts.set(sig, new Map(everyone.map((n) => [n.id, [n.x, n.y]])));
     const settle = () => {
       if (made.sim !== sim) return; // a newer drawing took its place
       const until = performance.now() + 8;
@@ -1866,6 +2783,7 @@ dash.draw('network', {
 
     let held = null;
     let hover = null;
+    const tipOf = (n) => [n.abs ? n.name : who.get(n.id).name];
     on(canvas, 'pointermove', (event) => {
       if (held || pan || event.pointerType === 'touch') return;
       const n = faceAt(event);
@@ -1873,7 +2791,7 @@ dash.draw('network', {
       hover = n;
       canvas.style.cursor = n ? 'pointer' : '';
       light(n ? n.id : focusId(chars));
-      if (n) { tipLines(tip, [who.get(n.id).name]); place(n); } else tip.hidden = true;
+      if (n) { tipLines(tip, tipOf(n)); place(n); } else tip.hidden = true;
     });
     on(canvas, 'pointerleave', (event) => {
       if (held || event.pointerType === 'touch') return;
@@ -1895,7 +2813,7 @@ dash.draw('network', {
     // only moves and scales the picture; nothing is built again.
     const bounds = () => {
       let x0 = Infinity; let y0 = Infinity; let x1 = -Infinity; let y1 = -Infinity;
-      for (const n of nodes) { x0 = Math.min(x0, n.x - n.r); y0 = Math.min(y0, n.y - n.r); x1 = Math.max(x1, n.x + n.r); y1 = Math.max(y1, n.y + n.r); }
+      for (const n of everyone) { x0 = Math.min(x0, n.x - n.r); y0 = Math.min(y0, n.y - n.r); x1 = Math.max(x1, n.x + n.r); y1 = Math.max(y1, n.y + n.r); }
       return { x0, y0, x1, y1 };
     };
     const FIT_PAD = 12;
@@ -1992,9 +2910,10 @@ dash.draw('network', {
     // (d3.drag) and a finger held on a face on the page (below).
     const take = (n) => {
       held = n;
+      refit = false;
       if (view.focus !== n.id) pick(n.id);
       canvas.style.cursor = 'grabbing';
-      tipLines(tip, [who.get(n.id).name]);
+      tipLines(tip, tipOf(n));
       // The layout rests with alpha far below alphaMin; raised only by
       // alphaTarget, it would stop again on the first step (the first two
       // drags froze). It starts above alphaMin and rises from there; the
@@ -2016,7 +2935,8 @@ dash.draw('network', {
       canvas.style.cursor = '';
       tip.hidden = true;
       sim.alphaTarget(0);
-      n.fx = null; n.fy = null;
+      // a planet stays where it is let go
+      if (!n.abs) { n.fx = null; n.fy = null; }
       if (made.pending) { made.pending = false; dash.draw('network'); }
     };
     d3.select(canvas).call(d3.drag()
@@ -2091,7 +3011,8 @@ dash.draw('network', {
     made.inputs = inputs;
     made.isHeld = () => held != null;
     made.shape = shape;
-    made.nodes = nodes;
+    made.nodes = everyone;
+    made.absKey = absKey;
     made.middle = [W / 2, H / 2];
     if (!window.PIXI) { el.append(node('p', 'zl-note', 'The network could not load its drawing library (PixiJS).')); return; }
     {
@@ -2108,7 +3029,7 @@ dash.draw('network', {
           renderer.resize(W, H);
           canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
           canvas.style.touchAction = 'pan-x pan-y';
-          px = pixiNetwork(renderer, nodes);
+          px = pixiNetwork(renderer, nodes, absNodes, TEXT_HEX);
           made.px = px;
           nodes.forEach((n, i) => { if (n.img) px.setFace(i, n.img); });
           // Drawn now, not on the next frame: a phone going full screen holds
@@ -2119,6 +3040,7 @@ dash.draw('network', {
           dirty = false;
           px.render(view2d);
           paint();
+          startFlow();
         })
         .catch((error) => console.error('network renderer:', error));
     }
@@ -2134,16 +3056,29 @@ dash.draw('focus-panel', (el) => {
   el.hidden = true;
   if (!ready('pair_totals', 'board', 'totals')) return;
   const who = people();
-  const { val, chars, pairs } = netData();
+  const { chars, pairs, own } = netData();
   const id = focusId(chars);
   if (!id) return;
   el.hidden = false;
   const row = chars.find((r) => r.id === id);
   const p = who.get(id);
-  const mates = partnersOf(pairs, id);
+  const group = absFocus();
+  // The list goes by count or by share (view.mateSort, kept apart for a category and a
+  // character): a category's characters by their posts with it, or the share of their posts
+  // it is; a character's partners by their art together, or the share of the partner's art
+  // that is with this character. A share goes by the Wilson bound, as everywhere.
+  const sortBy = view.mateSort[group ? 'group' : 'char'];
+  const mates = group
+    ? absRows(group).filter((r) => r.k > 0).map((r) => ({ other: r.id, n: r.n, share: r.k / r.n, bound: r.bound, v: r.k }))
+    : partnersOf(pairs, id).map((l) => {
+      const n = own.get(l.other) || l.v;
+      return { ...l, n, share: l.v / n, bound: wilson(l.v, n) };
+    });
+  mates.sort(sortBy === 'pct' ? (a, b) => b.bound - a.bound : (a, b) => b.v - a.v);
   const head = node('div', 'zl-panel-head');
   const title = node('div', 'zl-panel-title');
-  title.append(node('div', 'zl-name', p.name), node('div', 'zl-note', `#${row.rank} · ${fmt(row.total)} posts`));
+  if (group) title.append(node('div', 'zl-name', ABSTRACTIONS[group]), node('div', 'zl-note', `${fmt(mates.length)} characters`));
+  else title.append(node('div', 'zl-name', p.name), node('div', 'zl-note', `#${row.rank} · ${fmt(row.total)} posts`));
   // A tap on the face's row or its share opens or folds the list; the arrow
   // says which (open: it points the way the panel folds). Full screen on a
   // narrow screen the panel is a sheet at the bottom, folded at first, and
@@ -2151,7 +3086,8 @@ dash.draw('focus-panel', (el) => {
   // The selection itself goes with a click on the network's background.
   const arrow = node('span', 'zl-sheet-arrow');
   arrow.setAttribute('aria-hidden', 'true');
-  head.append(icon(p.icon, 64), title, arrow);
+  if (!group) head.append(icon(p.icon, 64));
+  head.append(title, arrow);
   const sheet = Boolean(el.closest('.zl-full')) && matchMedia('(max-width: 900px)').matches;
   const isOpen = () => (sheet ? Boolean(view.sheetOpen) : view.panelOpen !== false);
   el.classList.toggle('zl-open', isOpen());
@@ -2162,18 +3098,57 @@ dash.draw('focus-panel', (el) => {
     el.scrollTop = 0;
   };
   el.append(head);
-  if (view.measure !== 'safe') el.append(shareBar(row.share));
-  el.append(node('p', 'zl-note', `Drawn together with ${fmt(mates.length)} other characters.`),
-    node('h4', 'zl-panel-sub', view.measure === 'r18' ? 'Most R-18 art with' : view.measure === 'safe' ? 'Most art without R-18 with' : 'Most art with'));
+  if (!group && view.measure !== 'safe') el.append(shareBar(row.share));
+  if (!group) el.append(node('p', 'zl-note', `Drawn together with ${fmt(mates.length)} other characters.`));
+  const sub = node('div', 'zl-panel-subrow');
+  // what the bars' colours are, in place of a title
+  const shareRows = group || sortBy === 'pct';
+  const keys = shareRows
+    ? [['zl-sw-solo', group ? ABSTRACTIONS[group] : `with ${p.name}`], ['zl-sw-all', 'their other art']]
+    : view.measure === 'all' ? [['zl-sw-r18', 'R-18'], ['zl-sw-all', 'not R-18']]
+      : [[view.measure === 'r18' ? 'zl-sw-r18' : 'zl-sw-all', view.measure === 'r18' ? 'R-18 together' : 'together, not R-18']];
+  const legend = node('ul', 'zl-key zl-panel-key');
+  for (const [swatch, name] of keys) {
+    const li = node('li');
+    li.append(node('span', `zl-sw ${swatch}`), node('span', null, name));
+    legend.append(li);
+  }
+  sub.append(legend);
+  // the sort: count (#) or share (%)
+  const sorts = node('div', 'zl-seg zl-mate-sort');
+  sorts.setAttribute('role', 'group');
+  sorts.setAttribute('aria-label', 'Sort the list');
+  for (const [key, label, tip] of [['count', '#', 'By how much art'], ['pct', '%', 'By what share of their art']]) {
+    const b = node('button', null, label);
+    b.type = 'button';
+    b.title = tip;
+    b.setAttribute('aria-pressed', String(sortBy === key));
+    b.addEventListener('click', (event) => {
+      event.stopPropagation();
+      view.mateSort[group ? 'group' : 'char'] = key;
+      dash.draw('focus-panel');
+    });
+    sorts.append(b);
+  }
+  sub.append(sorts);
+  el.append(sub);
   const list = node('ol', 'zl-mates');
   const top = mates;
-  const max = d3.max(top, (l) => l.v) || 1;
+  const shares = shareRows;
+  const max = d3.max(top, (l) => (shares ? l.n : l.v)) || 1;
   for (const l of top) {
     const li = node('li', 'zl-mate');
     li.dataset.key = l.a + '|' + l.b;
     const body = node('div', 'zl-mate-body');
-    body.append(node('div', 'zl-name', who.get(l.other).name),
-      view.measure === 'all' ? barLine(l.total, l.r18, max) : barLine(l.v, null, max));
+    // by share: the other's posts, the violet part those with the category or this character;
+    // sorted by share, each bar the full width, so the violet part is the share itself
+    const line = shares ? barLine(l.n, l.v, sortBy === 'pct' ? l.n : max, `${pct(l.share)} · ${short(l.v)}`)
+      : view.measure === 'all' ? barLine(l.total, l.r18, max) : barLine(l.v, null, max);
+    if (shares) {
+      line.classList.add('zl-barline-wide');
+      line.querySelector('.zl-bar-r18').classList.add('zl-bar-abs');
+    }
+    body.append(node('div', 'zl-name', who.get(l.other).name), line);
     li.append(icon(who.get(l.other).icon, 32), body);
     // a click on a partner selects it, in the network and here
     li.title = `Show ${who.get(l.other).name}`;
@@ -2235,9 +3210,29 @@ document.querySelectorAll('[data-game]').forEach((btn) => {
 document.addEventListener('click', (event) => { if (!switcher.contains(event.target)) switcher.open = false; });
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && switcher.open) { switcher.open = false; switcher.querySelector('summary').focus(); } });
 
+const showSort = () => {
+  document.querySelectorAll('[data-block]').forEach((b) => {
+    b.setAttribute('aria-pressed', String(b.dataset.block === view.block));
+    // the arrow stands on what the list is sorted by: alone or with someone when picked, else the block
+    b.querySelector('.zl-arrow').textContent = b.dataset.block !== view.block || isSoloSort() ? '' : view.dir === 'asc' ? ' ↑' : ' ↓';
+  });
+  document.querySelector('[data-block="r18"]').disabled = view.measure === 'safe';
+  document.querySelector('[data-block="safe"]').disabled = view.measure === 'r18';
+  document.querySelectorAll('[data-who]').forEach((b) => {
+    b.setAttribute('aria-pressed', String(b.dataset.who === view.who));
+    b.querySelector('.zl-arrow').textContent = b.dataset.who !== view.who || !isSoloSort() ? '' : view.dir === 'asc' ? ' ↑' : ' ↓';
+  });
+  document.querySelector('[data-scale="pct"]').disabled = scope() === 'all' && !isSoloSort();
+  document.querySelectorAll('[data-scale]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.scale === (inShares() ? 'pct' : 'abs'))));
+};
+const setPeriod = (period) => {
+  view.period = period;
+  document.querySelectorAll('[data-period]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.period === period)));
+};
 document.querySelectorAll('.zl-sites input').forEach((box) => {
   box.addEventListener('change', () => {
     if (!document.querySelector('.zl-sites input:checked')) box.checked = true;
+    if (isSoloSort() && !soloReady()) { view.who = 'all'; showSort(); }
     redrawAll();
   });
 });
@@ -2294,6 +3289,23 @@ themeButton.addEventListener('click', () => {
   showTheme(theme);
   redrawAll();
 });
+// The animations: on unless switched off with the button, kept for the next visit. A switch
+// on tells the moving parts (zl-motion) to start again.
+const motionButton = document.getElementById('motion');
+const showMotion = (on) => {
+  document.documentElement.dataset.motion = on ? 'on' : 'off';
+  motionButton.setAttribute('aria-pressed', String(on));
+  const next = on ? 'Stop the animations' : 'Play the animations';
+  motionButton.setAttribute('aria-label', next);
+  motionButton.title = next;
+};
+showMotion((() => { try { return localStorage.getItem('tagstats-motion') !== 'off'; } catch (e) { return true; } })());
+motionButton.addEventListener('click', () => {
+  const on = document.documentElement.dataset.motion === 'off';
+  try { localStorage.setItem('tagstats-motion', on ? 'on' : 'off'); } catch (e) { /* only this visit */ }
+  showMotion(on);
+  document.dispatchEvent(new Event('zl-motion'));
+});
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
   if (pickedTheme()) return;
   showTheme(systemTheme());
@@ -2313,23 +3325,40 @@ moreButton.addEventListener('click', () => {
 });
 document.querySelectorAll('[data-period]').forEach((btn) => {
   btn.addEventListener('click', () => {
-    view.period = btn.dataset.period;
-    document.querySelectorAll('[data-period]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+    setPeriod(btn.dataset.period);
+    if (isSoloSort() && !soloReady()) { view.who = 'all'; showSort(); }
     showMoreCount();
     redrawAll();
   });
 });
-document.querySelectorAll('[data-sort]').forEach((btn) => {
+// A second click on the button already chosen, in either group, turns the order round.
+for (const name of ['block', 'who']) {
+  document.querySelectorAll(`[data-${name}]`).forEach((btn) => {
+    btn.addEventListener('click', () => {
+      view.dir = view[name] === btn.dataset[name] && view.dir === 'desc' ? 'asc' : 'desc';
+      view[name] = btn.dataset[name];
+      showSort();
+      if (isSoloSort() && !soloReady()) { useSoloSites(); return; }
+      dash.draw('podium');
+      dash.draw('bars');
+    });
+  });
+}
+document.querySelectorAll('[data-scale]').forEach((btn) => {
   btn.addEventListener('click', () => {
-    view.sort = btn.dataset.sort;
-    document.querySelectorAll('[data-sort]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+    view.scale = btn.dataset.scale;
+    showSort();
     dash.draw('podium');
     dash.draw('bars');
   });
 });
+showSort();
 document.querySelectorAll('[data-measure]').forEach((btn) => {
   btn.addEventListener('click', () => {
     view.measure = btn.dataset.measure;
+    // Content can leave out the block sorted by
+    if ((view.measure === 'safe' && view.block === 'r18') || (view.measure === 'r18' && view.block === 'safe')) view.block = 'all';
+    showSort();
     document.querySelectorAll('[data-measure]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
     document.querySelectorAll('[data-legend]').forEach((key) => { key.hidden = key.dataset.legend !== view.measure; });
     redrawAll();
@@ -2374,15 +3403,14 @@ searchBox.addEventListener('keydown', (event) => {
 // them, so a long list moves no hidden layers. An IntersectionObserver says
 // which are on screen; parts drawn later are found as they are added. Each
 // part gets its own speed, start and pattern offset, so no two move alike.
-// The loop runs only while a part is on screen and the tab is shown; with
-// reduced motion the hearts stay still.
+// The loop runs only while a part is on screen and the tab is shown; with the
+// animations off (motionOff) the hearts stay still.
 (() => {
-  const TARGET = '.zl-bar-r18, .zl-bar-dark, .zl-seg button[data-measure="r18"], .zl-seg button[data-sort="share"]';
+  const TARGET = '.zl-bar-r18, .zl-bar-dark, .zl-seg button[data-measure="r18"]';
   const FPS = 30;
   // No hearts on a narrower part: none would show, and the moving layer inside
   // a part under about 1 px paints it black.
   const MIN_WIDTH = 16;
-  const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const rand = (a, b) => a + Math.random() * (b - a);
   const shown = new Set();
   const vary = (el) => {
@@ -2401,11 +3429,32 @@ searchBox.addEventListener('keydown', (event) => {
     const t2 = ((now + h.o2) % h.d2) / h.d2;
     el.style.setProperty('--zl-m1', `translateY(${(-48 * t1).toFixed(1)}px)`);
     el.style.setProperty('--zl-m2', `translate(${(5 * Math.sin(t2 * 2 * Math.PI)).toFixed(1)}px, ${(-64 * t2).toFixed(1)}px)`);
+    if (el.zlWave) sloshWave(el.zlWave, el, now);
   };
+  // The edge of what a block lights sloshes in place: a standing wave, which stays where
+  // it is and only rises and falls. The width is read once.
+  const sloshWave = (w, el, now) => {
+    if (!w.width) {
+      w.width = el.clientWidth;
+      w.height = el.clientHeight;
+      w.wave.setAttribute('viewBox', `0 0 ${w.width} ${w.height}`);
+    }
+    const x = w.width * w.solo;
+    // a fill that reaches the end of its block stays flat there, with no gap curving in
+    const flat = w.width - x <= WAVE * 2;
+    const swing = flat ? 0 : Math.sin(now * 0.0024 + w.phase) * WAVE;
+    const end = flat ? w.width : x;
+    let d = 'M0 0';
+    for (let y = 0; y <= w.height; y += 2) d += `L${(end + swing * Math.sin(y / 7 + w.phase)).toFixed(1)} ${y}`;
+    w.edge.setAttribute('d', `${d}L0 ${w.height}Z`);
+  };
+  window.addEventListener('resize', () => shown.forEach((el) => {
+    if (el.zlWave) el.zlWave.width = 0;
+  }));
   let running = false;
   let last = 0;
   const tick = (now) => {
-    if (!shown.size || document.hidden) { running = false; return; }
+    if (!shown.size || !pageAwake() || motionOff()) { running = false; return; }
     if (now - last >= 1000 / FPS - 1) {
       last = now;
       for (const el of shown) {
@@ -2416,7 +3465,7 @@ searchBox.addEventListener('keydown', (event) => {
     requestAnimationFrame(tick);
   };
   const wake = () => {
-    if (still || running || !shown.size || document.hidden) return;
+    if (motionOff() || running || !shown.size || !pageAwake()) return;
     running = true;
     requestAnimationFrame(tick);
   };
@@ -2437,9 +3486,11 @@ searchBox.addEventListener('keydown', (event) => {
   new MutationObserver((list) => { for (const m of list) m.addedNodes.forEach(watch); }).observe(document.body, { childList: true, subtree: true });
   watch(document.body);
   document.addEventListener('visibilitychange', wake);
+  document.addEventListener('zl-motion', wake);
+  window.addEventListener('focus', wake);
 })();
 </script>
 </div>
-<footer class="site-foot">Counts of tag searches on Danbooru, Rule34 and pixiv, collected 2026-11-06. Only numbers are shown, no pictures from those sites. Character icons from the games' fandom wikis, © their publishers.</footer>
+<footer class="site-foot">Counts of tag searches on Danbooru, Rule34 and pixiv, collected 2026-11-07. Only numbers are shown, no pictures from those sites. Character icons from the games' fandom wikis, © their publishers.</footer>
 </body>
 </html>
