@@ -243,6 +243,11 @@ def main(tagstats):
         shutil.copyfile(report / "pairs_rows.json", target / "pairs.json")
         datasets[f"board_{game}"] = f"data/{game}/board.json"
         datasets[f"pairs_{game}"] = f"data/{game}/pairs.json"
+        # the same without AI art (python -m tagstats no-ai), for the page's AI switch
+        for name, file in (("board", "leaderboard_noai.json"), ("pairs", "pairs_rows_noai.json")):
+            if (report / file).exists():
+                shutil.copyfile(report / file, target / f"{name}_noai.json")
+                datasets[f"{name}_noai_{game}"] = f"data/{game}/{name}_noai.json"
         export_data(tagstats, config, game)
     for blob, (folder, file) in links.items():
         (DOCS / folder).mkdir(parents=True, exist_ok=True)
@@ -260,7 +265,8 @@ def main(tagstats):
     (DOCS / "index.html").write_text(out, encoding="utf-8")
     (DOCS / ".nojekyll").write_text("", encoding="utf-8")
     (DATA / "README.md").write_text(DATA_README.replace("__DATE__", datetime.date.today().isoformat()), encoding="utf-8")
-    print(f"Built {DOCS / 'index.html'}: {len(datasets) // 2} games, {len(links)} local files")
+    games = len([k for k in datasets if k.startswith("board_") and "_noai_" not in k])
+    print(f"Built {DOCS / 'index.html'}: {games} games, {len(links)} local files")
 
 
 if __name__ == "__main__":

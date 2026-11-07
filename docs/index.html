@@ -53,7 +53,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 #dash-root { max-width: 1240px; margin: 0 auto; padding: 24px 16px 32px; }
 .site-foot { max-width: 1240px; margin: 0 auto; padding: 0 16px 32px; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
 </style>
-<script>window.DASH_DATASETS = {"board_genshin": "data/genshin/board.json", "pairs_genshin": "data/genshin/pairs.json", "board_hsr": "data/hsr/board.json", "pairs_hsr": "data/hsr/pairs.json", "board_wuwa": "data/wuwa/board.json", "pairs_wuwa": "data/wuwa/pairs.json", "board_zzz": "data/zzz/board.json", "pairs_zzz": "data/zzz/pairs.json"};</script>
+<script>window.DASH_DATASETS = {"board_genshin": "data/genshin/board.json", "pairs_genshin": "data/genshin/pairs.json", "board_noai_genshin": "data/genshin/board_noai.json", "pairs_noai_genshin": "data/genshin/pairs_noai.json", "board_hsr": "data/hsr/board.json", "pairs_hsr": "data/hsr/pairs.json", "board_noai_hsr": "data/hsr/board_noai.json", "pairs_noai_hsr": "data/hsr/pairs_noai.json", "board_wuwa": "data/wuwa/board.json", "pairs_wuwa": "data/wuwa/pairs.json", "board_noai_wuwa": "data/wuwa/board_noai.json", "pairs_noai_wuwa": "data/wuwa/pairs_noai.json", "board_zzz": "data/zzz/board.json", "pairs_zzz": "data/zzz/pairs.json", "board_noai_zzz": "data/zzz/board_noai.json", "pairs_noai_zzz": "data/zzz/pairs_noai.json"};</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pixi.js@8.22.0/dist/pixi.min.js"></script>
 <script src="dash-lite.js"></script>
@@ -75,8 +75,9 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 .zl-muted, .zl-note { color: var(--color-fg-muted); }
 .zl-note { font-size: var(--cds-font-size-caption); max-width: 75ch; }
 .zl-warn { color: var(--color-warn); font-weight: var(--cds-font-weight-medium); font-size: var(--cds-font-size-caption); }
-/* the note sits on the Leaderboard heading's row, at its right */
+/* the notes sit on the Leaderboard heading's row, at its right, each on a line of its own */
 .zl-sechead .zl-warn { margin-left: auto; text-align: right; }
+.zl-warn > span { display: block; }
 .zl-warn:empty { display: none; }
 .zl-group { display: flex; align-items: center; gap: var(--cds-gap-sm); margin: 0; padding: 0; border: 0; }
 .zl-group > legend, .zl-group > .zl-group-name { float: left; padding: 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
@@ -490,7 +491,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
   <div class="zl-topbar-right">
   <div class="zl-findbar">
     <input class="zl-search" type="search" id="find" placeholder="Find a character" aria-label="Find a character in every list and chart">
-    <span class="zl-settings"><button type="button" class="zl-theme zl-gear" id="settings" aria-expanded="false" aria-controls="settings-panel" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M10.3 2h3.4l.5 2.6 1.6.7 2.2-1.5 2.4 2.4-1.5 2.2.7 1.6 2.6.5v3.4l-2.6.5-.7 1.6 1.5 2.2-2.4 2.4-2.2-1.5-1.6.7-.5 2.6h-3.4l-.5-2.6-1.6-.7-2.2 1.5-2.4-2.4 1.5-2.2-.7-1.6L2 13.7v-3.4l2.6-.5.7-1.6-1.5-2.2 2.4-2.4 2.2 1.5 1.6-.7ZM12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8Z"/></svg></button><span class="zl-settings-panel" id="settings-panel" hidden><button type="button" class="zl-theme zl-motion" id="motion" aria-pressed="true"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M10 3.5 11.6 8.4 16.5 10 11.6 11.6 10 16.5 8.4 11.6 3.5 10 8.4 8.4Z M18 13.5 18.9 16.1 21.5 17 18.9 17.9 18 20.5 17.1 17.9 14.5 17 17.1 16.1Z M18 3 18.6 4.4 20 5 18.6 5.6 18 7 17.4 5.6 16 5 17.4 4.4Z" fill="currentColor"/><path class="zl-motion-off" d="M4 4 20 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Animations</span><span class="zl-set-state" id="motion-state"></span></button><button type="button" class="zl-theme" id="theme"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><mask id="zl-theme-cut"><rect width="24" height="24" fill="#fff"/><circle class="zl-theme-bite" cx="25" cy="8" r="6.5" fill="#000"/></mask><circle class="zl-theme-disc" cx="12" cy="12" r="5" fill="currentColor" mask="url(#zl-theme-cut)"/><g class="zl-theme-rays" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="20.5" y1="12.0" x2="22.5" y2="12.0"/><line x1="18.0" y1="18.0" x2="19.4" y2="19.4"/><line x1="12.0" y1="20.5" x2="12.0" y2="22.5"/><line x1="6.0" y1="18.0" x2="4.6" y2="19.4"/><line x1="3.5" y1="12.0" x2="1.5" y2="12.0"/><line x1="6.0" y1="6.0" x2="4.6" y2="4.6"/><line x1="12.0" y1="3.5" x2="12.0" y2="1.5"/><line x1="18.0" y1="6.0" x2="19.4" y2="4.6"/></g></svg><span>Theme</span><span class="zl-set-state" id="theme-state"></span></button></span></span>
+    <span class="zl-settings"><button type="button" class="zl-theme zl-gear" id="settings" aria-expanded="false" aria-controls="settings-panel" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M10.3 2h3.4l.5 2.6 1.6.7 2.2-1.5 2.4 2.4-1.5 2.2.7 1.6 2.6.5v3.4l-2.6.5-.7 1.6 1.5 2.2-2.4 2.4-2.2-1.5-1.6.7-.5 2.6h-3.4l-.5-2.6-1.6-.7-2.2 1.5-2.4-2.4 1.5-2.2-.7-1.6L2 13.7v-3.4l2.6-.5.7-1.6-1.5-2.2 2.4-2.4 2.2 1.5 1.6-.7ZM12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8Z"/></svg></button><span class="zl-settings-panel" id="settings-panel" hidden><button type="button" class="zl-theme zl-motion" id="motion" aria-pressed="true"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M10 3.5 11.6 8.4 16.5 10 11.6 11.6 10 16.5 8.4 11.6 3.5 10 8.4 8.4Z M18 13.5 18.9 16.1 21.5 17 18.9 17.9 18 20.5 17.1 17.9 14.5 17 17.1 16.1Z M18 3 18.6 4.4 20 5 18.6 5.6 18 7 17.4 5.6 16 5 17.4 4.4Z" fill="currentColor"/><path class="zl-motion-off" d="M4 4 20 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Animations</span><span class="zl-set-state" id="motion-state"></span></button><button type="button" class="zl-theme" id="theme"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><mask id="zl-theme-cut"><rect width="24" height="24" fill="#fff"/><circle class="zl-theme-bite" cx="25" cy="8" r="6.5" fill="#000"/></mask><circle class="zl-theme-disc" cx="12" cy="12" r="5" fill="currentColor" mask="url(#zl-theme-cut)"/><g class="zl-theme-rays" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="20.5" y1="12.0" x2="22.5" y2="12.0"/><line x1="18.0" y1="18.0" x2="19.4" y2="19.4"/><line x1="12.0" y1="20.5" x2="12.0" y2="22.5"/><line x1="6.0" y1="18.0" x2="4.6" y2="19.4"/><line x1="3.5" y1="12.0" x2="1.5" y2="12.0"/><line x1="6.0" y1="6.0" x2="4.6" y2="4.6"/><line x1="12.0" y1="3.5" x2="12.0" y2="1.5"/><line x1="18.0" y1="6.0" x2="19.4" y2="4.6"/></g></svg><span>Theme</span><span class="zl-set-state" id="theme-state"></span></button><button type="button" class="zl-theme" id="ai-art" aria-pressed="true"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><text x="12" y="15.5" text-anchor="middle" font-size="8.5" font-weight="700" font-family="system-ui, sans-serif" fill="currentColor">AI</text></svg><span>AI art</span><span class="zl-set-state" id="ai-state"></span></button></span></span>
     <button type="button" class="zl-theme zl-fold" id="fold" aria-expanded="true" aria-label="Hide the filters" title="Hide the filters"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 15l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
   <div class="zl-group"><span class="zl-group-name" aria-hidden="true">Content</span>
@@ -513,9 +514,9 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 <section class="zl-sec" id="leaderboard">
   <div class="zl-sechead">
     <h2>Leaderboard</h2>
-    <p class="zl-warn" data-draw="missing" data-source="board_zzz board_genshin board_hsr board_wuwa">—</p>
+    <p class="zl-warn" data-draw="missing" data-source="board_zzz board_noai_zzz board_genshin board_noai_genshin board_hsr board_noai_hsr board_wuwa board_noai_wuwa">—</p>
   </div>
-  <div class="zl-podium" data-draw="podium" data-source="totals_zzz totals_window_zzz board_zzz totals_genshin totals_window_genshin board_genshin totals_hsr totals_window_hsr board_hsr totals_wuwa totals_window_wuwa board_wuwa"></div>
+  <div class="zl-podium" data-draw="podium" data-source="totals_zzz totals_window_zzz board_zzz totals_noai_zzz totals_window_noai_zzz board_noai_zzz totals_genshin totals_window_genshin board_genshin totals_noai_genshin totals_window_noai_genshin board_noai_genshin totals_hsr totals_window_hsr board_hsr totals_noai_hsr totals_window_noai_hsr board_noai_hsr totals_wuwa totals_window_wuwa board_wuwa totals_noai_wuwa totals_window_noai_wuwa board_noai_wuwa"></div>
   <div class="zl-card">
     <div class="zl-tools">
       <h3>Every character</h3>
@@ -537,7 +538,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
     </div>
     </div>
     <ul class="zl-key" id="layers"></ul>
-    <ol class="zl-list" data-draw="bars" data-source="totals_zzz totals_window_zzz board_zzz totals_genshin totals_window_genshin board_genshin totals_hsr totals_window_hsr board_hsr totals_wuwa totals_window_wuwa board_wuwa"></ol>
+    <ol class="zl-list" data-draw="bars" data-source="totals_zzz totals_window_zzz board_zzz totals_noai_zzz totals_window_noai_zzz board_noai_zzz totals_genshin totals_window_genshin board_genshin totals_noai_genshin totals_window_noai_genshin board_noai_genshin totals_hsr totals_window_hsr board_hsr totals_noai_hsr totals_window_noai_hsr board_noai_hsr totals_wuwa totals_window_wuwa board_wuwa totals_noai_wuwa totals_window_noai_wuwa board_noai_wuwa"></ol>
   </div>
   <div class="zl-card">
     <div class="zl-cardhead">
@@ -545,7 +546,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
       <span class="zl-hint-short"><span class="zl-mouse">Hold Ctrl and scroll to zoom</span><span class="zl-touch">Two fingers to zoom</span></span>
       <div class="zl-ctools"></div>
     </div>
-    <div class="zl-chart" data-draw="scatter" data-source="totals_zzz totals_window_zzz board_zzz totals_genshin totals_window_genshin board_genshin totals_hsr totals_window_hsr board_hsr totals_wuwa totals_window_wuwa board_wuwa"></div>
+    <div class="zl-chart" data-draw="scatter" data-source="totals_zzz totals_window_zzz board_zzz totals_noai_zzz totals_window_noai_zzz board_noai_zzz totals_genshin totals_window_genshin board_genshin totals_noai_genshin totals_window_noai_genshin board_noai_genshin totals_hsr totals_window_hsr board_hsr totals_noai_hsr totals_window_noai_hsr board_noai_hsr totals_wuwa totals_window_wuwa board_wuwa totals_noai_wuwa totals_window_noai_wuwa board_noai_wuwa"></div>
   </div>
 </section>
 
@@ -558,7 +559,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
       <div class="zl-ctools"></div>
     </div>
     <div class="zl-netwrap">
-      <div class="zl-chart zl-net" data-draw="network" data-source="pair_totals_zzz totals_zzz totals_window_zzz board_zzz pair_totals_genshin totals_genshin totals_window_genshin board_genshin pair_totals_hsr totals_hsr totals_window_hsr board_hsr pair_totals_wuwa totals_wuwa totals_window_wuwa board_wuwa"></div>
+      <div class="zl-chart zl-net" data-draw="network" data-source="pair_totals_zzz totals_zzz totals_window_zzz board_zzz pair_totals_noai_zzz totals_noai_zzz totals_window_noai_zzz board_noai_zzz pair_totals_genshin totals_genshin totals_window_genshin board_genshin pair_totals_noai_genshin totals_noai_genshin totals_window_noai_genshin board_noai_genshin pair_totals_hsr totals_hsr totals_window_hsr board_hsr pair_totals_noai_hsr totals_noai_hsr totals_window_noai_hsr board_noai_hsr pair_totals_wuwa totals_wuwa totals_window_wuwa board_wuwa pair_totals_noai_wuwa totals_noai_wuwa totals_window_noai_wuwa board_noai_wuwa"></div>
       <div class="zl-abs" id="abs-dock">
         <button type="button" class="zl-abs-card" id="abs-add" aria-expanded="false" aria-controls="abs-list" title="Characters around categories: each one you pick pulls the characters by their share of art with it">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(-25 12 12)"/><circle cx="20.5" cy="8" r="1.6"/><circle cx="3.5" cy="16" r="1.6"/></svg>
@@ -567,7 +568,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
         </button>
         <div class="zl-abs-list" id="abs-list" role="group" aria-label="Categories on the network" hidden></div>
       </div>
-      <aside class="zl-panel" data-draw="focus-panel" data-source="pair_totals_zzz totals_zzz totals_window_zzz board_zzz pair_totals_genshin totals_genshin totals_window_genshin board_genshin pair_totals_hsr totals_hsr totals_window_hsr board_hsr pair_totals_wuwa totals_wuwa totals_window_wuwa board_wuwa"></aside>
+      <aside class="zl-panel" data-draw="focus-panel" data-source="pair_totals_zzz totals_zzz totals_window_zzz board_zzz pair_totals_noai_zzz totals_noai_zzz totals_window_noai_zzz board_noai_zzz pair_totals_genshin totals_genshin totals_window_genshin board_genshin pair_totals_noai_genshin totals_noai_genshin totals_window_noai_genshin board_noai_genshin pair_totals_hsr totals_hsr totals_window_hsr board_hsr pair_totals_noai_hsr totals_noai_hsr totals_window_noai_hsr board_noai_hsr pair_totals_wuwa totals_wuwa totals_window_wuwa board_wuwa pair_totals_noai_wuwa totals_noai_wuwa totals_window_noai_wuwa board_noai_wuwa"></aside>
     </div>
     <ul class="zl-key zl-key-line"><li>Compared to their top partner:</li><li>100%<span class="zl-range" id="line-range" title="Each end of a line shows how this pair compares with that character's top partner. Double-click to reset."><span class="zl-sw zl-sw-line"></span><button type="button" class="zl-range-end" role="slider" aria-label="Weakest pairs kept"></button></span><span id="line-low">0%</span></li><li>Drag to hide weaker links</li></ul>
   </div>
@@ -578,7 +579,7 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
     <ul class="zl-key" data-legend="all"><li><span class="zl-sw zl-sw-r18"></span>R-18 part</li><li><span class="zl-sw zl-sw-all"></span>Posts together</li></ul>
     <ul class="zl-key" data-legend="r18" hidden><li><span class="zl-sw zl-sw-r18"></span>R-18 posts together</li></ul>
     <ul class="zl-key" data-legend="safe" hidden><li><span class="zl-sw zl-sw-all"></span>Posts together without R-18</li></ul>
-    <ol class="zl-list" data-draw="pairs-top" data-source="pair_totals_zzz board_zzz pair_totals_genshin board_genshin pair_totals_hsr board_hsr pair_totals_wuwa board_wuwa"></ol>
+    <ol class="zl-list" data-draw="pairs-top" data-source="pair_totals_zzz board_zzz pair_totals_noai_zzz board_noai_zzz pair_totals_genshin board_genshin pair_totals_noai_genshin board_noai_genshin pair_totals_hsr board_hsr pair_totals_noai_hsr board_noai_hsr pair_totals_wuwa board_wuwa pair_totals_noai_wuwa board_noai_wuwa"></ol>
   </div>
 </section>
 </div>
@@ -716,6 +717,97 @@ dash.calc('pair_totals_zzz', {
   },
 });
 
+dash.calc('totals_noai_zzz', {
+  inputs: ['board_noai_zzz'],
+  title: 'ZZZ without AI: Posts per character for each choice of sites',
+  description: 'Posts and R-18 posts added up over the chosen sites, the R-18 share, and the rank by all posts, by R-18 posts and by posts without R-18.',
+  fn: (board) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const keys = [];
+    for (let m = 1; m < 1 << sites.length; m++) keys.push(sites.filter((s, i) => m & (1 << i)).sort().join('+'));
+    const out = [];
+    for (const key of keys) {
+      const parts = key.split('+');
+      const rows = board.map((r) => {
+        const has = parts.filter((s) => r[s + '_total'] != null);
+        const total = has.length ? d3.sum(has, (s) => r[s + '_total']) : null;
+        const r18 = has.length ? d3.sum(has, (s) => r[s + '_r18'] ?? 0) : null;
+        return { sites: key, id: r.id, total, r18, share: total ? r18 / total : null };
+      });
+      const has = rows.filter((r) => r.total != null);
+      has.sort((a, b) => b.total - a.total).forEach((r, i) => { r.rank = i + 1; });
+      has.sort((a, b) => b.r18 - a.r18).forEach((r, i) => { r.rank_r18 = i + 1; });
+      has.sort((a, b) => (b.total - b.r18) - (a.total - a.r18)).forEach((r, i) => { r.rank_safe = i + 1; });
+      out.push(...rows);
+    }
+    return out;
+  },
+});
+
+dash.calc('totals_window_noai_zzz', {
+  inputs: ['board_noai_zzz'],
+  title: 'ZZZ without AI: Posts per character up to 3 months after release',
+  description: 'Posts and R-18 posts up to 3 months after each character\'s release (art before release included), added up over the chosen sites, the R-18 share, and the rank by all posts, by R-18 posts and by posts without R-18.',
+  fn: (board) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const keys = [];
+    for (let m = 1; m < 1 << sites.length; m++) keys.push(sites.filter((s, i) => m & (1 << i)).sort().join('+'));
+    const out = [];
+    for (const key of keys) {
+      const parts = key.split('+');
+      const rows = board.map((r) => {
+        const has = parts.filter((s) => r['w_' + s + '_total'] != null);
+        const total = has.length ? d3.sum(has, (s) => r['w_' + s + '_total']) : null;
+        const r18 = has.length ? d3.sum(has, (s) => r['w_' + s + '_r18'] ?? 0) : null;
+        return { sites: key, id: r.id, total, r18, share: total ? r18 / total : null };
+      });
+      const has = rows.filter((r) => r.total != null);
+      has.sort((a, b) => b.total - a.total).forEach((r, i) => { r.rank = i + 1; });
+      has.sort((a, b) => b.r18 - a.r18).forEach((r, i) => { r.rank_r18 = i + 1; });
+      has.sort((a, b) => (b.total - b.r18) - (a.total - a.r18)).forEach((r, i) => { r.rank_safe = i + 1; });
+      out.push(...rows);
+    }
+    return out;
+  },
+});
+
+dash.calc('pair_totals_noai_zzz', {
+  inputs: ['pairs_noai_zzz', 'totals_noai_zzz', 'totals_window_noai_zzz'],
+  title: 'ZZZ without AI: Crossovers for each choice of sites',
+  description: 'Posts with both characters added up over the chosen sites that have crossover counts, and affinity: posts together divided by the less drawn character\'s posts on those sites; all time and up to 3 months after the newer character\'s release.',
+  fn: (pairs, totals, totalsWindow) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const counted = new Set(pairs.map((p) => p.site));
+    const byKey = new Map(totals.map((r) => [r.sites + '|' + r.id, r.total]));
+    const byKeyWindow = new Map(totalsWindow.map((r) => [r.sites + '|' + r.id, r.total]));
+    const affinityOf = (map, usedKey, a, b, total) => {
+      const least = Math.min(map.get(usedKey + '|' + a) || Infinity, map.get(usedKey + '|' + b) || Infinity);
+      return Number.isFinite(least) && least > 0 ? total / least : null;
+    };
+    const grouped = d3.group(pairs, (p) => p.a + '|' + p.b);
+    const out = [];
+    for (let m = 1; m < 1 << sites.length; m++) {
+      const parts = sites.filter((s, i) => m & (1 << i)).sort();
+      const key = parts.join('+');
+      const used = parts.filter((s) => counted.has(s));
+      if (!used.length) continue;
+      const usedKey = used.join('+');
+      for (const [pair, rows] of grouped) {
+        const mine = rows.filter((p) => used.includes(p.site));
+        if (!mine.length) continue;
+        const total = d3.sum(mine, (p) => p.total);
+        const wTotal = d3.sum(mine, (p) => p.w_total ?? 0);
+        const [a, b] = pair.split('|');
+        out.push({ sites: key, a, b, total, r18: d3.sum(mine, (p) => p.r18 ?? 0),
+                   affinity: affinityOf(byKey, usedKey, a, b, total),
+                   w_total: wTotal, w_r18: d3.sum(mine, (p) => p.w_r18 ?? 0),
+                   w_affinity: affinityOf(byKeyWindow, usedKey, a, b, wTotal) });
+      }
+    }
+    return out;
+  },
+});
+
 dash.calc('totals_genshin', {
   inputs: ['board_genshin'],
   title: 'Genshin: Posts per character for each choice of sites',
@@ -773,6 +865,97 @@ dash.calc('totals_window_genshin', {
 dash.calc('pair_totals_genshin', {
   inputs: ['pairs_genshin', 'totals_genshin', 'totals_window_genshin'],
   title: 'Genshin: Crossovers for each choice of sites',
+  description: 'Posts with both characters added up over the chosen sites that have crossover counts, and affinity: posts together divided by the less drawn character\'s posts on those sites; all time and up to 3 months after the newer character\'s release.',
+  fn: (pairs, totals, totalsWindow) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const counted = new Set(pairs.map((p) => p.site));
+    const byKey = new Map(totals.map((r) => [r.sites + '|' + r.id, r.total]));
+    const byKeyWindow = new Map(totalsWindow.map((r) => [r.sites + '|' + r.id, r.total]));
+    const affinityOf = (map, usedKey, a, b, total) => {
+      const least = Math.min(map.get(usedKey + '|' + a) || Infinity, map.get(usedKey + '|' + b) || Infinity);
+      return Number.isFinite(least) && least > 0 ? total / least : null;
+    };
+    const grouped = d3.group(pairs, (p) => p.a + '|' + p.b);
+    const out = [];
+    for (let m = 1; m < 1 << sites.length; m++) {
+      const parts = sites.filter((s, i) => m & (1 << i)).sort();
+      const key = parts.join('+');
+      const used = parts.filter((s) => counted.has(s));
+      if (!used.length) continue;
+      const usedKey = used.join('+');
+      for (const [pair, rows] of grouped) {
+        const mine = rows.filter((p) => used.includes(p.site));
+        if (!mine.length) continue;
+        const total = d3.sum(mine, (p) => p.total);
+        const wTotal = d3.sum(mine, (p) => p.w_total ?? 0);
+        const [a, b] = pair.split('|');
+        out.push({ sites: key, a, b, total, r18: d3.sum(mine, (p) => p.r18 ?? 0),
+                   affinity: affinityOf(byKey, usedKey, a, b, total),
+                   w_total: wTotal, w_r18: d3.sum(mine, (p) => p.w_r18 ?? 0),
+                   w_affinity: affinityOf(byKeyWindow, usedKey, a, b, wTotal) });
+      }
+    }
+    return out;
+  },
+});
+
+dash.calc('totals_noai_genshin', {
+  inputs: ['board_noai_genshin'],
+  title: 'Genshin without AI: Posts per character for each choice of sites',
+  description: 'Posts and R-18 posts added up over the chosen sites, the R-18 share, and the rank by all posts, by R-18 posts and by posts without R-18.',
+  fn: (board) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const keys = [];
+    for (let m = 1; m < 1 << sites.length; m++) keys.push(sites.filter((s, i) => m & (1 << i)).sort().join('+'));
+    const out = [];
+    for (const key of keys) {
+      const parts = key.split('+');
+      const rows = board.map((r) => {
+        const has = parts.filter((s) => r[s + '_total'] != null);
+        const total = has.length ? d3.sum(has, (s) => r[s + '_total']) : null;
+        const r18 = has.length ? d3.sum(has, (s) => r[s + '_r18'] ?? 0) : null;
+        return { sites: key, id: r.id, total, r18, share: total ? r18 / total : null };
+      });
+      const has = rows.filter((r) => r.total != null);
+      has.sort((a, b) => b.total - a.total).forEach((r, i) => { r.rank = i + 1; });
+      has.sort((a, b) => b.r18 - a.r18).forEach((r, i) => { r.rank_r18 = i + 1; });
+      has.sort((a, b) => (b.total - b.r18) - (a.total - a.r18)).forEach((r, i) => { r.rank_safe = i + 1; });
+      out.push(...rows);
+    }
+    return out;
+  },
+});
+
+dash.calc('totals_window_noai_genshin', {
+  inputs: ['board_noai_genshin'],
+  title: 'Genshin without AI: Posts per character up to 3 months after release',
+  description: 'Posts and R-18 posts up to 3 months after each character\'s release (art before release included), added up over the chosen sites, the R-18 share, and the rank by all posts, by R-18 posts and by posts without R-18.',
+  fn: (board) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const keys = [];
+    for (let m = 1; m < 1 << sites.length; m++) keys.push(sites.filter((s, i) => m & (1 << i)).sort().join('+'));
+    const out = [];
+    for (const key of keys) {
+      const parts = key.split('+');
+      const rows = board.map((r) => {
+        const has = parts.filter((s) => r['w_' + s + '_total'] != null);
+        const total = has.length ? d3.sum(has, (s) => r['w_' + s + '_total']) : null;
+        const r18 = has.length ? d3.sum(has, (s) => r['w_' + s + '_r18'] ?? 0) : null;
+        return { sites: key, id: r.id, total, r18, share: total ? r18 / total : null };
+      });
+      const has = rows.filter((r) => r.total != null);
+      has.sort((a, b) => b.total - a.total).forEach((r, i) => { r.rank = i + 1; });
+      has.sort((a, b) => b.r18 - a.r18).forEach((r, i) => { r.rank_r18 = i + 1; });
+      has.sort((a, b) => (b.total - b.r18) - (a.total - a.r18)).forEach((r, i) => { r.rank_safe = i + 1; });
+      out.push(...rows);
+    }
+    return out;
+  },
+});
+
+dash.calc('pair_totals_noai_genshin', {
+  inputs: ['pairs_noai_genshin', 'totals_noai_genshin', 'totals_window_noai_genshin'],
+  title: 'Genshin without AI: Crossovers for each choice of sites',
   description: 'Posts with both characters added up over the chosen sites that have crossover counts, and affinity: posts together divided by the less drawn character\'s posts on those sites; all time and up to 3 months after the newer character\'s release.',
   fn: (pairs, totals, totalsWindow) => {
     const sites = ["danbooru", "rule34", "pixiv"];
@@ -898,6 +1081,97 @@ dash.calc('pair_totals_hsr', {
   },
 });
 
+dash.calc('totals_noai_hsr', {
+  inputs: ['board_noai_hsr'],
+  title: 'HSR without AI: Posts per character for each choice of sites',
+  description: 'Posts and R-18 posts added up over the chosen sites, the R-18 share, and the rank by all posts, by R-18 posts and by posts without R-18.',
+  fn: (board) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const keys = [];
+    for (let m = 1; m < 1 << sites.length; m++) keys.push(sites.filter((s, i) => m & (1 << i)).sort().join('+'));
+    const out = [];
+    for (const key of keys) {
+      const parts = key.split('+');
+      const rows = board.map((r) => {
+        const has = parts.filter((s) => r[s + '_total'] != null);
+        const total = has.length ? d3.sum(has, (s) => r[s + '_total']) : null;
+        const r18 = has.length ? d3.sum(has, (s) => r[s + '_r18'] ?? 0) : null;
+        return { sites: key, id: r.id, total, r18, share: total ? r18 / total : null };
+      });
+      const has = rows.filter((r) => r.total != null);
+      has.sort((a, b) => b.total - a.total).forEach((r, i) => { r.rank = i + 1; });
+      has.sort((a, b) => b.r18 - a.r18).forEach((r, i) => { r.rank_r18 = i + 1; });
+      has.sort((a, b) => (b.total - b.r18) - (a.total - a.r18)).forEach((r, i) => { r.rank_safe = i + 1; });
+      out.push(...rows);
+    }
+    return out;
+  },
+});
+
+dash.calc('totals_window_noai_hsr', {
+  inputs: ['board_noai_hsr'],
+  title: 'HSR without AI: Posts per character up to 3 months after release',
+  description: 'Posts and R-18 posts up to 3 months after each character\'s release (art before release included), added up over the chosen sites, the R-18 share, and the rank by all posts, by R-18 posts and by posts without R-18.',
+  fn: (board) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const keys = [];
+    for (let m = 1; m < 1 << sites.length; m++) keys.push(sites.filter((s, i) => m & (1 << i)).sort().join('+'));
+    const out = [];
+    for (const key of keys) {
+      const parts = key.split('+');
+      const rows = board.map((r) => {
+        const has = parts.filter((s) => r['w_' + s + '_total'] != null);
+        const total = has.length ? d3.sum(has, (s) => r['w_' + s + '_total']) : null;
+        const r18 = has.length ? d3.sum(has, (s) => r['w_' + s + '_r18'] ?? 0) : null;
+        return { sites: key, id: r.id, total, r18, share: total ? r18 / total : null };
+      });
+      const has = rows.filter((r) => r.total != null);
+      has.sort((a, b) => b.total - a.total).forEach((r, i) => { r.rank = i + 1; });
+      has.sort((a, b) => b.r18 - a.r18).forEach((r, i) => { r.rank_r18 = i + 1; });
+      has.sort((a, b) => (b.total - b.r18) - (a.total - a.r18)).forEach((r, i) => { r.rank_safe = i + 1; });
+      out.push(...rows);
+    }
+    return out;
+  },
+});
+
+dash.calc('pair_totals_noai_hsr', {
+  inputs: ['pairs_noai_hsr', 'totals_noai_hsr', 'totals_window_noai_hsr'],
+  title: 'HSR without AI: Crossovers for each choice of sites',
+  description: 'Posts with both characters added up over the chosen sites that have crossover counts, and affinity: posts together divided by the less drawn character\'s posts on those sites; all time and up to 3 months after the newer character\'s release.',
+  fn: (pairs, totals, totalsWindow) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const counted = new Set(pairs.map((p) => p.site));
+    const byKey = new Map(totals.map((r) => [r.sites + '|' + r.id, r.total]));
+    const byKeyWindow = new Map(totalsWindow.map((r) => [r.sites + '|' + r.id, r.total]));
+    const affinityOf = (map, usedKey, a, b, total) => {
+      const least = Math.min(map.get(usedKey + '|' + a) || Infinity, map.get(usedKey + '|' + b) || Infinity);
+      return Number.isFinite(least) && least > 0 ? total / least : null;
+    };
+    const grouped = d3.group(pairs, (p) => p.a + '|' + p.b);
+    const out = [];
+    for (let m = 1; m < 1 << sites.length; m++) {
+      const parts = sites.filter((s, i) => m & (1 << i)).sort();
+      const key = parts.join('+');
+      const used = parts.filter((s) => counted.has(s));
+      if (!used.length) continue;
+      const usedKey = used.join('+');
+      for (const [pair, rows] of grouped) {
+        const mine = rows.filter((p) => used.includes(p.site));
+        if (!mine.length) continue;
+        const total = d3.sum(mine, (p) => p.total);
+        const wTotal = d3.sum(mine, (p) => p.w_total ?? 0);
+        const [a, b] = pair.split('|');
+        out.push({ sites: key, a, b, total, r18: d3.sum(mine, (p) => p.r18 ?? 0),
+                   affinity: affinityOf(byKey, usedKey, a, b, total),
+                   w_total: wTotal, w_r18: d3.sum(mine, (p) => p.w_r18 ?? 0),
+                   w_affinity: affinityOf(byKeyWindow, usedKey, a, b, wTotal) });
+      }
+    }
+    return out;
+  },
+});
+
 dash.calc('totals_wuwa', {
   inputs: ['board_wuwa'],
   title: 'WuWa: Posts per character for each choice of sites',
@@ -989,10 +1263,102 @@ dash.calc('pair_totals_wuwa', {
   },
 });
 
+dash.calc('totals_noai_wuwa', {
+  inputs: ['board_noai_wuwa'],
+  title: 'WuWa without AI: Posts per character for each choice of sites',
+  description: 'Posts and R-18 posts added up over the chosen sites, the R-18 share, and the rank by all posts, by R-18 posts and by posts without R-18.',
+  fn: (board) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const keys = [];
+    for (let m = 1; m < 1 << sites.length; m++) keys.push(sites.filter((s, i) => m & (1 << i)).sort().join('+'));
+    const out = [];
+    for (const key of keys) {
+      const parts = key.split('+');
+      const rows = board.map((r) => {
+        const has = parts.filter((s) => r[s + '_total'] != null);
+        const total = has.length ? d3.sum(has, (s) => r[s + '_total']) : null;
+        const r18 = has.length ? d3.sum(has, (s) => r[s + '_r18'] ?? 0) : null;
+        return { sites: key, id: r.id, total, r18, share: total ? r18 / total : null };
+      });
+      const has = rows.filter((r) => r.total != null);
+      has.sort((a, b) => b.total - a.total).forEach((r, i) => { r.rank = i + 1; });
+      has.sort((a, b) => b.r18 - a.r18).forEach((r, i) => { r.rank_r18 = i + 1; });
+      has.sort((a, b) => (b.total - b.r18) - (a.total - a.r18)).forEach((r, i) => { r.rank_safe = i + 1; });
+      out.push(...rows);
+    }
+    return out;
+  },
+});
+
+dash.calc('totals_window_noai_wuwa', {
+  inputs: ['board_noai_wuwa'],
+  title: 'WuWa without AI: Posts per character up to 3 months after release',
+  description: 'Posts and R-18 posts up to 3 months after each character\'s release (art before release included), added up over the chosen sites, the R-18 share, and the rank by all posts, by R-18 posts and by posts without R-18.',
+  fn: (board) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const keys = [];
+    for (let m = 1; m < 1 << sites.length; m++) keys.push(sites.filter((s, i) => m & (1 << i)).sort().join('+'));
+    const out = [];
+    for (const key of keys) {
+      const parts = key.split('+');
+      const rows = board.map((r) => {
+        const has = parts.filter((s) => r['w_' + s + '_total'] != null);
+        const total = has.length ? d3.sum(has, (s) => r['w_' + s + '_total']) : null;
+        const r18 = has.length ? d3.sum(has, (s) => r['w_' + s + '_r18'] ?? 0) : null;
+        return { sites: key, id: r.id, total, r18, share: total ? r18 / total : null };
+      });
+      const has = rows.filter((r) => r.total != null);
+      has.sort((a, b) => b.total - a.total).forEach((r, i) => { r.rank = i + 1; });
+      has.sort((a, b) => b.r18 - a.r18).forEach((r, i) => { r.rank_r18 = i + 1; });
+      has.sort((a, b) => (b.total - b.r18) - (a.total - a.r18)).forEach((r, i) => { r.rank_safe = i + 1; });
+      out.push(...rows);
+    }
+    return out;
+  },
+});
+
+dash.calc('pair_totals_noai_wuwa', {
+  inputs: ['pairs_noai_wuwa', 'totals_noai_wuwa', 'totals_window_noai_wuwa'],
+  title: 'WuWa without AI: Crossovers for each choice of sites',
+  description: 'Posts with both characters added up over the chosen sites that have crossover counts, and affinity: posts together divided by the less drawn character\'s posts on those sites; all time and up to 3 months after the newer character\'s release.',
+  fn: (pairs, totals, totalsWindow) => {
+    const sites = ["danbooru", "rule34", "pixiv"];
+    const counted = new Set(pairs.map((p) => p.site));
+    const byKey = new Map(totals.map((r) => [r.sites + '|' + r.id, r.total]));
+    const byKeyWindow = new Map(totalsWindow.map((r) => [r.sites + '|' + r.id, r.total]));
+    const affinityOf = (map, usedKey, a, b, total) => {
+      const least = Math.min(map.get(usedKey + '|' + a) || Infinity, map.get(usedKey + '|' + b) || Infinity);
+      return Number.isFinite(least) && least > 0 ? total / least : null;
+    };
+    const grouped = d3.group(pairs, (p) => p.a + '|' + p.b);
+    const out = [];
+    for (let m = 1; m < 1 << sites.length; m++) {
+      const parts = sites.filter((s, i) => m & (1 << i)).sort();
+      const key = parts.join('+');
+      const used = parts.filter((s) => counted.has(s));
+      if (!used.length) continue;
+      const usedKey = used.join('+');
+      for (const [pair, rows] of grouped) {
+        const mine = rows.filter((p) => used.includes(p.site));
+        if (!mine.length) continue;
+        const total = d3.sum(mine, (p) => p.total);
+        const wTotal = d3.sum(mine, (p) => p.w_total ?? 0);
+        const [a, b] = pair.split('|');
+        out.push({ sites: key, a, b, total, r18: d3.sum(mine, (p) => p.r18 ?? 0),
+                   affinity: affinityOf(byKey, usedKey, a, b, total),
+                   w_total: wTotal, w_r18: d3.sum(mine, (p) => p.w_r18 ?? 0),
+                   w_affinity: affinityOf(byKeyWindow, usedKey, a, b, wTotal) });
+      }
+    }
+    return out;
+  },
+});
+
 
 
 // the shown game's dataset or calc: board -> board_<game>
-const D = (id) => dash.data(`${id}_${view.game}`);
+// A game's data with AI art, or its second set without (no_ai.py) when the switch is off.
+const D = (id) => dash.data(`${id}${view.ai === false ? '_noai' : ''}_${view.game}`);
 const ready = (...ids) => ids.every((id) => D(id).status === 'ok');
 const people = () => new Map(D('board').data.map((r) => [r.id, r]));
 
@@ -1165,7 +1531,8 @@ dash.draw('missing', (el) => {
   const notes = empty.length ? [`No counts yet for ${empty.join(', ')}: these figures leave ${empty.length > 1 ? 'them' : 'it'} out.`] : [];
   // Danbooru is down, so its posts could not be read: it has its totals only, no tags in the store
   if (chosen().includes('danbooru') && !hasStored('danbooru') && !empty.includes(LABELS.danbooru)) notes.push('Danbooru is down: totals only; its tag numbers follow Rule34 and pixiv.');
-  el.textContent = notes.join(' ');
+  if (view.ai === false) notes.push('AI art left out.');
+  el.replaceChildren(...notes.map((text) => node('span', null, text)));
 });
 
 // The lower bound of the 95% Wilson interval of k R-18 posts out of n: the
@@ -3530,6 +3897,24 @@ document.querySelectorAll('[data-scale]').forEach((btn) => {
   });
 });
 showSort();
+// AI art: counted unless switched off, kept for the next visit. Off, every number comes from
+// the game's second set of data, without AI (D, no_ai.py).
+const aiButton = document.getElementById('ai-art');
+const showAi = (on) => {
+  view.ai = on;
+  aiButton.setAttribute('aria-pressed', String(on));
+  const next = on ? 'Leave AI art out' : 'Count AI art';
+  aiButton.setAttribute('aria-label', next);
+  aiButton.title = next;
+  document.getElementById('ai-state').textContent = on ? 'Included' : 'Left out';
+};
+showAi((() => { try { return localStorage.getItem('tagstats-ai') !== 'off'; } catch (e) { return true; } })());
+aiButton.addEventListener('click', () => {
+  const on = !view.ai;
+  try { localStorage.setItem('tagstats-ai', on ? 'on' : 'off'); } catch (e) { /* only this visit */ }
+  showAi(on);
+  redrawAll();
+});
 // The fold of the bar on a phone: Content and Period hidden or shown, kept for the next visit.
 const foldButton = document.getElementById('fold');
 const showFold = (folded) => {
