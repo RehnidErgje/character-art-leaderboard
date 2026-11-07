@@ -102,6 +102,15 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
 /* a fixed width: a percentage one made the bar wrap the search above Content */
 .zl-topbar-right { justify-content: flex-end; }
 .zl-topbar-right .zl-search { width: 14rem; max-width: 100%; }
+/* the search and the gear: on a wide screen apart (the gear last), on a phone one box */
+.zl-findbar { display: contents; }
+/* the fold of the bar, on a phone only: it hides Content and Period; a dot when they are not
+   at all art and all time, so a filter hidden is not forgotten */
+.zl-theme.zl-fold { display: none; position: relative; }
+.zl-fold svg { transition: transform .3s ease; }
+.zl-fold[aria-expanded="false"] svg { transform: rotate(180deg); }
+.zl-fold.zl-on::after { content: ""; position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border-radius: 50%; background: var(--zl-solo); }
+.zl-topbar-right .zl-settings { order: 1; }
 /* full screen on a wide screen: search, Content and the chart's buttons in
    one row; the search gives up room first */
 @media (min-width: 900px) {
@@ -419,11 +428,15 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
   .zl-topbar .zl-group > legend, .zl-topbar .zl-group > .zl-group-name { display: none; }
   /* the sites as their icons only; the name stays for screen readers */
   .zl-chip { height: 30px; padding: 0 7px; gap: 0; font-size: 0; }
-  .zl-topbar-right .zl-search { order: 3; flex: 1 1 10rem; width: auto; min-width: 10rem; }
+  /* the search and the gear wrap together: beside the logo while the search has room, on a
+     row of their own below it when not, never the gear alone at the left edge */
+  .zl-findbar { order: 3; display: flex; align-items: center; gap: 6px; flex: 1 1 9rem; min-width: 0; }
+  .zl-findbar .zl-search { flex: 1 1 auto; width: auto; min-width: 0; }
+  .zl-theme.zl-fold { display: inline-flex; flex: none; }
+  .zl-topbar[data-folded="true"] .zl-topbar-right > .zl-group { display: none; }
   .zl-topbar-right > .zl-group { order: 4; flex: 1 1 100%; }
   .zl-topbar-right > .zl-group .zl-seg { display: flex; width: 100%; }
   .zl-topbar-right > .zl-group .zl-seg button { flex: 1; padding-block: 6px; }
-  .zl-settings { order: 3; }
   .zl-morepanel { order: 6; justify-content: flex-start; }
   .zl-morepanel .zl-group { flex: 1 1 100%; }
   .zl-morepanel .zl-seg { display: flex; flex: 1; }
@@ -466,7 +479,11 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
   </fieldset>
   </div>
   <div class="zl-topbar-right">
-  <input class="zl-search" type="search" id="find" placeholder="Find a character" aria-label="Find a character in every list and chart">
+  <div class="zl-findbar">
+    <input class="zl-search" type="search" id="find" placeholder="Find a character" aria-label="Find a character in every list and chart">
+    <span class="zl-settings"><button type="button" class="zl-theme zl-gear" id="settings" aria-expanded="false" aria-controls="settings-panel" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M10.3 2h3.4l.5 2.6 1.6.7 2.2-1.5 2.4 2.4-1.5 2.2.7 1.6 2.6.5v3.4l-2.6.5-.7 1.6 1.5 2.2-2.4 2.4-2.2-1.5-1.6.7-.5 2.6h-3.4l-.5-2.6-1.6-.7-2.2 1.5-2.4-2.4 1.5-2.2-.7-1.6L2 13.7v-3.4l2.6-.5.7-1.6-1.5-2.2 2.4-2.4 2.2 1.5 1.6-.7ZM12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8Z"/></svg></button><span class="zl-settings-panel" id="settings-panel" hidden><button type="button" class="zl-theme zl-motion" id="motion" aria-pressed="true"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M10 3.5 11.6 8.4 16.5 10 11.6 11.6 10 16.5 8.4 11.6 3.5 10 8.4 8.4Z M18 13.5 18.9 16.1 21.5 17 18.9 17.9 18 20.5 17.1 17.9 14.5 17 17.1 16.1Z M18 3 18.6 4.4 20 5 18.6 5.6 18 7 17.4 5.6 16 5 17.4 4.4Z" fill="currentColor"/><path class="zl-motion-off" d="M4 4 20 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Animations</span><span class="zl-set-state" id="motion-state"></span></button><button type="button" class="zl-theme" id="theme"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><mask id="zl-theme-cut"><rect width="24" height="24" fill="#fff"/><circle class="zl-theme-bite" cx="25" cy="8" r="6.5" fill="#000"/></mask><circle class="zl-theme-disc" cx="12" cy="12" r="5" fill="currentColor" mask="url(#zl-theme-cut)"/><g class="zl-theme-rays" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="20.5" y1="12.0" x2="22.5" y2="12.0"/><line x1="18.0" y1="18.0" x2="19.4" y2="19.4"/><line x1="12.0" y1="20.5" x2="12.0" y2="22.5"/><line x1="6.0" y1="18.0" x2="4.6" y2="19.4"/><line x1="3.5" y1="12.0" x2="1.5" y2="12.0"/><line x1="6.0" y1="6.0" x2="4.6" y2="4.6"/><line x1="12.0" y1="3.5" x2="12.0" y2="1.5"/><line x1="18.0" y1="6.0" x2="19.4" y2="4.6"/></g></svg><span>Theme</span><span class="zl-set-state" id="theme-state"></span></button></span></span>
+    <button type="button" class="zl-theme zl-fold" id="fold" aria-expanded="true" aria-label="Hide the filters" title="Hide the filters"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 15l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
   <div class="zl-group"><span class="zl-group-name" aria-hidden="true">Content</span>
   <div class="zl-seg" role="group" aria-label="Content">
     <button type="button" data-measure="all" aria-pressed="true">All art</button>
@@ -480,7 +497,6 @@ body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-fami
     <button type="button" data-period="window" aria-pressed="false" title="Art up to 3 months after each character's release, art from before release included; a pair: up to 3 months after the newer one's release">First 3 months</button>
   </div>
   </div>
-  <span class="zl-settings"><button type="button" class="zl-theme zl-gear" id="settings" aria-expanded="false" aria-controls="settings-panel" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M10.3 2h3.4l.5 2.6 1.6.7 2.2-1.5 2.4 2.4-1.5 2.2.7 1.6 2.6.5v3.4l-2.6.5-.7 1.6 1.5 2.2-2.4 2.4-2.2-1.5-1.6.7-.5 2.6h-3.4l-.5-2.6-1.6-.7-2.2 1.5-2.4-2.4 1.5-2.2-.7-1.6L2 13.7v-3.4l2.6-.5.7-1.6-1.5-2.2 2.4-2.4 2.2 1.5 1.6-.7ZM12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8Z"/></svg></button><span class="zl-settings-panel" id="settings-panel" hidden><button type="button" class="zl-theme zl-motion" id="motion" aria-pressed="true"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M10 3.5 11.6 8.4 16.5 10 11.6 11.6 10 16.5 8.4 11.6 3.5 10 8.4 8.4Z M18 13.5 18.9 16.1 21.5 17 18.9 17.9 18 20.5 17.1 17.9 14.5 17 17.1 16.1Z M18 3 18.6 4.4 20 5 18.6 5.6 18 7 17.4 5.6 16 5 17.4 4.4Z" fill="currentColor"/><path class="zl-motion-off" d="M4 4 20 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Animations</span><span class="zl-set-state" id="motion-state"></span></button><button type="button" class="zl-theme" id="theme"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><mask id="zl-theme-cut"><rect width="24" height="24" fill="#fff"/><circle class="zl-theme-bite" cx="25" cy="8" r="6.5" fill="#000"/></mask><circle class="zl-theme-disc" cx="12" cy="12" r="5" fill="currentColor" mask="url(#zl-theme-cut)"/><g class="zl-theme-rays" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="20.5" y1="12.0" x2="22.5" y2="12.0"/><line x1="18.0" y1="18.0" x2="19.4" y2="19.4"/><line x1="12.0" y1="20.5" x2="12.0" y2="22.5"/><line x1="6.0" y1="18.0" x2="4.6" y2="19.4"/><line x1="3.5" y1="12.0" x2="1.5" y2="12.0"/><line x1="6.0" y1="6.0" x2="4.6" y2="4.6"/><line x1="12.0" y1="3.5" x2="12.0" y2="1.5"/><line x1="18.0" y1="6.0" x2="19.4" y2="4.6"/></g></svg><span>Theme</span><span class="zl-set-state" id="theme-state"></span></button></span></span>
   <div class="zl-bar-tools"></div>
   </div>
 </div>
@@ -1139,7 +1155,7 @@ dash.draw('missing', (el) => {
   const empty = chosen().filter((s) => !b.data.some((r) => r[s + '_total'] != null)).map((s) => LABELS[s]);
   const notes = empty.length ? [`No counts yet for ${empty.join(', ')}: these figures leave ${empty.length > 1 ? 'them' : 'it'} out.`] : [];
   // Danbooru is down, so its posts could not be read: it has its totals only, no tags in the store
-  if (chosen().includes('danbooru') && !hasStored('danbooru')) notes.push('Danbooru is down: totals only; its tag numbers follow Rule34 and pixiv.');
+  if (chosen().includes('danbooru') && !hasStored('danbooru') && !empty.includes(LABELS.danbooru)) notes.push('Danbooru is down: totals only; its tag numbers follow Rule34 and pixiv.');
   el.textContent = notes.join(' ');
 });
 
@@ -3505,6 +3521,24 @@ document.querySelectorAll('[data-scale]').forEach((btn) => {
   });
 });
 showSort();
+// The fold of the bar on a phone: Content and Period hidden or shown, kept for the next visit.
+const foldButton = document.getElementById('fold');
+const showFold = (folded) => {
+  document.querySelector('.zl-topbar').dataset.folded = String(folded);
+  foldButton.setAttribute('aria-expanded', String(!folded));
+  const label = folded ? 'Show the filters' : 'Hide the filters';
+  foldButton.setAttribute('aria-label', label);
+  foldButton.title = label;
+};
+const showFoldDot = () => foldButton.classList.toggle('zl-on', view.measure !== 'all' || view.period !== 'all');
+showFold((() => { try { return localStorage.getItem('tagstats-fold') === 'on'; } catch (e) { return false; } })());
+foldButton.addEventListener('click', () => {
+  const folded = foldButton.getAttribute('aria-expanded') === 'true';
+  try { localStorage.setItem('tagstats-fold', folded ? 'on' : 'off'); } catch (e) { /* only this visit */ }
+  showFold(folded);
+});
+document.addEventListener('click', (event) => { if (event.target.closest('[data-measure], [data-period]')) showFoldDot(); });
+showFoldDot();
 document.querySelectorAll('[data-measure]').forEach((btn) => {
   btn.addEventListener('click', () => {
     view.measure = btn.dataset.measure;
