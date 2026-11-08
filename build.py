@@ -162,6 +162,12 @@ One row per pair and site: posts that have both characters.
   Scaramouche (on Danbooru the wanderer tag implies the scaramouche tag), Herta
   includes The Herta, Firefly includes Sam. The query columns show what was
   searched.
+- The counts include AI art. The same numbers without it are in
+  `docs/data/<game>/board_noai.json` and `pairs_noai.json`: Rule34 less its
+  posts with an AI tag, pixiv from its own search without AI. Danbooru does not
+  take AI art.
+- Alone and category numbers are not in the CSV; they are in
+  `docs/data/<game>/board.json` (and `board_noai.json`).
 - No images from these sites are included, only numbers.
 """
 
